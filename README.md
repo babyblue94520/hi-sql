@@ -2,6 +2,23 @@
 
 ##
 
+### pom.xml
+
+```xml
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com</url>
+        </repository>
+    </repositories>
+
+    <dependency>
+        <groupId>pers.clare</groupId>
+        <artifactId>hi-sql</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+```
+
 ### 配置
 
 ```java

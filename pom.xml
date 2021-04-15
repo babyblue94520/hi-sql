@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>pers.clare</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>hi-sql</name>
     <description>Have fun using SQL</description>
 
@@ -51,4 +51,11 @@
 
         </plugins>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub babyblue94520 Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/babyblue94520/hi-sql</url>
+        </repository>
+    </distributionManagement>
 </project>
