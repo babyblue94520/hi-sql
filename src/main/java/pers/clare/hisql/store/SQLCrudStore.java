@@ -1,0 +1,89 @@
+package pers.clare.hisql.store;
+
+
+import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.query.SQLQueryBuilder;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.Map;
+
+public class SQLCrudStore<T> extends SQLStore<T> {
+    private String tableName;
+    private FieldColumn[] fieldColumns;
+    private Field autoKey;
+    private Field[] keyFields;
+    private String count;
+    private SQLQueryBuilder countById;
+    private String select;
+    private SQLQueryBuilder selectById;
+    private String deleteAll;
+    private SQLQueryBuilder deleteById;
+
+    public SQLCrudStore(
+            Constructor<T> constructor
+            , Map<String, FieldSetHandler> fieldSetMap
+            , String tableName
+            , FieldColumn[] fieldColumns
+            , Field autoKey
+            , Field[] keyFields
+            , String count
+            , SQLQueryBuilder countById
+            , String select
+            , SQLQueryBuilder selectById
+            , String deleteAll
+            , SQLQueryBuilder deleteById
+    ) {
+        super(constructor, fieldSetMap);
+        this.tableName = tableName;
+        this.fieldColumns = fieldColumns;
+        this.autoKey = autoKey;
+        this.keyFields = keyFields;
+        this.count = count;
+        this.countById = countById;
+        this.select = select;
+        this.selectById = selectById;
+        this.deleteAll = deleteAll;
+        this.deleteById = deleteById;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public FieldColumn[] getFieldColumns() {
+        return fieldColumns;
+    }
+
+    public Field getAutoKey() {
+        return autoKey;
+    }
+
+    public Field[] getKeyFields() {
+        return keyFields;
+    }
+
+    public String getCount() {
+        return count;
+    }
+
+    public SQLQueryBuilder getCountById() {
+        return countById;
+    }
+
+    public String getSelect() {
+        return select;
+    }
+
+    public SQLQueryBuilder getSelectById() {
+        return selectById;
+    }
+
+    public String getDeleteAll() {
+        return deleteAll;
+    }
+
+    public SQLQueryBuilder getDeleteById() {
+        return deleteById;
+    }
+}
