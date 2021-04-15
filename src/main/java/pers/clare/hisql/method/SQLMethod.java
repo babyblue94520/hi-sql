@@ -163,7 +163,7 @@ public abstract class SQLMethod implements MethodInterceptor {
         if (sqlQueryReplaceBuilder != null) {
             query = toSqlQuery(sqlQueryReplaceBuilder, arguments);
         } else if (sqlQueryBuilder != null) {
-            query = toSqlQuery(sqlQueryReplaceBuilder, arguments);
+            query = toSqlQuery(sqlQueryBuilder, arguments);
         }
         if (query == null) {
             if (pagination != null) {

@@ -30,7 +30,6 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     public void registerFilters() {
         addIncludeFilter(new InterfaceTypeFilter(SQLRepository.class));
-//        addExcludeFilter(new AnnotationTypeFilter(NoRepositoryBean.class));
     }
 
     @Override
@@ -70,7 +69,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
-            log.debug("Creating SQLEntityRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
+            log.debug("Creating SQLRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
             if (beanClassName == null) {
                 log.warn("beanClassName is null.");
             } else {

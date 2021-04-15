@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HiSqlContext {
+    private static final Map<Class<?>, ResultSetValueConverter> resultSetValueConverterMap = new HashMap<>();
 
     private String xmlRoot = "sqlquery/";
 
@@ -15,13 +16,11 @@ public class HiSqlContext {
 
     private NamingStrategy naming;
 
-    private Map<Class<?>, ResultSetValueConverter> resultSetValueConverterMap = new HashMap<>();
-
-    public void addResultSetValueConverter(Class<?> clazz, ResultSetValueConverter resultSetValueConverter) {
+    public static void addResultSetValueConverter(Class<?> clazz, ResultSetValueConverter resultSetValueConverter) {
         resultSetValueConverterMap.put(clazz, resultSetValueConverter);
     }
 
-    public ResultSetValueConverter getResultSetValueConverter(Class<?> clazz) {
+    public static ResultSetValueConverter getResultSetValueConverter(Class<?> clazz) {
         return resultSetValueConverterMap.get(clazz);
     }
 
