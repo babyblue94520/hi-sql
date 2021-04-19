@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.StoreResultSetHandler;
-import pers.clare.hisql.page.Page;
-import pers.clare.hisql.page.Pagination;
-import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.page.*;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.util.SQLUtil;
@@ -189,6 +187,57 @@ public class SQLStoreService extends SQLService {
             , Object... parameters
     ) {
         return queryHandler(readonly, sqlStore, context.getPageMode().buildSortSQL(sort, sql), parameters, this::findAllHandler);
+    }
+
+
+    public <T> Next<T> next(
+            SQLStore<T> sqlStore
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        return next(false, sqlStore, sql, pagination, parameters);
+    }
+
+    public <T> Next<T> next(
+            boolean readonly
+            , SQLStore<T> sqlStore
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            return Next.of(pagination.getPage(), pagination.getSize(), list);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            close(connection);
+        }
+    }
+
+    public <T> Next<T> next(
+            boolean readonly
+            , SQLCrudStore<T> sqlStore
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<T> list = SQLUtil.toInstances(sqlStore, go(connection, context.getPageMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
+            return Next.of(pagination.getPage(), pagination.getSize(), list);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            close(connection);
+        }
     }
 
     public <T> Page<T> page(

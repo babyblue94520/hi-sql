@@ -268,6 +268,66 @@ public class SQLService {
         return queryHandler(readonly, sql, valueType, parameters, this::findAllHandler);
     }
 
+    public <T> Next<T> basicNext(
+            Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        return basicNext(false, clazz, sql, pagination, parameters);
+    }
+
+    public <T> Next<T> basicNext(
+            boolean readonly
+            , Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<T> list = ResultSetUtil.toList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            return Next.of(pagination.getPage(), pagination.getSize(), list);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            close(connection);
+        }
+    }
+
+    public <T> Next<Map<String, T>> next(
+            Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        return next(false, clazz, sql, pagination, parameters);
+    }
+
+    public <T> Next<Map<String, T>> next(
+            boolean readonly
+            , Class<T> clazz
+            , String sql
+            , Pagination pagination
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            return Next.of(pagination.getPage(), pagination.getSize(), list);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            close(connection);
+        }
+    }
+
     public <T> Page<T> basicPage(
             Class<T> clazz
             , String sql

@@ -48,7 +48,7 @@ public class HiSqlConfig {
     
         Page<T> page(Pagination pagination);
     
-        Next<T> next(Pagination pagination);
+        Next<T> toNext(Pagination pagination);
     
         T find(T entity);
     

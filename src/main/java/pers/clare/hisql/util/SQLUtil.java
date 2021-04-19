@@ -1,12 +1,12 @@
 package pers.clare.hisql.util;
 
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.FieldSetHandler;
-import pers.clare.hisql.page.Pagination;
-import pers.clare.hisql.page.Sort;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

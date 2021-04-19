@@ -5,11 +5,11 @@ import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.store.SQLStoreFactory;
 
 
-public class SQLEntityPage extends PageMethod {
+public class SQLEntityNext extends PageMethod {
     protected Class<?> valueType;
     protected SQLStore<?> sqlStore;
 
-    SQLEntityPage(Class<?> valueType) {
+    SQLEntityNext(Class<?> valueType) {
         this.valueType = valueType;
     }
 
@@ -20,6 +20,6 @@ public class SQLEntityPage extends PageMethod {
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {
-        return sqlStoreService.page(this.sqlStore, sql, pagination, arguments);
+        return sqlStoreService.next(this.sqlStore, sql, pagination, arguments);
     }
 }

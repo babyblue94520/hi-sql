@@ -3,14 +3,11 @@ package pers.clare.hisql.method;
 import org.aopalliance.intercept.MethodInterceptor;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.annotation.HiSql;
-import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.page.*;
 import pers.clare.hisql.util.MethodUtil;
 import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.page.Next;
-import pers.clare.hisql.page.Page;
-import pers.clare.hisql.page.Pagination;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -67,8 +64,7 @@ public class SQLMethodFactory {
             } else if (Page.class.isAssignableFrom(returnType)) {
                 return buildPage(method);
             } else if (Next.class.isAssignableFrom(returnType)) {
-                // TODO
-                return null;
+                return buildNext(method);
             } else {
                 if (SQLStoreFactory.isIgnore(returnType)) {
                     return new BasicType(returnType);
@@ -126,6 +122,23 @@ public class SQLMethodFactory {
                 return new BasicTypPage(valueType);
             } else {
                 return new SQLEntityPage(valueType);
+            }
+        }
+    }
+
+    /**
+     * build next result method interceptor
+     */
+    private static SQLMethod buildNext(Method method) {
+        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
+        if (valueType == null || valueType == Map.class) {
+            valueType = getParameterMapValueClass(method, null);
+            return new BasicTypeMapNext(valueType);
+        } else {
+            if (SQLStoreFactory.isIgnore(valueType)) {
+                return new BasicTypeNext(valueType);
+            } else {
+                return new SQLEntityNext(valueType);
             }
         }
     }

@@ -1,8 +1,8 @@
 package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.query.SQLQuery;
 
 public abstract class PageMethod extends SQLMethod {
 

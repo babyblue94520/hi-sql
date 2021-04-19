@@ -2,19 +2,10 @@ package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
 
-public class MySQLPageMode implements PageMode  {
+public class MySQLPageMode implements PageMode {
 
     public String buildTotalSQL(String sql) {
         return "select count(*) from(" + sql + ")t";
-    }
-
-    public String buildPaginationSQL(
-            Pagination pagination
-            , String sql
-    ) {
-        StringBuilder sb = new StringBuilder(sql);
-        appendPaginationSQL(sb, pagination);
-        return sb.toString();
     }
 
     public String buildSortSQL(
@@ -23,6 +14,15 @@ public class MySQLPageMode implements PageMode  {
     ) {
         StringBuilder sb = new StringBuilder(sql);
         appendSortSQL(sb, sort.getSorts());
+        return sb.toString();
+    }
+
+    public String buildPaginationSQL(
+            Pagination pagination
+            , String sql
+    ) {
+        StringBuilder sb = new StringBuilder(sql);
+        appendPaginationSQL(sb, pagination);
         return sb.toString();
     }
 

@@ -2,10 +2,7 @@ package pers.clare.hisql.repository;
 
 import pers.clare.hisql.*;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.page.Next;
-import pers.clare.hisql.page.Page;
-import pers.clare.hisql.page.Pagination;
-import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.page.*;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.FieldColumn;
 import pers.clare.hisql.store.SQLCrudStore;
@@ -96,8 +93,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
 
     @Override
     public Next<T> next(Pagination pagination) {
-        // TODO
-        return null;
+        return sqlStoreService.next(false, sqlStore, pagination);
     }
 
     public List<T> findAll(

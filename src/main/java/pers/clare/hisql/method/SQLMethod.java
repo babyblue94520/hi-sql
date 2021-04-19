@@ -34,8 +34,8 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected ArgumentGetHandler paginationHandler;
     protected ArgumentGetHandler sortHandler;
 
-    public void init(){
-        Parameter[] parameters  = method.getParameters();
+    public void init() {
+        Parameter[] parameters = method.getParameters();
         char[] cs = sql.toCharArray();
         if (SQLQueryReplaceBuilder.findKeyCount(cs) > 0) {
             sqlQueryReplaceBuilder = new SQLQueryReplaceBuilder(cs);
@@ -75,7 +75,6 @@ public abstract class SQLMethod implements MethodInterceptor {
         if (sortHandler == null) return null;
         return (Sort) sortHandler.apply(arguments);
     }
-
 
 
     private void buildArgumentValueHandler(Parameter p, int index) {
@@ -118,6 +117,10 @@ public abstract class SQLMethod implements MethodInterceptor {
             } else {
                 buildArgumentValueHandler(type, key + '.' + field.getName(), fieldHandler);
             }
+        }
+        Class<?> superClazz = clazz.getSuperclass();
+        if (!isSimpleType(superClazz)) {
+            buildArgumentValueHandler(superClazz, key, handler);
         }
     }
 
