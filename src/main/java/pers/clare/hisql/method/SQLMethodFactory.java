@@ -11,20 +11,22 @@ import pers.clare.hisql.exception.HiSqlException;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Pattern;
 
 
 public class SQLMethodFactory {
+    private static final Pattern select = Pattern.compile("^[\\s\\n]?select", Pattern.CASE_INSENSITIVE);
 
     private SQLMethodFactory() {
     }
 
     public static Map<Method, MethodInterceptor> create(
             HiSqlContext context
-            ,SQLStoreService sqlStoreService
-            ,Class<?> repositoryInterface
+            , SQLStoreService sqlStoreService
+            , Class<?> repositoryInterface
     ) {
         Method[] methods = repositoryInterface.getDeclaredMethods();
-        Map<String, String> contents = SQLInjector.getContents(context.getXmlRoot(),repositoryInterface);
+        Map<String, String> contents = SQLInjector.getContents(context.getXmlRoot(), repositoryInterface);
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
         String command;
         SQLMethod sqlMethod;
@@ -51,8 +53,8 @@ public class SQLMethodFactory {
      * build method interceptor by command type
      */
     private static SQLMethod buildMethod(Method method, String command) {
-        if (command.startsWith("select")) {
-            Class<?> returnType = method.getReturnType();
+        Class<?> returnType = method.getReturnType();
+        if (select.matcher(command).find()) {
             if (Collection.class.isAssignableFrom(returnType)) {
                 if (returnType == Set.class) {
                     return buildSet(method);
@@ -73,7 +75,13 @@ public class SQLMethodFactory {
                 }
             }
         } else {
-            return new SQLUpdateMethod();
+            if (returnType == void.class || returnType == Integer.class || returnType == int.class) {
+                return new SQLUpdateMethod();
+            } else if (returnType == Long.class || returnType == long.class) {
+                return new SQLUpdateLongMethod();
+            } else {
+                throw new HiSqlException("%s return type must be int or long", method);
+            }
         }
     }
 

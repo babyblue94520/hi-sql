@@ -31,7 +31,7 @@ public class SQLMethodInterceptor implements MethodInterceptor {
                 targetMethod = targetClass.getMethod(method.getName(), method.getParameterTypes());
                 this.methods.put(method, targetMethod);
             } catch (NoSuchMethodException e) {
-                log.warn(e.getMessage());
+//                log.warn(e.getMessage());
             }
         }
     }

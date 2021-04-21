@@ -17,9 +17,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class SQLMethod implements MethodInterceptor {
     protected static final Object[] emptyArguments = new Object[0];
@@ -119,7 +117,7 @@ public abstract class SQLMethod implements MethodInterceptor {
             }
         }
         Class<?> superClazz = clazz.getSuperclass();
-        if (!isSimpleType(superClazz)) {
+        if (superClazz != null && !isSimpleType(superClazz)) {
             buildArgumentValueHandler(superClazz, key, handler);
         }
     }
@@ -133,13 +131,19 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     private boolean isSimpleType(Class<?> type) {
-        return type.isPrimitive() || type.getName().startsWith("java.lang") || type.isArray() || type == Collection.class;
+        return type.isPrimitive() || type.getName().startsWith("java.lang") || type.isArray() || Collection.class.isAssignableFrom(type);
     }
 
     protected SQLQuery toSqlQuery(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, Object[] arguments) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
+        Object value;
         for (Map.Entry<String, ArgumentGetHandler> entry : replaces.entrySet()) {
-            replace.replace(entry.getKey(), (String) entry.getValue().apply(arguments));
+            value = entry.getValue().apply(arguments);
+            if (value instanceof String) {
+                replace.replace(entry.getKey(), (String) value);
+            } else {
+                throw new HiSqlException("%s must be String", entry.getKey());
+            }
         }
         SQLQuery query = replace.buildQuery();
         for (Map.Entry<String, ArgumentGetHandler> entry : valueHandlers.entrySet()) {
@@ -188,5 +192,4 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     abstract protected Object doInvoke(String sql, Object[] arguments);
-
 }

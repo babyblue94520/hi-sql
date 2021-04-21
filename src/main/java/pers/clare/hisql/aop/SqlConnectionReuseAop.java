@@ -10,7 +10,7 @@ import pers.clare.hisql.support.ConnectionReuseHolder;
 import pers.clare.hisql.support.ConnectionReuseManager;
 
 @Aspect
-@Order(Integer.MIN_VALUE)
+@Order(Integer.MAX_VALUE)
 @Component
 public class SqlConnectionReuseAop {
 
