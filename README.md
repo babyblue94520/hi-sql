@@ -77,7 +77,6 @@ public class HiSqlConfig {
     }
   
     @Getter
-    @Setter
     public class User {
     
         @Id
@@ -466,9 +465,11 @@ public class HiSqlConfig {
     * **Rollback on any exception**
 
     ```java
-    @SqlConnectionReuse(transaction = true)
-    public void transaction(StringBuffer result, Long id, String name, int count) {
-        multiUpdate(result, id, name, count);
+    public class TransactionExample {
+        @SqlConnectionReuse(transaction = true)
+        public void transaction(StringBuffer result, Long id, String name, int count) {
+            //
+        }
     }
     ```
 
@@ -479,67 +480,90 @@ public class HiSqlConfig {
     ```java
     import java.hiSql.Connection;
     
-    @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
-    public void transaction(StringBuffer result, Long id, String name, int count) {
-      multiUpdate(result, id, name, count);
+    public class IsolationExample {
+        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+        public void transaction(StringBuffer result, Long id, String name, int count) {
+          
+        }
     }
     ```
 
     **Rollback example**
 
     ```java
-    public String rollback(Long id, String name) {
-        StringBuilder sb = new StringBuilder();
-        try {
-            proxy().updateException(sb, id, name);
-        } catch (Exception e) {
-            sb.append(e.getMessage()).append('\n');
+    public class RollbackExample {
+        public String rollback(Long id, String name) {
+            StringBuilder sb = new StringBuilder();
+            try {
+                proxy().updateException(sb, id, name);
+            } catch (Exception e) {
+                sb.append(e.getMessage()).append('\n');
+            }
+            sb.append(userRepository.findById(id)).append('\n');
+            return sb.toString();
         }
-        sb.append(userRepository.findById(id)).append('\n');
-        return sb.toString();
-    }
-    
-    @SqlConnectionReuse(transaction = true)
-    public void updateException(StringBuilder sb, Long id, String name) {
-    
-        // first update user name
-        String result = queryDefineValue(id, name);
-        sb.append(result).append('\n');
-        sb.append("------some connection------").append('\n');
         
-        // select user in same connection
-        User user = userRepository.findById(id);
-        sb.append(user).append('\n');
-    
-        // second update user name
-        result = queryDefineValue(id, name+2);
-        sb.append(result).append('\n');
-    
-        // select uncommitted user in different connection
-        sb.append("------uncommitted------").append('\n');
-        user = proxy().findByIdUncommitted(id);
-        sb.append(user).append('\n');
-    
-        // select committed user in different connection
-        sb.append("------committed------").append('\n');
-        user = proxy().findById(id);
-        sb.append(user).append('\n');
+        @SqlConnectionReuse(transaction = true)
+        public void updateException(StringBuilder sb, Long id, String name) {
         
-        // rollback
-        throw new RuntimeException("rollback");
+            // first update user name
+            String result = queryDefineValue(id, name);
+            sb.append(result).append('\n');
+            sb.append("------some connection------").append('\n');
+            
+            // select user in same connection
+            User user = userRepository.findById(id);
+            sb.append(user).append('\n');
+        
+            // second update user name
+            result = queryDefineValue(id, name+2);
+            sb.append(result).append('\n');
+        
+            // select uncommitted user in different connection
+            sb.append("------uncommitted------").append('\n');
+            user = proxy().findByIdUncommitted(id);
+            sb.append(user).append('\n');
+        
+            // select committed user in different connection
+            sb.append("------committed------").append('\n');
+            user = proxy().findById(id);
+            sb.append(user).append('\n');
+            
+            // rollback
+            throw new RuntimeException("rollback");
+        }
+        
+        @SqlConnectionReuse
+        public User findById(Long id) {
+            return userRepository.findById(id);
+        }
+        
+        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+        public User findByIdUncommitted(Long id) {
+            return userRepository.findById(id);
+        }
     }
-    
-    @SqlConnectionReuse
-    public User findById(Long id) {
-        return userRepository.findById(id);
-    }
-    
-    @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
-    public User findByIdUncommitted(Long id) {
-        return userRepository.findById(id);
-    }
-  
     ```
 
     ![](images/rollback.png)
       
+* **Custom ResultSet Value Converter**
+
+```java
+@Getter
+public class Device{
+    private Integer id;
+    private String name;
+    private Pattern regex;
+}
+
+public class HiSqlConfig {
+    static {
+        // register Pattern converter
+        HiSqlContext.addResultSetValueConverter(Pattern.class, (value) -> {
+            if (value == null) return null;
+            return Pattern.compile(String.valueOf(value));
+        });
+    }
+}
+```
