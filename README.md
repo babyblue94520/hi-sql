@@ -19,7 +19,7 @@
 <dependency>
     <groupId>pers.clare</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -549,21 +549,21 @@ public class HiSqlConfig {
       
 * **Custom ResultSet Value Converter**
 
-```java
-@Getter
-public class Device{
-    private Integer id;
-    private String name;
-    private Pattern regex;
-}
-
-public class HiSqlConfig {
-    static {
-        // register Pattern converter
-        HiSqlContext.addResultSetValueConverter(Pattern.class, (value) -> {
-            if (value == null) return null;
-            return Pattern.compile(String.valueOf(value));
-        });
+    ```java
+    @Getter
+    public class Device{
+        private Integer id;
+        private String name;
+        private Pattern regex;
     }
-}
-```
+    
+    public class HiSqlConfig {
+        static {
+            // register Pattern converter
+            HiSqlContext.addResultSetValueConverter(Pattern.class, (value) -> {
+                if (value == null) return null;
+                return Pattern.compile(String.valueOf(value));
+            });
+        }
+    }
+    ```
