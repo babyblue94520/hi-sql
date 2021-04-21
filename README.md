@@ -1,25 +1,29 @@
-#
+# Hi SQL
 
-##
+## Overview
+
+![](images/write_sql.png)
+
+## Quickstart
 
 ### pom.xml
 
 ```xml
-    <repositories>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com</url>
-        </repository>
-    </repositories>
+<repositories>
+    <repository>
+        <id>github</id>
+        <url>https://maven.pkg.github.com</url>
+    </repository>
+</repositories>
 
-    <dependency>
-        <groupId>pers.clare</groupId>
-        <artifactId>hi-sql</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-    </dependency>
+<dependency>
+    <groupId>pers.clare</groupId>
+    <artifactId>hi-sql</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
 ```
 
-### 配置
+### Config
 
 ```java
 @EnableHiSql
@@ -27,13 +31,11 @@ public class HiSqlConfig {
 }
 ```
 
-### 使用
+### Use
 
 * **SQLCrudRepository**
-
-    實作 **Entity** 查詢、新增、修改和刪除等等的簡易操作
     
-    **預設方法**
+    **Method**
     
     ```java
     public interface SQLCrudRepository<T> extends SQLRepository {
@@ -48,7 +50,7 @@ public class HiSqlConfig {
     
         Page<T> page(Pagination pagination);
     
-        Next<T> toNext(Pagination pagination);
+        Next<T> next(Pagination pagination);
     
         T find(T entity);
     
@@ -66,9 +68,14 @@ public class HiSqlConfig {
     }
     ```
     
-    **簡易使用**
+    **Simple**
   
     ```Java
+    @Repository
+    public interface UserRepository extends SQLCrudRepository<User> {
+    
+    }
+  
     @Getter
     @Setter
     public class User {
@@ -100,82 +107,49 @@ public class HiSqlConfig {
         private Long createUser;
     }
 
-    @Repository
-    public interface UserRepository extends SQLCrudRepository<User> {
-    
-    }
     ```
 
 * **SQLRepository**
     
-    * **SQL** 表達式
+    * **SQL expression**
+      
+        * **{sql} indicates the sql to be replaced**
+        * **:value** indicates 
     
-        * 參數
-            
-            * **:value** 表示傳入的值
+    **Repository**
     
-          **Repository**
+    ```java
+    @Repository
+    public interface QueryRepository extends SQLRepository {
+    @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
+    List query(String value1, String value2);
     
-          ```java
-          @Repository
-          public interface QueryRepository extends SQLRepository {
-              @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
-              List query(String value1, String value2);
-          
-              // where in
-              @Sql(query = "select * from table where column1 in :values1 and column2 in :values2")
-              List query2(String[] values1,Collection values2);
-          }
-          ```
+    // where in
+    @Sql(query = "select * from table where column1 in :values1 and column2 in :values2")
+    List query2(String[] values1,Collection values2);
+      
+    @Sql(query = "select * from table where 1=1 {and1} {and2}")
+    List query(String and1, String and2, String value1, String value2);
+    }
+    ```
     
-          **Service**
+    **Service**
     
-          ```java
-          public class QueryService {
-              public List query(String value1, String value2) {
-                  queryRepository.query(value1, value2);
-              }
-        
-              // where in
-              public  List query2(String[] values1, Collection values2) {
-                  // values can't empty or null
-                  queryRepository.query2(values1, values2);
-              }
-          }
-          ```
+    ```java
+    public class QueryService {
+      public List query(String value1, String value2) {
+          queryRepository.query(value1, value2);
+      }
     
-        * 動態語法
-        
-            * **{SQL}** 表示將被替換內容的 **SQL** 語法
+      // where in
+      public  List query2(String[] values1, Collection values2) {
+          // values can't empty or null
+          queryRepository.query2(values1, values2);
+      }
+    }
+    ```
     
-          **Repository**
-    
-            ```java
-            @Repository
-            public interface QueryRepository extends SQLRepository {
-                @Sql(query = "select * from table where 1=1 {and1} {and2}")
-                List query(String and1, String and2, String value1, String value2);
-            }
-            ```
-    
-          **Service**
-        
-            * **value1、value2** 為空值時，則不加入查詢條件
-    
-            ```java
-            public class QueryService {
-                public List query(String value1, String value2) {
-                    queryRepository.query(
-                            StringUtils.isEmpty(value1) ? "" : "and column1 = :value1"
-                            , StringUtils.isEmpty(value2) ? "" : "and column2 = :value2"
-                            , value1
-                            , value2
-                    );
-                }
-            }
-            ```
-    
-    * 回傳資料格式
+    * **Support return type**
     
         * **Basic Type**
         * **Java Bean**
@@ -392,7 +366,7 @@ public class HiSqlConfig {
         }
         ```
         
-        **進階使用**
+        **Advanced**
     
         ```java
         @Getter
@@ -426,143 +400,146 @@ public class HiSqlConfig {
         List<User> sort(String andId, String andName, UserSortQuery query);
         ```
 
-* 配置 **XML SQL**
+* **Write SQL on XML**
 
-    * 根目錄 **resources/sqlquery/**
-    * **package/Repository.XML**
-    * 依照 **Method Name** or **@Sql(name=...)** 載入對應的標籤名稱
-    * 方便複雜的 **SQL** 排版
+    * **root path resources/sqlquery/**
+    * **{class package}/Repository.XML**
       
-        ex: resources\sqlquery\pers\clare\demo\data\hiSql\UserQueryRepository.xml
-
-        ```xml
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE SQL>
-        <SQL>
-            <findAllMapXML><![CDATA[
-                select id
-                    ,name
-                    ,create_time
-                from user
-            ]]></findAllMapXML>
-            <pageMapXML><![CDATA[
-                select *
-                from user
-                where create_time between :startTime and :endTime
-                {andId}
-                {andName}
-            ]]></pageMapXML>
-        </SQL>
-        ```
+      ex: resources\sqlquery\pers\clare\demo\data\hiSql\UserQueryRepository.xml
+      
+    * Get SQL by **Method Name** or **@Sql(name=...)**
+    
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE SQL>
+    <SQL>
+        <findAllMapXML><![CDATA[
+            select id
+                ,name
+                ,create_time
+            from user
+        ]]></findAllMapXML>
+        <pageMapXML><![CDATA[
+            select *
+            from user
+            where create_time between :startTime and :endTime
+            {andId}
+            {andName}
+        ]]></pageMapXML>
+    </SQL>
+    ```
 
 * **@SqlConnectionReuse**
+  
+    Use the same connection to call different methods
 
-  呼叫不同的方法時，綁定同一條連線，使用到 **User-Defined Variables** 或 開啟 **Transaction** 時，就需要使用相同連線，**@SqlConnectionReuse** 相同配置的方法，會自動使用上層的連線，不同則建立新連線
-    
-    * **Same connection**
-      
-        ```java
-        @Repository
-        public interface TransactionRepository extends SQLRepository {
-        
-            // mysql
-            @Sql("update user set name = if(@name:=name,:name,:name) where id=:id")
-            int updateName(Long id, String name);
-        
-            @Sql("select @name")
-            String getOldName();
-        }
-      
-        public class Service{
-            
-            @SqlConnectionReuse
-            public String queryDefineValue(Long id, String name) {
-                transactionRepository.updateName(id, name);
-                return String.format("old name:%s , new name:%s", transactionRepository.getOldName(), name);
-            }
-      
-        }
-        ```
-      
+    * **User-Defined Variables**
     * **Transaction**
-        
-        * 第一層的 **@SqlConnectionReuse** 的方法結束後，自動執行 **commit** ，發生任何例外則 **rollback**
-
-        ```java
-        @SqlConnectionReuse(transaction = true)
-        public void transaction(StringBuffer result, Long id, String name, int count) {
-            multiUpdate(result, id, name, count);
-        }
-        ```
-
-    * **Isolation**
-
-        * 使用不同的 **Isolation** 則會建立新連線
-
-      ```java
-      import java.hiSql.Connection;
-
-      @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
-      public void transaction(StringBuffer result, Long id, String name, int count) {
-          multiUpdate(result, id, name, count);
-      }
-      ```
-
-        **Rollback example**
     
-        ```java
-        public String rollback(Long id, String name) {
-            StringBuilder sb = new StringBuilder();
-            try {
-                proxy().updateException(sb, id, name);
-            } catch (Exception e) {
-                sb.append(e.getMessage()).append('\n');
-            }
-            sb.append(userRepository.findById(id)).append('\n');
-            return sb.toString();
-        }
-        
-        @SqlConnectionReuse(transaction = true)
-        public void updateException(StringBuilder sb, Long id, String name) {
-        
-            // first update user name
-            String result = queryDefineValue(id, name);
-            sb.append(result).append('\n');
-            sb.append("------some connection------").append('\n');
-            
-            // select user in same connection
-            User user = userRepository.findById(id);
-            sb.append(user).append('\n');
-        
-            // second update user name
-            result = queryDefineValue(id, name+2);
-            sb.append(result).append('\n');
-        
-            // select uncommitted user in different connection
-            sb.append("------uncommitted------").append('\n');
-            user = proxy().findByIdUncommitted(id);
-            sb.append(user).append('\n');
-        
-            // select committed user in different connection
-            sb.append("------committed------").append('\n');
-            user = proxy().findById(id);
-            sb.append(user).append('\n');
-            
-            // rollback
-            throw new RuntimeException("rollback");
-        }
+    **Same connection**
+      
+    ```java
+    @Repository
+    public interface TransactionRepository extends SQLRepository {
+    
+        // mysql
+        @Sql("update user set name = if(@name:=name,:name,:name) where id=:id")
+        int updateName(Long id, String name);
+    
+        @Sql("select @name")
+        String getOldName();
+    }
+  
+    public class Service{
         
         @SqlConnectionReuse
-        public User findById(Long id) {
-            return userRepository.findById(id);
+        public String queryDefineValue(Long id, String name) {
+            transactionRepository.updateName(id, name);
+            return String.format("old name:%s , new name:%s", transactionRepository.getOldName(), name);
         }
-        
-        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
-        public User findByIdUncommitted(Long id) {
-            return userRepository.findById(id);
-        }
+  
+    }
+    ```
       
-        ```
+    **Transaction**
+        
+    * **Rollback on any exception**
+
+    ```java
+    @SqlConnectionReuse(transaction = true)
+    public void transaction(StringBuffer result, Long id, String name, int count) {
+        multiUpdate(result, id, name, count);
+    }
+    ```
+
+    **Isolation**
+
+    Use a different **Isolation** to create a new connection
+
+    ```java
+    import java.hiSql.Connection;
     
-        ![](image/rollback.png)
+    @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+    public void transaction(StringBuffer result, Long id, String name, int count) {
+      multiUpdate(result, id, name, count);
+    }
+    ```
+
+    **Rollback example**
+
+    ```java
+    public String rollback(Long id, String name) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            proxy().updateException(sb, id, name);
+        } catch (Exception e) {
+            sb.append(e.getMessage()).append('\n');
+        }
+        sb.append(userRepository.findById(id)).append('\n');
+        return sb.toString();
+    }
+    
+    @SqlConnectionReuse(transaction = true)
+    public void updateException(StringBuilder sb, Long id, String name) {
+    
+        // first update user name
+        String result = queryDefineValue(id, name);
+        sb.append(result).append('\n');
+        sb.append("------some connection------").append('\n');
+        
+        // select user in same connection
+        User user = userRepository.findById(id);
+        sb.append(user).append('\n');
+    
+        // second update user name
+        result = queryDefineValue(id, name+2);
+        sb.append(result).append('\n');
+    
+        // select uncommitted user in different connection
+        sb.append("------uncommitted------").append('\n');
+        user = proxy().findByIdUncommitted(id);
+        sb.append(user).append('\n');
+    
+        // select committed user in different connection
+        sb.append("------committed------").append('\n');
+        user = proxy().findById(id);
+        sb.append(user).append('\n');
+        
+        // rollback
+        throw new RuntimeException("rollback");
+    }
+    
+    @SqlConnectionReuse
+    public User findById(Long id) {
+        return userRepository.findById(id);
+    }
+    
+    @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+    public User findByIdUncommitted(Long id) {
+        return userRepository.findById(id);
+    }
+  
+    ```
+
+    ![](images/rollback.png)
       
