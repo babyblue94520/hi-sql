@@ -2,11 +2,37 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>pers.clare</groupId>
+    <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2.3-RELEASE</version>
     <name>hi-sql</name>
     <description>Have fun using SQL</description>
+    <packaging>jar</packaging>
+    <url>https://github.com/babyblue94520/hi-sql</url>
+
+    <scm>
+        <connection>https://github.com/babyblue94520/hi-sql.git</connection>
+        <url>https://github.com/babyblue94520/hi-sql.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Clare Wu</name>
+            <id>babyblue94520</id>
+            <email>babyblue94520@gmail.com</email>
+            <timezone>+8</timezone>
+            <roles>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+            <url>https://github.com/babyblue94520/hi-sql/blob/master/LICENSE</url>
+        </license>
+    </licenses>
 
     <properties>
         <java.version>11</java.version>
@@ -51,6 +77,32 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <!--                <version>3.2.1</version>-->
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <!--                <version>3.2.0</version>-->
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
@@ -61,13 +113,44 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <altStagingDirectory>${maven.repo.local}</altStagingDirectory>
+                    <repositoryDirectory>${maven.repo.local}</repositoryDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>github</id>
-            <name>GitHub babyblue94520 Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/babyblue94520/hi-sql</url>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
+
 </project>

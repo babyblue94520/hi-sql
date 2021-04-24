@@ -59,9 +59,6 @@ public class SQLUtil {
     /**
      * appendIn
      * 依陣列數量，動態產生 (?,?,?,?) or ((?,?),(?,?))
-     *
-     * @param sb
-     * @param value
      */
     public static void appendInValue(
             StringBuilder sb

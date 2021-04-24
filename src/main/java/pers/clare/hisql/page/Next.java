@@ -4,8 +4,6 @@ import java.util.List;
 
 /**
  * 不查詢 total
- *
- * @param <T>
  */
 public class Next<T> {
     private int page;
