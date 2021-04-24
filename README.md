@@ -9,17 +9,10 @@
 ### pom.xml
 
 ```xml
-<repositories>
-    <repository>
-        <id>github</id>
-        <url>https://maven.pkg.github.com</url>
-    </repository>
-</repositories>
-
 <dependency>
-    <groupId>pers.clare</groupId>
+    <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.2.3-RELEASE</version>
 </dependency>
 ```
 
