@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 
 
 public class SQLMethodFactory {
-    private static final Pattern select = Pattern.compile("^[\\s\\n]?select", Pattern.CASE_INSENSITIVE);
+    // check string is select sql
+    private static final Pattern select = Pattern.compile("^[\\s\\n]?s", Pattern.CASE_INSENSITIVE);
 
     private SQLMethodFactory() {
     }

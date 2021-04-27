@@ -1,20 +1,31 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.page.*;
+import pers.clare.hisql.page.Next;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.FieldColumn;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLStoreFactory;
+import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.SQLUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+
 public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
+    private static final Logger log = LogManager.getLogger();
     private final SQLCrudStore<T> sqlStore;
     private final SQLStoreService sqlStoreService;
 
@@ -135,10 +146,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             if (autoKey == null) {
                 sqlStoreService.update(sql);
             } else {
-                Object key = sqlStoreService.insert(sql, autoKey.getType());
-                if (key != null) {
-                    autoKey.set(entity, key);
-                }
+                autoKey.set(entity, sqlStoreService.insert(sql, autoKey.getType()));
             }
             return entity;
         } catch (IllegalAccessException e) {
@@ -163,9 +171,97 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     }
 
     public int deleteById(
-            Object... ids
+            Object... id
     ) {
-        return sqlStoreService.update(SQLUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), ids));
+        return sqlStoreService.update(SQLUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
+    }
+
+    @Override
+    public Collection<T> insertAll(Collection<T> entities) {
+        Connection connection = null;
+        try {
+            connection = sqlStoreService.getConnection(false);
+            Field autoKey = sqlStore.getAutoKey();
+            if (autoKey == null) {
+                for (T entity : entities) {
+                    sqlStoreService.update(toInsertSQL(sqlStore, entity));
+                }
+            } else {
+                for (T entity : entities) {
+                    autoKey.set(entity, sqlStoreService.insert(toInsertSQL(sqlStore, entity), autoKey.getType()));
+                }
+            }
+            return entities;
+        } catch (SQLException | IllegalAccessException e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection);
+        }
+    }
+
+    @Override
+    public T[] insertAll(T[] entities) {
+        Connection connection = null;
+        try {
+            connection = sqlStoreService.getConnection(false);
+            Field autoKey = sqlStore.getAutoKey();
+            Statement statement = connection.createStatement();
+            if (autoKey == null) {
+                for (T entity : entities) {
+                    ConnectionUtil.insert(statement, toInsertSQL(sqlStore, entity));
+                }
+            } else {
+                ResultSet rs;
+                for (T entity : entities) {
+                    ConnectionUtil.insert(statement, toInsertSQL(sqlStore, entity));
+                    rs = statement.getGeneratedKeys();
+                    autoKey.set(entity, rs.next() ? rs.getObject(1, autoKey.getType()) : null);
+                }
+            }
+            return entities;
+        } catch (SQLException | IllegalAccessException e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection);
+        }
+    }
+
+    @Override
+    public int[] updateAll(Collection<T> entities) {
+        Connection connection = null;
+        try {
+            connection = sqlStoreService.getConnection(false);
+            Statement statement = connection.createStatement();
+            int[] counts = new int[entities.size()];
+            int i = 0;
+            for (T entity : entities) {
+                counts[i++] = ConnectionUtil.update(statement, toUpdateSQL(sqlStore, entity));
+            }
+            return counts;
+        } catch (SQLException | IllegalAccessException e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection);
+        }
+    }
+
+    @Override
+    public int[] updateAll(T[] entities) {
+        Connection connection = null;
+        try {
+            connection = sqlStoreService.getConnection(false);
+            Statement statement = connection.createStatement();
+            int l = entities.length;
+            int[] counts = new int[l];
+            for (int i = 0; i < l; i++) {
+                counts[i] = ConnectionUtil.update(statement, toUpdateSQL(sqlStore, entities[i]));
+            }
+            return counts;
+        } catch (SQLException | IllegalAccessException e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection);
+        }
     }
 
     public int deleteAll() {

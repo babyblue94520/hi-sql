@@ -2,6 +2,7 @@ package pers.clare.hisql.repository;
 
 import pers.clare.hisql.page.*;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface SQLCrudRepository<T> extends SQLRepository {
@@ -31,6 +32,14 @@ public interface SQLCrudRepository<T> extends SQLRepository {
     int delete(T entity);
 
     int deleteById(Object... keys);
+
+    Collection<T> insertAll(Collection<T> entities);
+
+    T[] insertAll(T[] entities);
+
+    int[] updateAll(Collection<T> entities);
+
+    int[] updateAll(T[] entities);
 
     int deleteAll();
 }

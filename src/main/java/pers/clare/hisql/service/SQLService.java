@@ -1,15 +1,13 @@
 package pers.clare.hisql.service;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetHandler;
 import pers.clare.hisql.page.*;
 import pers.clare.hisql.support.ConnectionReuse;
 import pers.clare.hisql.support.ConnectionReuseHolder;
+import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
-import pers.clare.hisql.util.SQLUtil;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -18,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class SQLService {
-    private static final Logger log = LogManager.getLogger();
 
     protected HiSqlContext context;
     protected DataSource write;
@@ -58,32 +55,6 @@ public class SQLService {
         return result == null && readonly && hasRead;
     }
 
-    protected void close(Connection connection) {
-        if (connection == null) return;
-        try {
-            if (ConnectionReuseHolder.get() == null) {
-                connection.close();
-            }
-        } catch (Exception e) {
-            throw new HiSqlException(e);
-        }
-    }
-
-    protected ResultSet go(Connection connection, String sql, Object[] parameters) throws SQLException {
-        log.debug(sql);
-        try {
-            if (parameters.length == 0) {
-                return connection.createStatement().executeQuery(sql);
-            } else {
-                PreparedStatement ps = connection.prepareStatement(sql);
-                SQLUtil.setValue(ps, parameters);
-                return ps.executeQuery();
-            }
-        } catch (Exception e) {
-            log.error(sql);
-            throw e;
-        }
-    }
 
     protected <T, R> R queryHandler(
             Boolean readonly
@@ -101,7 +72,7 @@ public class SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -113,17 +84,19 @@ public class SQLService {
             , Object[] parameters
     ) throws SQLException {
         long total = list.size();
-        if (total < pagination.getSize()) {
-            total += pagination.getPage() * pagination.getSize();
+        int size = pagination.getSize();
+        int page = pagination.getPage();
+        if (total > 0 && total < size) {
+            total += (long) size * page;
         } else {
-            ResultSet rs = go(connection, context.getPageMode().buildTotalSQL(sql), parameters);
+            ResultSet rs = ConnectionUtil.query(connection, context.getPageMode().buildTotalSQL(sql), parameters);
             if (rs.next()) {
                 total = rs.getLong(1);
             } else {
                 throw new HiSqlException("query total error");
             }
         }
-        return Page.of(pagination.getPage(), pagination.getSize(), list, total);
+        return Page.of(page, size, list, total);
     }
 
     private <T, R> R doQueryHandler(
@@ -134,7 +107,7 @@ public class SQLService {
             , Object[] parameters
             , ResultSetHandler<T, R> resultSetHandler
     ) throws Exception {
-        R result = resultSetHandler.apply(go(connection, sql, parameters), valueType);
+        R result = resultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), valueType);
         if (retry(result, readonly)) {
             return doQueryHandler(connection, false, sql, valueType, parameters, resultSetHandler);
         } else {
@@ -287,14 +260,14 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -317,14 +290,14 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -347,14 +320,14 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -377,14 +350,14 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, go(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -393,24 +366,17 @@ public class SQLService {
             , Class<T> keyType
             , Object... parameters
     ) {
-        log.debug(sql);
         Connection connection = null;
         try {
             connection = getConnection(false);
-            Statement statement;
-            if (parameters.length == 0) {
-                statement = connection.createStatement();
-                statement.execute(sql, Statement.RETURN_GENERATED_KEYS);
-            } else {
-                statement = SQLUtil.executeInsert(connection, sql, parameters);
-            }
+            Statement statement = ConnectionUtil.insert(connection, sql, parameters);
             if (statement.getUpdateCount() == 0) return null;
             ResultSet rs = statement.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyType) : null;
         } catch (SQLException e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 
@@ -418,21 +384,14 @@ public class SQLService {
             String sql
             , Object... parameters
     ) {
-        log.debug(sql);
         Connection connection = null;
         try {
             connection = getConnection(false);
-            if (parameters.length == 0) {
-                return connection.createStatement().executeUpdate(sql);
-            } else {
-                PreparedStatement ps = connection.prepareStatement(sql);
-                SQLUtil.setValue(ps, parameters);
-                return ps.executeUpdate();
-            }
+            return ConnectionUtil.update(connection, sql, parameters);
         } catch (SQLException e) {
             throw new HiSqlException(e);
         } finally {
-            close(connection);
+            ConnectionUtil.close(connection);
         }
     }
 }

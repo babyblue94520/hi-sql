@@ -3,6 +3,10 @@ package pers.clare.hisql.page;
 public class Sort {
     private String[] sorts;
 
+    public static Sort of(String... sorts) {
+        return new Sort(sorts);
+    }
+
     public Sort() {
     }
 
