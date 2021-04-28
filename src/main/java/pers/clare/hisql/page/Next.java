@@ -6,12 +6,12 @@ import java.util.List;
  * 不查詢 total
  */
 public class Next<T> {
-    private int page;
-    private int size;
-    private List<T> records;
+    private final int page;
+    private final int size;
+    private final List<T> records;
 
     public static <T> Next<T> of(int page, int size, List<T> records) {
-        return new Next(page, size, records);
+        return new Next<T>(page, size, records);
     }
 
     public Next(int page, int size, List<T> records) {

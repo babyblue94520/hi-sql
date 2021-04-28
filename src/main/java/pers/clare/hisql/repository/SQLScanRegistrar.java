@@ -34,10 +34,10 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar, Resource
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        AnnotationAttributes SQLEntityScanAttrs = AnnotationAttributes
+        AnnotationAttributes attributes = AnnotationAttributes
                 .fromMap(importingClassMetadata.getAnnotationAttributes(EnableHiSql.class.getName()));
-        if (SQLEntityScanAttrs != null) {
-            registerBeanDefinitions(importingClassMetadata, SQLEntityScanAttrs, registry,
+        if (attributes != null) {
+            registerBeanDefinitions(importingClassMetadata, attributes, registry,
                     generateBaseBeanName(importingClassMetadata));
         }
     }

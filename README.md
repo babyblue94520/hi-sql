@@ -4,6 +4,11 @@
 
 ![](images/write_sql.png)
 
+## Requirement
+
+* Spring Framework 5+
+* Java 11
+
 ## Quickstart
 
 ### pom.xml
@@ -12,7 +17,7 @@
 <dependency>
     <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.2.3-RELEASE</version>
+    <version>0.0.3-RELEASE</version>
 </dependency>
 ```
 
@@ -106,7 +111,7 @@ public class HiSqlConfig {
     * **SQL expression**
       
         * **{sql} indicates the sql to be replaced**
-        * **:value** indicates 
+        * **:value indicates parameter name**  
     
     **Repository**
     

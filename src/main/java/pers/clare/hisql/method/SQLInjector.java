@@ -21,7 +21,7 @@ public class SQLInjector {
 
     static {
         try {
-            documentBuilder = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
+            documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
             throw new Error(e.getMessage(), e);
         }
