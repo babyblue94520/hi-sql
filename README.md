@@ -7,7 +7,7 @@
 ## Requirement
 
 * Spring Framework 5+
-* Java 11
+* Java 8+
 
 ## Quickstart
 
