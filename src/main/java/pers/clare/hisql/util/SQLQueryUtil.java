@@ -1,22 +1,16 @@
 package pers.clare.hisql.util;
 
-import pers.clare.hisql.page.Pagination;
-import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.FieldSetHandler;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.sql.*;
 import java.util.*;
 
 
-public class SQLUtil {
+public class SQLQueryUtil {
 
-    SQLUtil() {
+    private SQLQueryUtil() {
     }
 
     public static void appendValue(
@@ -28,7 +22,12 @@ public class SQLUtil {
             char[] cs = ((String) value).toCharArray();
             for (char c : cs) {
                 sb.append(c);
-                if (c == '\'') sb.append('\'');
+                switch (c){
+                    case '\'':
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                }
             }
             sb.append('\'');
         } else {
@@ -72,22 +71,9 @@ public class SQLUtil {
             for (Object v : vs) appendInValue(sb, v);
             sb.deleteCharAt(sb.length() - 1).append(')');
         } else {
-            SQLUtil.appendValue(sb, value);
+            SQLQueryUtil.appendValue(sb, value);
         }
         sb.append(',');
-    }
-
-    public static int setValue(
-            PreparedStatement ps
-            , Object... parameters
-    ) throws SQLException {
-        int index = 1;
-        if (parameters == null || parameters.length == 0) return index;
-        for (Object value : parameters) {
-            if (value instanceof Pagination || value instanceof Sort) continue;
-            ps.setObject(index++, value);
-        }
-        return index;
     }
 
     public static String setValue(SQLQueryBuilder sqlQueryBuilder, Field[] fields, Object[] parameters) {
@@ -109,50 +95,4 @@ public class SQLUtil {
             throw new HiSqlException(e);
         }
     }
-
-    public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        if (rs.next()) {
-            return buildInstance(sqlStore.getConstructor(), fields, rs);
-        }
-        return null;
-    }
-
-    public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        Set<T> result = new HashSet<>();
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        while (rs.next()) {
-            result.add(buildInstance(sqlStore.getConstructor(), fields, rs));
-        }
-        return result;
-    }
-
-    public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        List<T> list = new ArrayList<>();
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        while (rs.next()) {
-            list.add(buildInstance(sqlStore.getConstructor(), fields, rs));
-        }
-        return list;
-    }
-
-    private static <T> T buildInstance(Constructor<T> constructor, FieldSetHandler[] fields, ResultSet rs) throws Exception {
-        T target = constructor.newInstance();
-        int i = 1;
-        for (FieldSetHandler field : fields) {
-            if (field == null) continue;
-            field.apply(target, rs, i++);
-        }
-        return target;
-    }
-
-    private static FieldSetHandler[] toFields(Map<String, FieldSetHandler> fieldMap, ResultSetMetaData metaData) throws Exception {
-        int l = metaData.getColumnCount();
-        FieldSetHandler[] fields = new FieldSetHandler[l];
-        for (int i = 0; i < l; i++) {
-            fields[i] = fieldMap.get(metaData.getColumnLabel(i + 1));
-        }
-        return fields;
-    }
-
 }

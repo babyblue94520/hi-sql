@@ -1,6 +1,6 @@
 package pers.clare.hisql.query;
 
-import pers.clare.hisql.util.SQLUtil;
+import pers.clare.hisql.util.SQLQueryUtil;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +26,7 @@ public class SQLQuery {
         this.values = new Object[sqlParts.length];
     }
 
-    public SQLQuery value(String key, Object... value) {
+    public SQLQuery values(String key, Object... value) {
         return value(key, value);
     }
 
@@ -72,10 +72,10 @@ public class SQLQuery {
         } else {
             Class<?> valueClass = value.getClass();
             if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
-                SQLUtil.appendInValue(sb, value);
+                SQLQueryUtil.appendInValue(sb, value);
                 sb.deleteCharAt(sb.length() - 1);
             } else {
-                SQLUtil.appendValue(sb, value);
+                SQLQueryUtil.appendValue(sb, value);
             }
         }
     }

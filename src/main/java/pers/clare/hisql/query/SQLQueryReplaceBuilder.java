@@ -98,7 +98,7 @@ public class SQLQueryReplaceBuilder {
                         .value("id", 1)
                         .value("name", "tes%")
                         .value("age", 1)
-                        .value("bb", new int[]{1, 2}, new int[]{1, 2})
+                        .values("bb", new int[]{1, 2}, new int[]{1, 2})
                         .value("cc", Arrays.asList(new int[]{1, 2}, new int[]{1, 2})).toString()
         );
     }

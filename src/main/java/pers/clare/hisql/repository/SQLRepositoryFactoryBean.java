@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.util.Assert;
 import pers.clare.hisql.HiSqlContext;
-import pers.clare.hisql.naming.DefaultNamingStrategy;
-import pers.clare.hisql.page.MySQLPageMode;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.service.SQLStoreService;
 
 import javax.sql.DataSource;
@@ -63,9 +63,12 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        String dataSourceName = this.annotationAttributes.getString("dataSourceRef");
-        String readDataSourceName = this.annotationAttributes.getString("readDataSourceRef");
-        String contextName = this.annotationAttributes.getString("contextRef");
+        String dataSourceName = annotationAttributes.getString("dataSourceRef");
+        String readDataSourceName = annotationAttributes.getString("readDataSourceRef");
+        String contextName = annotationAttributes.getString("contextRef");
+        String xmlRootPath = annotationAttributes.getString("xmlRootPath");
+        Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
+        Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
 
         DataSource write;
         if (dataSourceName == null || dataSourceName.length() == 0) {
@@ -79,11 +82,19 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
         HiSqlContext hiSqlContext;
         if (contextName == null || contextName.length() == 0) {
             hiSqlContext = new HiSqlContext();
-            hiSqlContext.setNaming(new DefaultNamingStrategy());
-            hiSqlContext.setPageMode(new MySQLPageMode());
         } else {
             hiSqlContext = (HiSqlContext) beanFactory.getBean(contextName);
         }
+        if (hiSqlContext.getXmlRoot() == null) {
+            hiSqlContext.setXmlRoot(xmlRootPath);
+        }
+        if (hiSqlContext.getPaginationMode() == null) {
+            hiSqlContext.setPaginationMode(paginationModeClass.newInstance());
+        }
+        if (hiSqlContext.getNaming() == null) {
+            hiSqlContext.setNaming(namingClass.newInstance());
+        }
+
         SQLStoreService sqlStoreService = new SQLStoreService(hiSqlContext, write, read);
         this.factory = new SQLRepositoryFactory();
         this.factory.setContext(hiSqlContext);

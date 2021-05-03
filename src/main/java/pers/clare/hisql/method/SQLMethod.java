@@ -13,11 +13,9 @@ import pers.clare.hisql.query.SQLQueryReplace;
 import pers.clare.hisql.query.SQLQueryReplaceBuilder;
 import pers.clare.hisql.service.SQLStoreService;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class SQLMethod implements MethodInterceptor {
     protected static final Object[] emptyArguments = new Object[0];
@@ -80,6 +78,29 @@ public abstract class SQLMethod implements MethodInterceptor {
         ArgumentGetHandler handler = (arguments) -> arguments[index];
         if (isSimpleType(type)) {
             setArgumentValueHandler(p.getName(), handler);
+        } else if (type.isArray()) {
+            Class<?> componentType = type.getComponentType();
+            if (isSimpleType(componentType)) {
+                setArgumentValueHandler(p.getName(), handler);
+            } else {
+                if (componentType.isArray()) {
+                    setArgumentValueHandler(p.getName(), handler);
+                } else {
+                    setArgumentValueHandler(p.getName(), buildArrayArgumentValueHandler(componentType, handler));
+                }
+            }
+        } else if (Collection.class.isAssignableFrom(type)) {
+            Type[] types = ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments();
+            Class<?> actualType = types.length > 0 ? (Class<?>) types[0] : null;
+            if (actualType == null || isSimpleType(actualType)) {
+                setArgumentValueHandler(p.getName(), handler);
+            } else {
+                if (actualType.isArray()) {
+                    setArgumentValueHandler(p.getName(), handler);
+                } else {
+                    setArgumentValueHandler(p.getName(), buildCollectionArgumentValueHandler((Class<?>) types[0], handler));
+                }
+            }
         } else if (type == Pagination.class) {
             paginationHandler = handler;
         } else if (type == Sort.class) {
@@ -122,6 +143,65 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
     }
 
+    private ArgumentGetHandler buildArrayArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+        Function<Object, Object>[] functions = getFieldHandlers(clazz);
+        return (arguments) -> {
+            Object[] array = (Object[]) handler.apply(arguments);
+            Object[][] result = new Object[array.length][];
+            Object[] values;
+            int i = 0, j;
+            for (Object o : array) {
+                values = new Object[functions.length];
+                j = 0;
+                for (Function<Object, Object> valueHandler : functions) {
+                    values[j++] = valueHandler.apply(o);
+                }
+                result[i++] = values;
+            }
+            return result;
+        };
+    }
+
+    private ArgumentGetHandler buildCollectionArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+        Function<Object, Object>[] functions = getFieldHandlers(clazz);
+        return (arguments) -> {
+            Collection<Object> collection = (Collection<Object>) handler.apply(arguments);
+            Object[][] result = new Object[collection.size()][];
+            Object[] values;
+            int i = 0, j;
+            for (Object o : collection) {
+                values = new Object[functions.length];
+                j = 0;
+                for (Function<Object, Object> valueHandler : functions) {
+                    values[j++] = valueHandler.apply(o);
+                }
+                result[i++] = values;
+            }
+            return result;
+        };
+    }
+
+    private Function<Object, Object>[] getFieldHandlers(Class<?> clazz) {
+        Field[] fields = clazz.getDeclaredFields();
+        int modifier;
+        List<Function<Object, Object>> valueHandlers = new ArrayList<>();
+        for (Field field : fields) {
+            modifier = field.getModifiers();
+            if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
+            field.setAccessible(true);
+            valueHandlers.add((target) -> {
+                try {
+                    return field.get(target);
+                } catch (Exception e) {
+                    throw new HiSqlException(e);
+                }
+            });
+        }
+        Function<Object, Object>[] functions = new Function[valueHandlers.size()];
+        return valueHandlers.toArray(functions);
+    }
+
+
     private void setArgumentValueHandler(String name, ArgumentGetHandler handler) {
         if (replaces != null && sqlQueryReplaceBuilder.hasKey(name)) {
             replaces.put(name, handler);
@@ -131,7 +211,7 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     private boolean isSimpleType(Class<?> type) {
-        return type.isPrimitive() || type.getName().startsWith("java.lang") || type.isArray() || Collection.class.isAssignableFrom(type);
+        return type.isPrimitive() || type.getName().startsWith("java.lang");
     }
 
     protected SQLQuery toSqlQuery(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, Object[] arguments) {
@@ -174,16 +254,16 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
         if (query == null) {
             if (pagination != null) {
-                executeSQL = context.getPageMode().buildPaginationSQL(pagination, executeSQL);
+                executeSQL = context.getPaginationMode().buildPaginationSQL(pagination, executeSQL);
             } else if (sort != null) {
-                executeSQL = context.getPageMode().buildSortSQL(sort, executeSQL);
+                executeSQL = context.getPaginationMode().buildSortSQL(sort, executeSQL);
             }
         } else {
             StringBuilder sb = query.toSQL();
             if (pagination != null) {
-                context.getPageMode().appendPaginationSQL(sb, pagination);
+                context.getPaginationMode().appendPaginationSQL(sb, pagination);
             } else if (sort != null) {
-                context.getPageMode().appendSortSQL(sb, sort.getSorts());
+                context.getPaginationMode().appendSortSQL(sb, sort.getSorts());
             }
             executeSQL = sb.toString();
             arguments = emptyArguments;
@@ -192,4 +272,22 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     abstract protected Object doInvoke(String sql, Object[] arguments);
+
+    public static void main(String[] args) {
+        Object[] a = new Object[0];
+        Class<?> clazz = a.getClass();
+        System.out.println(clazz.isArray());
+        System.out.println(clazz);
+        System.out.println(clazz.getComponentType());
+
+        List<Object> b = new ArrayList<>();
+        Class<?> bClazz = b.getClass();
+        System.out.println(bClazz);
+        System.out.println(bClazz.getComponentType());
+
+        Map<String, Object> m = new HashMap<>();
+        Class<?> mClazz = m.getClass();
+        System.out.println(mClazz);
+        System.out.println(mClazz.getComponentType());
+    }
 }

@@ -2,7 +2,7 @@ package pers.clare.hisql;
 
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.page.PageMode;
+import pers.clare.hisql.page.PaginationMode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,9 +10,9 @@ import java.util.Map;
 public class HiSqlContext {
     private static final Map<Class<?>, ResultSetValueConverter> resultSetValueConverterMap = new HashMap<>();
 
-    private String xmlRoot = "sqlquery/";
+    private String xmlRoot;
 
-    private PageMode pageMode;
+    private PaginationMode paginationMode;
 
     private NamingStrategy naming;
 
@@ -32,12 +32,12 @@ public class HiSqlContext {
         this.xmlRoot = xmlRoot;
     }
 
-    public PageMode getPageMode() {
-        return pageMode;
+    public PaginationMode getPaginationMode() {
+        return paginationMode;
     }
 
-    public void setPageMode(PageMode pageMode) {
-        this.pageMode = pageMode;
+    public void setPaginationMode(PaginationMode paginationMode) {
+        this.paginationMode = paginationMode;
     }
 
     public void setNaming(NamingStrategy naming) {

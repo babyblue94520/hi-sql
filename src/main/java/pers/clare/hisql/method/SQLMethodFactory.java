@@ -33,7 +33,7 @@ public class SQLMethodFactory {
         SQLMethod sqlMethod;
         for (Method method : methods) {
             command = findSqlCommand(contents, method);
-            if (command == null) {
+            if (command == null || command.length() == 0) {
                 throw new HiSqlException("%s.%s method must set XML or Sql.query", repositoryInterface.getName(), method.getName());
             }
             sqlMethod = buildMethod(method, command);

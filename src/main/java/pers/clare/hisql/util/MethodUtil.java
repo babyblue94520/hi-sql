@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 public class MethodUtil {
+    private MethodUtil(){}
 
     public static Class<?> getReturnClass(Method method, int index) {
         Type type = getReturnType(method, index);

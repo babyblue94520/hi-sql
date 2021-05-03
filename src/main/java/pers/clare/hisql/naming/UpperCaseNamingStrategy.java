@@ -1,23 +1,24 @@
 package pers.clare.hisql.naming;
 
-public class DefaultNamingStrategy implements NamingStrategy{
-
+public class UpperCaseNamingStrategy implements NamingStrategy {
+    @Override
     public String turnCamelCase(String name) {
         return turnCamelCase(new StringBuilder(), name).toString();
     }
 
+    @Override
     public StringBuilder turnCamelCase(StringBuilder sb, String name) {
         int l = name.length();
         char[] cs = name.toCharArray();
         char c = cs[0];
-        sb.append(Character.toLowerCase(c));
+        sb.append(Character.toUpperCase(c));
         for (int i = 1; i < l; i++) {
             c = cs[i];
             if (c > 64 && c < 91) {
-                c = Character.toLowerCase(c);
+                c = Character.toUpperCase(c);
                 sb.append('_');
             }
-            sb.append(c);
+            sb.append(Character.toUpperCase(c));
         }
         return sb;
     }

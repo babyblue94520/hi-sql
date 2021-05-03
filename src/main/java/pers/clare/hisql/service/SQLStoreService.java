@@ -7,7 +7,8 @@ import pers.clare.hisql.page.*;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.util.ConnectionUtil;
-import pers.clare.hisql.util.SQLUtil;
+import pers.clare.hisql.util.ResultSetUtil;
+import pers.clare.hisql.util.SQLQueryUtil;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -87,7 +88,7 @@ public class SQLStoreService extends SQLService {
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) throws Exception {
         Statement statement = connection.createStatement();
-        ResultSet rs = ConnectionUtil.query(statement, SQLUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), entity));
+        ResultSet rs = ConnectionUtil.query(statement, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), entity));
         R result = storeResultSetHandler.apply(rs, sqlStore);
         if (retry(result, readonly)) {
             statement.close();
@@ -98,15 +99,15 @@ public class SQLStoreService extends SQLService {
     }
 
     private <T> T findHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toInstance(sqlStore, rs);
+        return ResultSetUtil.toInstance(sqlStore, rs);
     }
 
     private <T> Set<T> findSetHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toSetInstance(sqlStore, rs);
+        return ResultSetUtil.toSetInstance(sqlStore, rs);
     }
 
     private <T> List<T> findAllHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return SQLUtil.toInstances(sqlStore, rs);
+        return ResultSetUtil.toInstances(sqlStore, rs);
     }
 
     public <T> T find(
@@ -183,7 +184,7 @@ public class SQLStoreService extends SQLService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(readonly, sqlStore, context.getPageMode().buildSortSQL(sort, sql), parameters, this::findAllHandler);
+        return queryHandler(readonly, sqlStore, context.getPaginationMode().buildSortSQL(sort, sql), parameters, this::findAllHandler);
     }
 
 
@@ -206,7 +207,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -226,7 +227,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
+            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -256,7 +257,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
@@ -277,12 +278,12 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = SQLUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
+            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
             long total = list.size();
             int size = pagination.getSize();
             int page = pagination.getPage();
             if (total > 0 && total < size) {
-                total += size * page;
+                total += (long) size * page;
             } else {
                 ResultSet rs = ConnectionUtil.query(connection, sqlStore.getCount(), parameters);
                 if (rs.next()) {

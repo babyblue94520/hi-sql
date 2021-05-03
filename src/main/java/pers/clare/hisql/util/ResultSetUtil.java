@@ -1,9 +1,15 @@
 package pers.clare.hisql.util;
 
+import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.store.SQLStore;
+
+import java.lang.reflect.Constructor;
 import java.sql.*;
 import java.util.*;
 
 public class ResultSetUtil {
+
+    private ResultSetUtil(){}
 
     public static String[] getNames(ResultSet rs) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
@@ -88,5 +94,51 @@ public class ResultSetUtil {
             result.add(rs.getObject(1, clazz));
         }
         return result;
+    }
+
+
+    public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
+        if (rs.next()) {
+            return buildInstance(sqlStore.getConstructor(), fields, rs);
+        }
+        return null;
+    }
+
+    public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        Set<T> result = new HashSet<>();
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
+        while (rs.next()) {
+            result.add(buildInstance(sqlStore.getConstructor(), fields, rs));
+        }
+        return result;
+    }
+
+    public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        List<T> list = new ArrayList<>();
+        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
+        while (rs.next()) {
+            list.add(buildInstance(sqlStore.getConstructor(), fields, rs));
+        }
+        return list;
+    }
+
+    private static <T> T buildInstance(Constructor<T> constructor, FieldSetHandler[] fields, ResultSet rs) throws Exception {
+        T target = constructor.newInstance();
+        int i = 1;
+        for (FieldSetHandler field : fields) {
+            if (field == null) continue;
+            field.apply(target, rs, i++);
+        }
+        return target;
+    }
+
+    private static FieldSetHandler[] toFields(Map<String, FieldSetHandler> fieldMap, ResultSetMetaData metaData) throws Exception {
+        int l = metaData.getColumnCount();
+        FieldSetHandler[] fields = new FieldSetHandler[l];
+        for (int i = 0; i < l; i++) {
+            fields[i] = fieldMap.get(metaData.getColumnLabel(i + 1));
+        }
+        return fields;
     }
 }

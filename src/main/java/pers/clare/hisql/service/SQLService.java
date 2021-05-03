@@ -89,7 +89,7 @@ public class SQLService {
         if (total > 0 && total < size) {
             total += (long) size * page;
         } else {
-            ResultSet rs = ConnectionUtil.query(connection, context.getPageMode().buildTotalSQL(sql), parameters);
+            ResultSet rs = ConnectionUtil.query(connection, context.getPaginationMode().buildTotalSQL(sql), parameters);
             if (rs.next()) {
                 total = rs.getLong(1);
             } else {
@@ -260,7 +260,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -290,7 +290,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -320,7 +320,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toList(clazz, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
@@ -350,7 +350,7 @@ public class SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPageMode().buildPaginationSQL(pagination, sql), parameters));
+            List<Map<String, T>> list = ResultSetUtil.toMapList(clazz, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;

@@ -1,6 +1,6 @@
 package pers.clare.hisql.page;
 
-public interface PageMode {
+public interface PaginationMode {
 
     String buildTotalSQL(String sql);
 

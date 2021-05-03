@@ -9,6 +9,20 @@
 * Spring Framework 5+
 * Java 8+
 
+## Default
+
+* **Lower case naming**
+
+    ```
+    HelloWorld > hello_world
+    ```
+
+* **MySQL Pagination**
+
+    ```sql
+    select * from table limit 0,20
+    ```
+
 ## Quickstart
 
 ### pom.xml
@@ -365,37 +379,56 @@ public class HiSqlConfig {
         
         **Advanced**
     
-        ```java
-        @Getter
-        @Setter
-        public class UserPageQuery {
-            private Pagination pagination;
-            private Long startTime;
-            private Long endTime;
-            private Long id;
-            private String name;
-        }
+        * **bean parameter**
       
-        @Getter
-        @Setter
-        public class UserSortQuery {
-            private Sort sort;
-            private Long startTime;
-            private Long endTime;
-            private Long id;
-            private String name;
-        }
+            ```java
+            @Getter
+            @Setter
+            public class UserPageQuery {
+                private Pagination pagination;
+                private Long startTime;
+                private Long endTime;
+                private Long id;
+                private String name;
+            }
+          
+            @Getter
+            @Setter
+            public class UserSortQuery {
+                private Sort sort;
+                private Long startTime;
+                private Long endTime;
+                private Long id;
+                private String name;
+            }
+            
+            @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+            Page<User> page(
+                String andId
+                , String andName
+                , UserPageQuery query
+            );
+    
+            @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+            List<User> sort(String andId, String andName, UserSortQuery query);
+            ```
         
-        @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-        Page<User> page(
-            String andId
-            , String andName
-            , UserPageQuery query
-        );
+        * **in()**
+    
+            ```java
+            @Repository
+            public interface UserQueryRepository extends SQLRepository {
+                @HiSql("select * from user where (id,name) in :idNames")
+                List<User> findAll(SimpleUser[] idNames);
+                
+                @HiSql("select * from user where (id,name) in :idNames")
+                List<User> findAll(List<SimpleUser> idNames);
+                
+                @HiSql("select * from user where (id,name) in :idNames")
+                List<User> findAll(Object[][] idNames);
+            }
 
-        @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-        List<User> sort(String andId, String andName, UserSortQuery query);
-        ```
+            ```
 
 * **Write SQL on XML**
 
@@ -544,7 +577,46 @@ public class HiSqlConfig {
     ```
 
     ![](images/rollback.png)
-      
+
+
+### **Advanced**
+
+* **Change naming strategy**
+
+    **UpperCase**
+    ```java
+    @EnableHiSql(
+        naming = UpperCaseNamingStrategy.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+  
+    **Custom naming strategy**
+    ```java
+    public class CustomNamingStrategy implements NamingStrategy{
+    }
+  
+    @EnableHiSql(
+        naming = CustomNamingStrategy.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+
+* **Change PaginationMode**
+  
+    ```java
+    public class CustomPaginationMode implements PaginationMode{
+    }
+  
+    @EnableHiSql(
+        paginationMode = CustomPaginationMode.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+
 * **Custom ResultSet Value Converter**
 
     ```java

@@ -2,7 +2,7 @@ package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
 
-public class MySQLPageMode implements PageMode {
+public class MSSQLPaginationMode implements PaginationMode {
 
     public String buildTotalSQL(String sql) {
         return "select count(*) from(" + sql + ")t";
@@ -31,10 +31,11 @@ public class MySQLPageMode implements PageMode {
             , Pagination pagination
     ) {
         appendSortSQL(sql, pagination.getSorts());
-        sql.append(" limit ")
+        sql.append(" offset ")
                 .append(pagination.getSize() * pagination.getPage())
-                .append(',')
-                .append(pagination.getSize());
+                .append(" fetch next ")
+                .append(pagination.getSize())
+                .append(" rows only");
     }
 
     public void appendSortSQL(StringBuilder sql, String[] sorts) {

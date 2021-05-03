@@ -3,6 +3,8 @@ package pers.clare.hisql.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.ConnectionReuseHolder;
 
 import java.sql.*;
@@ -10,10 +12,8 @@ import java.sql.*;
 public class ConnectionUtil {
     private static final Logger log = LogManager.getLogger();
 
-    ConnectionUtil() {
+    private ConnectionUtil() {
     }
-
-
 
     public static ResultSet query(Connection connection, String sql, Object[] parameters) throws SQLException {
         log.debug(sql);
@@ -21,7 +21,7 @@ public class ConnectionUtil {
             return connection.createStatement().executeQuery(sql);
         } else {
             PreparedStatement ps = connection.prepareStatement(sql);
-            SQLUtil.setValue(ps, parameters);
+            setQueryValue(ps, parameters);
             return ps.executeQuery();
         }
     }
@@ -62,7 +62,7 @@ public class ConnectionUtil {
             return conn.createStatement().executeUpdate(sql);
         } else {
             PreparedStatement ps = conn.prepareStatement(sql);
-            SQLUtil.setValue(ps, parameters);
+            setUpdateValue(ps, parameters);
             return ps.executeUpdate();
         }
     }
@@ -94,4 +94,28 @@ public class ConnectionUtil {
         }
     }
 
+    public static int setQueryValue(
+            PreparedStatement ps
+            , Object... parameters
+    ) throws SQLException {
+        int index = 1;
+        if (parameters == null || parameters.length == 0) return index;
+        for (Object value : parameters) {
+            if (value instanceof Pagination || value instanceof Sort) continue;
+            ps.setObject(index++, value);
+        }
+        return index;
+    }
+
+    public static int setUpdateValue(
+            PreparedStatement ps
+            , Object... parameters
+    ) throws SQLException {
+        int index = 1;
+        if (parameters == null || parameters.length == 0) return index;
+        for (Object value : parameters) {
+            ps.setObject(index++, value);
+        }
+        return index;
+    }
 }

@@ -54,6 +54,12 @@ public class SQLInjector {
     }
 
     private static String toPath(String root, Class<?> clazz) {
-        return root + clazz.getName().replaceAll("\\.", "/") + ".xml";
+        StringBuilder path = new StringBuilder(root);
+        if(!root.endsWith("/")){
+            path.append("/");
+        }
+        return path.append(clazz.getName().replaceAll("\\.", "/"))
+                .append(".xml")
+                .toString();
     }
 }

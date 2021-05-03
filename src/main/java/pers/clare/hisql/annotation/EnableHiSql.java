@@ -3,6 +3,10 @@ package pers.clare.hisql.annotation;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
+import pers.clare.hisql.naming.LowerCaseNamingStrategy;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.MySQLPaginationMode;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.repository.SQLScanRegistrar;
 import pers.clare.hisql.repository.SQLRepositoryFactoryBean;
 
@@ -24,5 +28,8 @@ public @interface EnableHiSql {
     String dataSourceRef() default "";
     String readDataSourceRef() default "";
     String contextRef() default "";
+    String xmlRootPath() default "hisql"; // resources/hisql
+    Class<? extends PaginationMode> paginationMode() default MySQLPaginationMode.class;
+    Class<? extends NamingStrategy> naming() default LowerCaseNamingStrategy.class;
     Class<? extends SQLRepositoryFactoryBean> factoryBean() default SQLRepositoryFactoryBean.class;
 }

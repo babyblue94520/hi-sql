@@ -13,13 +13,12 @@ import pers.clare.hisql.store.FieldColumn;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.ConnectionUtil;
-import pers.clare.hisql.util.SQLUtil;
+import pers.clare.hisql.util.SQLQueryUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,6 +34,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         if (interfaces.length == 0) {
             throw new IllegalArgumentException("Repository interface must not be null!");
         }
+
         ParameterizedType type = (ParameterizedType) interfaces[0];
         Type[] types = type.getActualTypeArguments();
         if (types == null || types.length == 0) {
@@ -63,7 +63,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             , T entity
     ) {
         try {
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
         } catch (Exception e) {
             throw new HiSqlException(e);
@@ -79,7 +79,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             , Object... ids
     ) {
         try {
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), ids));
+            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), ids));
             return count == null ? 0 : count;
         } catch (Exception e) {
             throw new HiSqlException(e);
@@ -121,7 +121,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             Boolean readonly
             , Object... ids
     ) {
-        return sqlStoreService.find(readonly, sqlStore, SQLUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
+        return sqlStoreService.find(readonly, sqlStore, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
     }
 
     public T find(
@@ -167,13 +167,13 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
     public int delete(
             T entity
     ) {
-        return sqlStoreService.update(SQLUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
+        return sqlStoreService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
     }
 
     public int deleteById(
             Object... id
     ) {
-        return sqlStoreService.update(SQLUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
+        return sqlStoreService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
     }
 
     @Override
@@ -283,7 +283,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
             columns.append(fieldColumn.getColumnName())
                     .append(',');
 
-            SQLUtil.appendValue(values, value);
+            SQLQueryUtil.appendValue(values, value);
             values.append(',');
         }
         values.deleteCharAt(values.length() - 1).append(')');
@@ -308,7 +308,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
                 } else {
                     wheres.append(fieldColumn.getColumnName())
                             .append('=');
-                    SQLUtil.appendValue(wheres, value);
+                    SQLQueryUtil.appendValue(wheres, value);
                 }
                 wheres.append(" and ");
             } else {
@@ -317,7 +317,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
 
                 values.append(fieldColumn.getColumnName())
                         .append('=');
-                SQLUtil.appendValue(values, value);
+                SQLQueryUtil.appendValue(values, value);
                 values.append(',');
             }
         }

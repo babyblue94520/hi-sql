@@ -103,7 +103,7 @@ public class SQLQueryBuilder {
                         .value("name", "tes%")
                         .value("test", "' or ''='")
                         .value("age", new int[]{1})
-                        .value("bb", new int[]{1, 2}, new int[]{1, 2})
+                        .values("bb", new int[]{1, 2}, new int[]{1, 2})
                         .value("cc", Arrays.asList(new int[]{1, 2}, new int[]{1, 2}))
         );
     }
