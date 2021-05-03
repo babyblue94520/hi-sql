@@ -30,15 +30,23 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
 
     public SQLCrudRepositoryImpl(HiSqlContext context, SQLStoreService sqlStoreService, Class<T> repositoryClass) {
         this.sqlStoreService = sqlStoreService;
-        Type[] interfaces = repositoryClass.getGenericInterfaces();
+        ParameterizedType[] interfaces = (ParameterizedType[]) repositoryClass.getGenericInterfaces();
         if (interfaces.length == 0) {
-            throw new IllegalArgumentException("Repository interface must not be null!");
+            throw new IllegalArgumentException("SQLCrudRepository interface must not be null!");
         }
-
-        ParameterizedType type = (ParameterizedType) interfaces[0];
-        Type[] types = type.getActualTypeArguments();
+        ParameterizedType parameterizedType = null;
+        for (ParameterizedType anInterface : interfaces) {
+            if (anInterface.getRawType() == SQLCrudRepository.class) {
+                parameterizedType = anInterface;
+                break;
+            }
+        }
+        if (parameterizedType == null) {
+            throw new IllegalArgumentException("SQLCrudRepository interface not found!");
+        }
+        Type[] types = parameterizedType.getActualTypeArguments();
         if (types == null || types.length == 0) {
-            throw new IllegalArgumentException("Repository entity class must not be null!");
+            throw new IllegalArgumentException("SQLCrudRepository entity class must not be null!");
         }
         sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(context, (Class<T>) types[0], true);
     }
