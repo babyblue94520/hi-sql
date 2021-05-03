@@ -25,6 +25,8 @@
 
 ## Quickstart
 
+[demo project](https://github.com/babyblue94520/hi-sql-demo)
+
 ### pom.xml
 
 ```xml
