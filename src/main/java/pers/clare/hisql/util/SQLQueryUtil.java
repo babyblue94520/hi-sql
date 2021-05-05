@@ -21,13 +21,13 @@ public class SQLQueryUtil {
             sb.append('\'');
             char[] cs = ((String) value).toCharArray();
             for (char c : cs) {
-                sb.append(c);
                 switch (c){
                     case '\'':
                     case '\\':
                         sb.append('\\');
                         break;
                 }
+                sb.append(c);
             }
             sb.append('\'');
         } else {
