@@ -23,7 +23,7 @@
     select * from table limit 0,20
     ```
 
-## Quickstart
+## QuickStart
 
 [demo project](https://github.com/babyblue94520/hi-sql-demo)
 
