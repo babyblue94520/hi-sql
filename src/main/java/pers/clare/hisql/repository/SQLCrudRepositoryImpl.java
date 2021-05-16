@@ -74,6 +74,8 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         try {
             Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
+        } catch (HiSqlException e) {
+            throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         }
@@ -90,6 +92,8 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         try {
             Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), ids));
             return count == null ? 0 : count;
+        } catch (HiSqlException e) {
+            throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         }
