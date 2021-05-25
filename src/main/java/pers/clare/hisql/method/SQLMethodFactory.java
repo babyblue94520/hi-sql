@@ -152,18 +152,6 @@ public class SQLMethodFactory {
         }
     }
 
-    private static int sortIndexOf(Class<?>[] parameterTypes) {
-        for (int i = 0; i < parameterTypes.length; i++)
-            if (parameterTypes[i] == Sort.class) return i;
-        return -1;
-    }
-
-    private static int paginationIndexOf(Class<?>[] parameterTypes) {
-        for (int i = 0; i < parameterTypes.length; i++)
-            if (parameterTypes[i] == Pagination.class) return i;
-        return -1;
-    }
-
     /**
      * get sql string
      */

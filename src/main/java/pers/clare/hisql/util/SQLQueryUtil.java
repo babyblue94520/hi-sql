@@ -21,7 +21,7 @@ public class SQLQueryUtil {
             sb.append('\'');
             char[] cs = ((String) value).toCharArray();
             for (char c : cs) {
-                switch (c){
+                switch (c) {
                     case '\'':
                     case '\\':
                         sb.append('\\');
@@ -35,10 +35,7 @@ public class SQLQueryUtil {
         }
     }
 
-    /**
-     * appendIn
-     * 依陣列數量，動態產生 (?,?,?,?) or ((?,?),(?,?))
-     */
+    // gen (?,?,?,?) or ((?,?),(?,?))
     public static void appendInValue(
             StringBuilder sb
             , Object value
@@ -65,6 +62,7 @@ public class SQLQueryUtil {
             }
             sb.deleteCharAt(sb.length() - 1).append(')');
         } else if (Collection.class.isAssignableFrom(valueClass)) {
+            @SuppressWarnings("unchecked")
             Collection<Object> vs = (Collection<Object>) value;
             if (vs.size() == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
             sb.append('(');

@@ -7,8 +7,9 @@ import pers.clare.hisql.page.PaginationMode;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class HiSqlContext {
-    private static final Map<Class<?>, ResultSetValueConverter> resultSetValueConverterMap = new HashMap<>();
+    private static final Map<Class<?>, ResultSetValueConverter<?>> resultSetValueConverterMap = new HashMap<>();
 
     private String xmlRoot;
 
@@ -16,11 +17,11 @@ public class HiSqlContext {
 
     private NamingStrategy naming;
 
-    public static void addResultSetValueConverter(Class<?> clazz, ResultSetValueConverter resultSetValueConverter) {
+    public static void addResultSetValueConverter(Class<?> clazz, ResultSetValueConverter<?> resultSetValueConverter) {
         resultSetValueConverterMap.put(clazz, resultSetValueConverter);
     }
 
-    public static ResultSetValueConverter getResultSetValueConverter(Class<?> clazz) {
+    public static ResultSetValueConverter<?> getResultSetValueConverter(Class<?> clazz) {
         return resultSetValueConverterMap.get(clazz);
     }
 

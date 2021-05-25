@@ -11,6 +11,7 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
@@ -47,9 +48,19 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-        boolean isNonRepositoryInterface = !SQLRepository.class.getName().equals(beanDefinition.getBeanClassName());
-        boolean isTopLevelType = !beanDefinition.getMetadata().hasEnclosingClass();
-        return isNonRepositoryInterface && isTopLevelType;
+        if (SQLRepository.class.getName().equals(beanDefinition.getBeanClassName())
+                || SQLCrudRepository.class.getName().equals(beanDefinition.getBeanClassName())) {
+            return false;
+        }
+        AnnotationMetadata annotationMetadata = beanDefinition.getMetadata();
+        String[] interfaceNames = annotationMetadata.getInterfaceNames();
+        for (String interfaceName : interfaceNames) {
+            if (SQLRepository.class.getName().equals(interfaceName)
+                    || SQLCrudRepository.class.getName().equals(interfaceName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

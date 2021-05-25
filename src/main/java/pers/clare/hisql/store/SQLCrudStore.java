@@ -9,16 +9,16 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 public class SQLCrudStore<T> extends SQLStore<T> {
-    private String tableName;
-    private FieldColumn[] fieldColumns;
-    private Field autoKey;
-    private Field[] keyFields;
-    private String count;
-    private SQLQueryBuilder countById;
-    private String select;
-    private SQLQueryBuilder selectById;
-    private String deleteAll;
-    private SQLQueryBuilder deleteById;
+    private final String tableName;
+    private final FieldColumn[] fieldColumns;
+    private final Field autoKey;
+    private final Field[] keyFields;
+    private final String count;
+    private final SQLQueryBuilder countById;
+    private final String select;
+    private final SQLQueryBuilder selectById;
+    private final String deleteAll;
+    private final SQLQueryBuilder deleteById;
 
     public SQLCrudStore(
             Constructor<T> constructor

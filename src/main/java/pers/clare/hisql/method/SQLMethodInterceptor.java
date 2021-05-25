@@ -2,8 +2,6 @@ package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.exception.HiSqlException;
 
 import java.lang.reflect.Method;
@@ -11,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SQLMethodInterceptor implements MethodInterceptor {
-    private static final Logger log = LogManager.getLogger();
 
     private final Object target;
     private final Map<Method, Method> methods = new HashMap<>();

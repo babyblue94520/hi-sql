@@ -11,7 +11,7 @@ public class Next<T> {
     private final List<T> records;
 
     public static <T> Next<T> of(int page, int size, List<T> records) {
-        return new Next<T>(page, size, records);
+        return new Next<>(page, size, records);
     }
 
     public Next(int page, int size, List<T> records) {

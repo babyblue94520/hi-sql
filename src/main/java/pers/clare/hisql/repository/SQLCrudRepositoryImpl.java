@@ -1,7 +1,5 @@
 package pers.clare.hisql.repository;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Next;
@@ -24,33 +22,14 @@ import java.util.List;
 
 
 public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
-    private static final Logger log = LogManager.getLogger();
     private final SQLCrudStore<T> sqlStore;
     private final SQLStoreService sqlStoreService;
 
     public SQLCrudRepositoryImpl(HiSqlContext context, SQLStoreService sqlStoreService, Class<T> repositoryClass) {
         this.sqlStoreService = sqlStoreService;
-        Type[] interfaces = repositoryClass.getGenericInterfaces();
-        if (interfaces.length == 0) {
-            throw new IllegalArgumentException("SQLCrudRepository interface must not be null!");
-        }
-        ParameterizedType parameterizedType = null;
-        for (Type anInterface : interfaces) {
-            if (anInterface instanceof ParameterizedType
-                    && ((ParameterizedType) anInterface).getRawType() == SQLCrudRepository.class) {
-                parameterizedType = (ParameterizedType) anInterface;
-                break;
-            }
-        }
-        if (parameterizedType == null) {
-            throw new IllegalArgumentException("SQLCrudRepository interface not found!");
-        }
-        Type[] types = parameterizedType.getActualTypeArguments();
-        if (types == null || types.length == 0) {
-            throw new IllegalArgumentException("SQLCrudRepository entity class must not be null!");
-        }
-        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(context, (Class<T>) types[0], true);
+        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(context, findFirstActualTypeArgument(repositoryClass), true);
     }
+
 
     public long count() {
         return count(false);
@@ -281,7 +260,31 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         return sqlStoreService.update(sqlStore.getDeleteAll());
     }
 
-    private static String toInsertSQL(SQLCrudStore sqlStore, Object entity) throws IllegalAccessException {
+    @SuppressWarnings("unchecked")
+    private static <T> Class<T> findFirstActualTypeArgument(Class<T> repositoryClass) {
+        Type[] interfaces = repositoryClass.getGenericInterfaces();
+        if (interfaces.length == 0) {
+            throw new IllegalArgumentException("SQLCrudRepository interface must not be null!");
+        }
+        ParameterizedType parameterizedType = null;
+        for (Type anInterface : interfaces) {
+            if (anInterface instanceof ParameterizedType
+                    && ((ParameterizedType) anInterface).getRawType() == SQLCrudRepository.class) {
+                parameterizedType = (ParameterizedType) anInterface;
+                break;
+            }
+        }
+        if (parameterizedType == null) {
+            throw new IllegalArgumentException("SQLCrudRepository interface not found!");
+        }
+        Type[] types = parameterizedType.getActualTypeArguments();
+        if (types == null || types.length == 0) {
+            throw new IllegalArgumentException("SQLCrudRepository entity class must not be null!");
+        }
+        return (Class<T>) types[0];
+    }
+
+    private static String toInsertSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
         FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
         StringBuilder columns = new StringBuilder("insert into " + sqlStore.getTableName() + "(");
         StringBuilder values = new StringBuilder("values(");
@@ -306,7 +309,7 @@ public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
         return columns.toString();
     }
 
-    private static String toUpdateSQL(SQLCrudStore sqlStore, Object entity) throws IllegalAccessException {
+    private static String toUpdateSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
         FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
         StringBuilder values = new StringBuilder("update " + sqlStore.getTableName() + " set ");
         StringBuilder wheres = new StringBuilder(" where ");

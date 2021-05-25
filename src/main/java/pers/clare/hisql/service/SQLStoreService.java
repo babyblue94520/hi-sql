@@ -17,6 +17,7 @@ import java.util.Set;
 
 
 public class SQLStoreService extends SQLService {
+    @SuppressWarnings("unused")
     public SQLStoreService(HiSqlContext context, DataSource write) {
         super(context, write);
     }
@@ -98,85 +99,72 @@ public class SQLStoreService extends SQLService {
         }
     }
 
-    private <T> T findHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return ResultSetUtil.toInstance(sqlStore, rs);
-    }
-
-    private <T> Set<T> findSetHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return ResultSetUtil.toSetInstance(sqlStore, rs);
-    }
-
-    private <T> List<T> findAllHandler(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        return ResultSetUtil.toInstances(sqlStore, rs);
-    }
-
+    @SuppressWarnings("unchecked")
     public <T> T find(
             SQLCrudStore<T> store
             , T entity
     ) {
-        return queryHandler(false, store, entity, this::findHandler);
+        return queryHandler(false, store, entity, (StoreResultSetHandler<T, T>) ResultSetUtil.toInstance);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T find(
             boolean readonly
             , SQLCrudStore<T> sqlStore
             , T entity
     ) {
-        return queryHandler(readonly, sqlStore, entity, this::findHandler);
+        return queryHandler(readonly, sqlStore, entity, (StoreResultSetHandler<T, T>) ResultSetUtil.toInstance);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T find(
             SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sqlStore, sql, parameters, this::findHandler);
+        return queryHandler(false, sqlStore, sql, parameters, (StoreResultSetHandler<T, T>) ResultSetUtil.toInstance);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T find(
             boolean readonly
             , SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sqlStore, sql, parameters, this::findHandler);
+        return queryHandler(readonly, sqlStore, sql, parameters, (StoreResultSetHandler<T, T>) ResultSetUtil.toInstance);
 
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Set<T> findSet(
             SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sqlStore, sql, parameters, this::findSetHandler);
+        return queryHandler(false, sqlStore, sql, parameters, (StoreResultSetHandler<T, Set<T>>) ResultSetUtil.toSetInstance);
     }
 
-    public <T> Set<T> findSet(
-            boolean readonly
-            , SQLStore<T> sqlStore
-            , String sql
-            , Object... parameters
-    ) {
-        return queryHandler(readonly, sqlStore, sql, parameters, this::findSetHandler);
-    }
-
+    @SuppressWarnings("unchecked")
     public <T> List<T> findAll(
             SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sqlStore, sql, parameters, this::findAllHandler);
+        return queryHandler(false, sqlStore, sql, parameters, (StoreResultSetHandler<T, List<T>>) ResultSetUtil.toInstances);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> List<T> findAll(
             boolean readonly
             , SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sqlStore, sql, parameters, this::findAllHandler);
+        return queryHandler(readonly, sqlStore, sql, parameters, (StoreResultSetHandler<T, List<T>>) ResultSetUtil.toInstances);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> List<T> findAll(
             boolean readonly
             , SQLStore<T> sqlStore
@@ -184,7 +172,7 @@ public class SQLStoreService extends SQLService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(readonly, sqlStore, context.getPaginationMode().buildSortSQL(sort, sql), parameters, this::findAllHandler);
+        return queryHandler(readonly, sqlStore, context.getPaginationMode().buildSortSQL(sort, sql), parameters, (StoreResultSetHandler<T, List<T>>) ResultSetUtil.toInstances);
     }
 
 
@@ -207,7 +195,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -227,7 +215,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters), sqlStore);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
             throw e;
@@ -257,7 +245,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters));
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
@@ -278,7 +266,7 @@ public class SQLStoreService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection(readonly);
-            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters));
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters), sqlStore);
             long total = list.size();
             int size = pagination.getSize();
             int page = pagination.getPage();
