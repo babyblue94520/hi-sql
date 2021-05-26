@@ -134,15 +134,15 @@ public class HiSqlConfig {
     ```java
     @Repository
     public interface QueryRepository extends SQLRepository {
-    @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
-    List query(String value1, String value2);
-    
-    // where in
-    @Sql(query = "select * from table where column1 in :values1 and column2 in :values2")
-    List query2(String[] values1,Collection values2);
-      
-    @Sql(query = "select * from table where 1=1 {and1} {and2}")
-    List query(String and1, String and2, String value1, String value2);
+        @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
+        List query(String value1, String value2);
+
+        // where in
+        @Sql(query = "select * from table where column1 in :values1 and column2 in :values2")
+        List query2(String[] values1,Collection values2);
+
+        @Sql(query = "select * from table where 1=1 {and1} {and2}")
+        List query(String and1, String and2, String value1, String value2);
     }
     ```
     
