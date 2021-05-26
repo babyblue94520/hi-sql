@@ -3,20 +3,13 @@ package pers.clare.hisql.annotation;
 
 import java.lang.annotation.*;
 
-/**
- * 載入SQL標籤
- */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface HiSql {
-    /**
-     * sql
-     */
+    // native sql string
     String value() default "";
 
-    /**
-     * Use name to get SQL from XML
-     */
+    // Find sql from XML by name
     String name() default "";
 }

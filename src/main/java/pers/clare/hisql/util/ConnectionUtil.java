@@ -94,28 +94,26 @@ public class ConnectionUtil {
         }
     }
 
-    public static int setQueryValue(
+    public static void setQueryValue(
             PreparedStatement ps
             , Object... parameters
     ) throws SQLException {
         int index = 1;
-        if (parameters == null || parameters.length == 0) return index;
+        if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
             if (value instanceof Pagination || value instanceof Sort) continue;
             ps.setObject(index++, value);
         }
-        return index;
     }
 
-    public static int setUpdateValue(
+    public static void setUpdateValue(
             PreparedStatement ps
             , Object... parameters
     ) throws SQLException {
         int index = 1;
-        if (parameters == null || parameters.length == 0) return index;
+        if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
             ps.setObject(index++, value);
         }
-        return index;
     }
 }

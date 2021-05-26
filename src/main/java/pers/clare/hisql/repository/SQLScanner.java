@@ -97,9 +97,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         if (property == null) {
             return null;
         }
-
         Object value = property.getValue();
-
         if (value == null) {
             return null;
         } else if (value instanceof String) {

@@ -49,13 +49,13 @@ public class MSSQLPaginationMode implements PaginationMode {
         sql.delete(sql.length() - 1, sql.length());
     }
 
-    private StringBuilder sortTurnCamelCase(StringBuilder sb, String name) {
+    private void sortTurnCamelCase(StringBuilder sb, String name) {
         int l = name.length();
         char[] cs = name.toCharArray();
         // 避開開頭空白或者換行
         int start = 0;
         for (char c : cs) {
-            if (c != ' ' || c != '\n') break;
+            if (c != ' ' && c != '\n') break;
             start++;
         }
         char c = cs[start++];
@@ -70,7 +70,6 @@ public class MSSQLPaginationMode implements PaginationMode {
             }
             sb.append(c);
         }
-        return sb;
     }
 
     private static char toLowerCase(char c) {
@@ -78,9 +77,8 @@ public class MSSQLPaginationMode implements PaginationMode {
     }
 
     private static char check(char c) {
-        switch (c) {
-            case ';':
-                throw new HiSqlException("Not a legal character ';'");
+        if (c == ';') {
+            throw new HiSqlException("Not a legal character ';'");
         }
         return c;
     }

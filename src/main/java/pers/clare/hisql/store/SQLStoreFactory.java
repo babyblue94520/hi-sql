@@ -12,10 +12,12 @@ import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("unchecked")
 public class SQLStoreFactory {
 
-    static Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new HashMap<>();
+    static Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
@@ -56,7 +58,7 @@ public class SQLStoreFactory {
             if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
             field.setAccessible(true);
             name = getColumnName(context, field, field.getAnnotation(Column.class)).replaceAll("`", "");
-            fieldSetHandler = buildSetHandler(context, field);
+            fieldSetHandler = buildSetHandler(field);
             fieldSetMap.put(field.getName(), fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -95,7 +97,7 @@ public class SQLStoreFactory {
             columnName = getColumnName(context, field, column).replaceAll("`", "");
             name = columnName.replaceAll("`", "");
 
-            fieldSetHandler = buildSetHandler(context, field);
+            fieldSetHandler = buildSetHandler(field);
             fieldSetMap.put(fieldName, fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -227,8 +229,8 @@ public class SQLStoreFactory {
         return new SQLQueryBuilder(chars);
     }
 
-    private static FieldSetHandler buildSetHandler(HiSqlContext context, Field field) {
-        ResultSetValueConverter resultSetValueConverter = context.getResultSetValueConverter(field.getType());
+    private static FieldSetHandler buildSetHandler(Field field) {
+        ResultSetValueConverter<?> resultSetValueConverter = HiSqlContext.getResultSetValueConverter(field.getType());
         if (resultSetValueConverter == null) {
             if (field.getType() == Object.class) {
                 return (target, rs, index) -> field.set(target, rs.getObject(index));

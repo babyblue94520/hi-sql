@@ -7,8 +7,8 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 
 public class SQLStore<T> {
-    private Constructor<T> constructor;
-    private Map<String, FieldSetHandler> fieldSetMap;
+    private final Constructor<T> constructor;
+    private final Map<String, FieldSetHandler> fieldSetMap;
 
     public SQLStore(Constructor<T> constructor
             , Map<String, FieldSetHandler> fieldSetMap

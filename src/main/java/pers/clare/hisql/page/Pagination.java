@@ -1,5 +1,6 @@
 package pers.clare.hisql.page;
 
+@SuppressWarnings("unused")
 public class Pagination {
     private int page;
     private int size;

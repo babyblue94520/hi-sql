@@ -2,10 +2,8 @@ package pers.clare.hisql.repository;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
@@ -16,18 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
-
-    /**
-     * {@inheritDoc}
-     *
-     * @deprecated Since 2.0.2, this method not used never.
-     */
-    @Override
-    @Deprecated
-    public void setResourceLoader(ResourceLoader resourceLoader) {
-        // NOP
-    }
+public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
 
     /**
      * {@inheritDoc}

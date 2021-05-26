@@ -1,6 +1,8 @@
 package pers.clare.hisql.util;
 
 import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.function.ResultSetHandler;
+import pers.clare.hisql.function.StoreResultSetHandler;
 import pers.clare.hisql.store.SQLStore;
 
 import java.lang.reflect.Constructor;
@@ -9,7 +11,8 @@ import java.util.*;
 
 public class ResultSetUtil {
 
-    private ResultSetUtil(){}
+    private ResultSetUtil() {
+    }
 
     public static String[] getNames(ResultSet rs) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();
@@ -22,22 +25,91 @@ public class ResultSetUtil {
         return names;
     }
 
-    public static <T> T to(Class<T> clazz, ResultSet rs) throws SQLException {
+    public static ResultSetHandler<?, ?> to = ResultSetUtil::to;
+
+    public static <T> T to(ResultSet rs, Class<T> clazz) throws SQLException {
         if (rs.next()) {
             return rs.getObject(1, clazz);
         }
         return null;
     }
 
-    public static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs) throws SQLException {
+    public static ResultSetHandler<?, ?> toMap = ResultSetUtil::toMap;
+
+    @SuppressWarnings("unchecked")
+    public static <T> Map<String, T> toMap(ResultSet rs, Class<T> valueClass) throws SQLException {
         if (rs.next()) {
             if (valueClass == Object.class) {
                 return (Map<String, T>) toMap(rs, getNames(rs));
             } else {
-                return toMap(valueClass, rs, getNames(rs));
+                return toMap(rs, valueClass, getNames(rs));
             }
         }
         return null;
+    }
+
+    public static ResultSetHandler<?, ?> toSet = ResultSetUtil::toSet;
+
+    public static <T> Set<T> toSet(ResultSet rs, Class<T> clazz) throws SQLException {
+        Set<T> result = new HashSet<>();
+        while (rs.next()) {
+            result.add(rs.getObject(1, clazz));
+        }
+        return result;
+    }
+
+    public static ResultSetHandler<?, ?> toMapSet = ResultSetUtil::toMapSet;
+
+    public static <T> Set<Map<String, T>> toMapSet(ResultSet rs, Class<T> valueClass) throws SQLException {
+        return (Set<Map<String, T>>) toMapCollection(rs, valueClass, new HashSet<>());
+    }
+
+    public static ResultSetHandler<?, ?> toMapList = ResultSetUtil::toMapList;
+
+    public static <T> List<Map<String, T>> toMapList(ResultSet rs, Class<T> valueClass) throws SQLException {
+        return (List<Map<String, T>>) toMapCollection(rs, valueClass, new ArrayList<>());
+    }
+
+    public static ResultSetHandler<?, ?> toList = ResultSetUtil::toList;
+
+    public static <T> List<T> toList(ResultSet rs, Class<T> clazz) throws SQLException {
+        List<T> result = new ArrayList<>();
+        while (rs.next()) {
+            result.add(rs.getObject(1, clazz));
+        }
+        return result;
+    }
+
+    public static StoreResultSetHandler<?, ?> toInstance = ResultSetUtil::toInstance;
+
+    public static <T> T toInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        FieldSetHandler[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        if (rs.next()) {
+            return buildInstance(rs, sqlStore.getConstructor(), fields);
+        }
+        return null;
+    }
+
+    public static StoreResultSetHandler<?, ?> toSetInstance = ResultSetUtil::toSetInstance;
+
+    public static <T> Set<T> toSetInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        Set<T> result = new HashSet<>();
+        FieldSetHandler[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        while (rs.next()) {
+            result.add(buildInstance(rs, sqlStore.getConstructor(), fields));
+        }
+        return result;
+    }
+
+    public static StoreResultSetHandler<?, ?> toInstances = ResultSetUtil::toInstances;
+
+    public static <T> List<T> toInstances(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+        List<T> list = new ArrayList<>();
+        FieldSetHandler[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        while (rs.next()) {
+            list.add(buildInstance(rs, sqlStore.getConstructor(), fields));
+        }
+        return list;
     }
 
     private static Map<String, Object> toMap(ResultSet rs, String[] names) throws SQLException {
@@ -49,7 +121,7 @@ public class ResultSetUtil {
         return map;
     }
 
-    private static <T> Map<String, T> toMap(Class<T> valueClass, ResultSet rs, String[] names) throws SQLException {
+    private static <T> Map<String, T> toMap(ResultSet rs, Class<T> valueClass, String[] names) throws SQLException {
         Map<String, T> map = new HashMap<>(names.length);
         int i = 1;
         for (String name : names) {
@@ -58,23 +130,8 @@ public class ResultSetUtil {
         return map;
     }
 
-    public static <T> Set<T> toSet(Class<T> clazz, ResultSet rs) throws SQLException {
-        Set<T> result = new HashSet<>();
-        while (rs.next()) {
-            result.add(rs.getObject(1, clazz));
-        }
-        return result;
-    }
-
-    public static <T> Set<Map<String, T>> toMapSet(Class<T> valueClass, ResultSet rs) throws SQLException {
-        return (Set<Map<String, T>>) toMapCollection(valueClass, rs, new HashSet<>());
-    }
-
-    public static <T> List<Map<String, T>> toMapList(Class<T> valueClass, ResultSet rs) throws SQLException {
-        return (List<Map<String, T>>) toMapCollection(valueClass, rs, new ArrayList<>());
-    }
-
-    private static <T> Collection<Map<String, T>> toMapCollection(Class<T> valueClass, ResultSet rs, Collection<Map<String, T>> collection) throws SQLException {
+    @SuppressWarnings("unchecked")
+    private static <T> Collection<Map<String, T>> toMapCollection(ResultSet rs, Class<T> valueClass, Collection<Map<String, T>> collection) throws SQLException {
         String[] names = getNames(rs);
         if (valueClass == Object.class) {
             while (rs.next()) {
@@ -82,48 +139,13 @@ public class ResultSetUtil {
             }
         } else {
             while (rs.next()) {
-                collection.add(toMap(valueClass, rs, names));
+                collection.add(toMap(rs, valueClass, names));
             }
         }
         return collection;
     }
 
-    public static <T> List<T> toList(Class<T> clazz, ResultSet rs) throws SQLException {
-        List<T> result = new ArrayList<>();
-        while (rs.next()) {
-            result.add(rs.getObject(1, clazz));
-        }
-        return result;
-    }
-
-
-    public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        if (rs.next()) {
-            return buildInstance(sqlStore.getConstructor(), fields, rs);
-        }
-        return null;
-    }
-
-    public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        Set<T> result = new HashSet<>();
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        while (rs.next()) {
-            result.add(buildInstance(sqlStore.getConstructor(), fields, rs));
-        }
-        return result;
-    }
-
-    public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
-        List<T> list = new ArrayList<>();
-        FieldSetHandler[] fields = toFields(sqlStore.getFieldSetMap(), rs.getMetaData());
-        while (rs.next()) {
-            list.add(buildInstance(sqlStore.getConstructor(), fields, rs));
-        }
-        return list;
-    }
-
-    private static <T> T buildInstance(Constructor<T> constructor, FieldSetHandler[] fields, ResultSet rs) throws Exception {
+    private static <T> T buildInstance(ResultSet rs, Constructor<T> constructor, FieldSetHandler[] fields) throws Exception {
         T target = constructor.newInstance();
         int i = 1;
         for (FieldSetHandler field : fields) {
@@ -133,7 +155,7 @@ public class ResultSetUtil {
         return target;
     }
 
-    private static FieldSetHandler[] toFields(Map<String, FieldSetHandler> fieldMap, ResultSetMetaData metaData) throws Exception {
+    private static FieldSetHandler[] toFields(ResultSetMetaData metaData, Map<String, FieldSetHandler> fieldMap) throws Exception {
         int l = metaData.getColumnCount();
         FieldSetHandler[] fields = new FieldSetHandler[l];
         for (int i = 0; i < l; i++) {

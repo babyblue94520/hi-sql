@@ -2,6 +2,7 @@ package pers.clare.hisql.exception;
 
 import java.sql.SQLException;
 
+@SuppressWarnings("unused")
 public class HiSqlException extends RuntimeException {
     private SQLException sqlException;
 

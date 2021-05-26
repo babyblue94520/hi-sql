@@ -144,14 +144,14 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     private ArgumentGetHandler buildArrayArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
-        Function<Object, Object>[] functions = getFieldHandlers(clazz);
+        List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Object[] array = (Object[]) handler.apply(arguments);
             Object[][] result = new Object[array.length][];
             Object[] values;
             int i = 0, j;
             for (Object o : array) {
-                values = new Object[functions.length];
+                values = new Object[functions.size()];
                 j = 0;
                 for (Function<Object, Object> valueHandler : functions) {
                     values[j++] = valueHandler.apply(o);
@@ -162,15 +162,16 @@ public abstract class SQLMethod implements MethodInterceptor {
         };
     }
 
+    @SuppressWarnings("unchecked")
     private ArgumentGetHandler buildCollectionArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
-        Function<Object, Object>[] functions = getFieldHandlers(clazz);
+        List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Collection<Object> collection = (Collection<Object>) handler.apply(arguments);
             Object[][] result = new Object[collection.size()][];
             Object[] values;
             int i = 0, j;
             for (Object o : collection) {
-                values = new Object[functions.length];
+                values = new Object[functions.size()];
                 j = 0;
                 for (Function<Object, Object> valueHandler : functions) {
                     values[j++] = valueHandler.apply(o);
@@ -181,7 +182,7 @@ public abstract class SQLMethod implements MethodInterceptor {
         };
     }
 
-    private Function<Object, Object>[] getFieldHandlers(Class<?> clazz) {
+    private List<Function<Object, Object>> getFieldHandlers(Class<?> clazz) {
         Field[] fields = clazz.getDeclaredFields();
         int modifier;
         List<Function<Object, Object>> valueHandlers = new ArrayList<>();
@@ -197,8 +198,7 @@ public abstract class SQLMethod implements MethodInterceptor {
                 }
             });
         }
-        Function<Object, Object>[] functions = new Function[valueHandlers.size()];
-        return valueHandlers.toArray(functions);
+        return valueHandlers;
     }
 
 
@@ -272,22 +272,4 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     abstract protected Object doInvoke(String sql, Object[] arguments);
-
-    public static void main(String[] args) {
-        Object[] a = new Object[0];
-        Class<?> clazz = a.getClass();
-        System.out.println(clazz.isArray());
-        System.out.println(clazz);
-        System.out.println(clazz.getComponentType());
-
-        List<Object> b = new ArrayList<>();
-        Class<?> bClazz = b.getClass();
-        System.out.println(bClazz);
-        System.out.println(bClazz.getComponentType());
-
-        Map<String, Object> m = new HashMap<>();
-        Class<?> mClazz = m.getClass();
-        System.out.println(mClazz);
-        System.out.println(mClazz.getComponentType());
-    }
 }
