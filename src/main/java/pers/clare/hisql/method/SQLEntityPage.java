@@ -20,6 +20,6 @@ public class SQLEntityPage extends PageMethod {
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {
-        return sqlStoreService.page(this.sqlStore, sql, pagination, arguments);
+        return sqlStoreService.page(readonly, sqlStore, sql, pagination, arguments);
     }
 }

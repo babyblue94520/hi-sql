@@ -8,6 +8,6 @@ public class BasicTypeMapSet extends SQLSelectMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findAllMapSet(valueType, sql, arguments);
+        return sqlStoreService.findAllMapSet(readonly, valueType, sql, arguments);
     }
 }

@@ -8,6 +8,6 @@ public class BasicType extends SQLSelectMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findFirst(valueType, sql, arguments);
+        return sqlStoreService.findFirst(readonly, valueType, sql, arguments);
     }
 }

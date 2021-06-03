@@ -20,6 +20,6 @@ public class SQLEntityNext extends PageMethod {
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {
-        return sqlStoreService.next(this.sqlStore, sql, pagination, arguments);
+        return sqlStoreService.next(readonly, sqlStore, sql, pagination, arguments);
     }
 }

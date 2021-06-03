@@ -31,8 +31,16 @@ public class SQLMethodFactory {
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
         String command;
         SQLMethod sqlMethod;
+        boolean readonly;
+        HiSql hiSql;
         for (Method method : methods) {
-            command = findSqlCommand(contents, method);
+            hiSql = method.getAnnotation(HiSql.class);
+            readonly = hiSql != null && hiSql.readonly();
+            command = contents.get(method.getName());
+            if (command == null && hiSql != null) {
+                command = contents.get(hiSql.name());
+                if (command == null) command = hiSql.value();
+            }
             if (command == null || command.length() == 0) {
                 throw new HiSqlException("%s.%s method must set XML or Sql.query", repositoryInterface.getName(), method.getName());
             }
@@ -43,6 +51,7 @@ public class SQLMethodFactory {
             sqlMethod.setContext(context);
             sqlMethod.setMethod(method);
             sqlMethod.setSql(command);
+            sqlMethod.setReadonly(readonly);
             sqlMethod.setSqlStoreService(sqlStoreService);
             sqlMethod.init();
             methodInterceptors.put(method, sqlMethod);

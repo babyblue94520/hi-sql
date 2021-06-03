@@ -8,6 +8,6 @@ public class SQLEntitySet extends SQLStoreMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findSet(sqlStore, sql, arguments);
+        return sqlStoreService.findSet(readonly, sqlStore, sql, arguments);
     }
 }
