@@ -114,18 +114,6 @@ public class SQLService {
         }
     }
 
-    private <T> Map<String, T> findMapHandler(ResultSet rs, Class<T> valueType) throws Exception {
-        return ResultSetUtil.toMap(rs, valueType);
-    }
-
-    public <T> Map<String, T> find(
-            String sql
-            , Class<T> valueType
-            , Object... parameters
-    ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, Map<String, T>>) ResultSetUtil.toMap);
-    }
-
     public <T> Map<String, T> find(
             boolean readonly
             , String sql
@@ -136,19 +124,12 @@ public class SQLService {
     }
 
     public <T> Set<T> findSet(
-            String sql
+            boolean readonly
             , Class<T> valueType
-            , Object... parameters
-    ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, Set<T>>) ResultSetUtil.toSet);
-    }
-
-    public <T> T findFirst(
-            Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, T>) ResultSetUtil.to);
+        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, Set<T>>) ResultSetUtil.toSet);
     }
 
     public <T> T findFirst(
@@ -161,36 +142,30 @@ public class SQLService {
     }
 
     public <T> Set<Map<String, T>> findAllMapSet(
-            Class<T> valueType
+            boolean readonly
+            , Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, Set<Map<String, T>>>) ResultSetUtil.toMapSet);
+        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, Set<Map<String, T>>>) ResultSetUtil.toMapSet);
     }
 
     public <T> List<Map<String, T>> findAllMap(
-            Class<T> valueType
+            boolean readonly
+            , Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, List<Map<String, T>>>) ResultSetUtil.toMapList);
+        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, List<Map<String, T>>>) ResultSetUtil.toMapList);
     }
 
     public <T> List<T> findAll(
-            Class<T> valueType
+            boolean readonly
+            , Class<T> valueType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sql, valueType, parameters, (ResultSetHandler<T, List<T>>) ResultSetUtil.toList);
-    }
-
-    public <T> Next<T> basicNext(
-            Class<T> clazz
-            , String sql
-            , Pagination pagination
-            , Object... parameters
-    ) {
-        return basicNext(false, clazz, sql, pagination, parameters);
+        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, List<T>>) ResultSetUtil.toList);
     }
 
     public <T> Next<T> basicNext(
@@ -215,15 +190,6 @@ public class SQLService {
     }
 
     public <T> Next<Map<String, T>> next(
-            Class<T> clazz
-            , String sql
-            , Pagination pagination
-            , Object... parameters
-    ) {
-        return next(false, clazz, sql, pagination, parameters);
-    }
-
-    public <T> Next<Map<String, T>> next(
             boolean readonly
             , Class<T> clazz
             , String sql
@@ -242,15 +208,6 @@ public class SQLService {
         } finally {
             ConnectionUtil.close(connection);
         }
-    }
-
-    public <T> Page<T> basicPage(
-            Class<T> clazz
-            , String sql
-            , Pagination pagination
-            , Object... parameters
-    ) {
-        return basicPage(false, clazz, sql, pagination, parameters);
     }
 
     public <T> Page<T> basicPage(

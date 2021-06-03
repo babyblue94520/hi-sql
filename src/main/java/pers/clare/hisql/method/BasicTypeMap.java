@@ -9,6 +9,6 @@ public class BasicTypeMap extends SQLSelectMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.find(sql, valueType, arguments);
+        return sqlStoreService.find(readonly, sql, valueType, arguments);
     }
 }

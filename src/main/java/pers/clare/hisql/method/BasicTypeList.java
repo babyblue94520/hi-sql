@@ -9,6 +9,6 @@ public class BasicTypeList extends SQLSelectMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findAll(valueType, sql, arguments);
+        return sqlStoreService.findAll(readonly, valueType, sql, arguments);
     }
 }

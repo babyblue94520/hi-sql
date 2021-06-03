@@ -138,20 +138,12 @@ public class SQLStoreService extends SQLService {
 
     @SuppressWarnings("unchecked")
     public <T> Set<T> findSet(
-            SQLStore<T> sqlStore
+            boolean readonly
+            ,  SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(false, sqlStore, sql, parameters, (StoreResultSetHandler<T, Set<T>>) ResultSetUtil.toSetInstance);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> List<T> findAll(
-            SQLStore<T> sqlStore
-            , String sql
-            , Object... parameters
-    ) {
-        return queryHandler(false, sqlStore, sql, parameters, (StoreResultSetHandler<T, List<T>>) ResultSetUtil.toInstances);
+        return queryHandler(readonly, sqlStore, sql, parameters, (StoreResultSetHandler<T, Set<T>>) ResultSetUtil.toSetInstance);
     }
 
     @SuppressWarnings("unchecked")

@@ -20,6 +20,7 @@ import java.util.function.Function;
 public abstract class SQLMethod implements MethodInterceptor {
     protected static final Object[] emptyArguments = new Object[0];
     protected String sql;
+    protected boolean readonly;
     protected HiSqlContext context;
     protected SQLStoreService sqlStoreService;
     protected SQLQueryReplaceBuilder sqlQueryReplaceBuilder;
@@ -54,6 +55,10 @@ public abstract class SQLMethod implements MethodInterceptor {
         this.sql = sql;
     }
 
+    public void setReadonly(boolean readonly) {
+        this.readonly = readonly;
+    }
+
     public void setMethod(Method method) {
         this.method = method;
     }
@@ -71,7 +76,6 @@ public abstract class SQLMethod implements MethodInterceptor {
         if (sortHandler == null) return null;
         return (Sort) sortHandler.apply(arguments);
     }
-
 
     private void buildArgumentValueHandler(Parameter p, int index) {
         Class<?> type = p.getType();
@@ -129,6 +133,7 @@ public abstract class SQLMethod implements MethodInterceptor {
             };
             if (isSimpleType(type)) {
                 setArgumentValueHandler(key + '.' + field.getName(), fieldHandler);
+                setArgumentValueHandler(field.getName(), fieldHandler);
             } else if (type == Pagination.class) {
                 paginationHandler = fieldHandler;
             } else if (type == Sort.class) {

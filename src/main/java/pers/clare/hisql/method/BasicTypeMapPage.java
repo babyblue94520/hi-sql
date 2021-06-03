@@ -11,6 +11,6 @@ public class BasicTypeMapPage extends PageMethod {
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {
-        return sqlStoreService.page(this.valueType, sql, pagination, arguments);
+        return sqlStoreService.page(readonly, valueType, sql, pagination, arguments);
     }
 }

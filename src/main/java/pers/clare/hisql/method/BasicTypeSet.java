@@ -9,6 +9,6 @@ public class BasicTypeSet extends SQLSelectMethod {
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findSet(sql, valueType, arguments);
+        return sqlStoreService.findSet(readonly, valueType, sql, arguments);
     }
 }
