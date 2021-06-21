@@ -5,6 +5,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.hisql.*;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentGetHandler;
+import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQuery;
@@ -30,6 +31,7 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected Method method;
     protected ArgumentGetHandler paginationHandler;
     protected ArgumentGetHandler sortHandler;
+    protected ArgumentGetHandler resultSetCallback;
 
     public void init() {
         Parameter[] parameters = method.getParameters();
@@ -81,7 +83,21 @@ public abstract class SQLMethod implements MethodInterceptor {
         Class<?> type = p.getType();
         ArgumentGetHandler handler = (arguments) -> arguments[index];
         if (isSimpleType(type)) {
-            setArgumentValueHandler(p.getName(), handler);
+            if (Collection.class.isAssignableFrom(type)) {
+                Type[] types = ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments();
+                Class<?> actualType = types.length > 0 ? (Class<?>) types[0] : null;
+                if (actualType == null || isSimpleType(actualType)) {
+                    setArgumentValueHandler(p.getName(), handler);
+                } else {
+                    if (actualType.isArray()) {
+                        setArgumentValueHandler(p.getName(), handler);
+                    } else {
+                        setArgumentValueHandler(p.getName(), buildCollectionArgumentValueHandler((Class<?>) types[0], handler));
+                    }
+                }
+            } else {
+                setArgumentValueHandler(p.getName(), handler);
+            }
         } else if (type.isArray()) {
             Class<?> componentType = type.getComponentType();
             if (isSimpleType(componentType)) {
@@ -93,22 +109,12 @@ public abstract class SQLMethod implements MethodInterceptor {
                     setArgumentValueHandler(p.getName(), buildArrayArgumentValueHandler(componentType, handler));
                 }
             }
-        } else if (Collection.class.isAssignableFrom(type)) {
-            Type[] types = ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments();
-            Class<?> actualType = types.length > 0 ? (Class<?>) types[0] : null;
-            if (actualType == null || isSimpleType(actualType)) {
-                setArgumentValueHandler(p.getName(), handler);
-            } else {
-                if (actualType.isArray()) {
-                    setArgumentValueHandler(p.getName(), handler);
-                } else {
-                    setArgumentValueHandler(p.getName(), buildCollectionArgumentValueHandler((Class<?>) types[0], handler));
-                }
-            }
         } else if (type == Pagination.class) {
             paginationHandler = handler;
         } else if (type == Sort.class) {
             sortHandler = handler;
+        } else if (type == ResultSetCallback.class) {
+            resultSetCallback = handler;
         } else {
             buildArgumentValueHandler(type, p.getName(), handler);
         }
@@ -216,7 +222,7 @@ public abstract class SQLMethod implements MethodInterceptor {
     }
 
     private boolean isSimpleType(Class<?> type) {
-        return type.isPrimitive() || type.getName().startsWith("java.lang");
+        return type.isPrimitive() || type.getName().startsWith("java.");
     }
 
     protected SQLQuery toSqlQuery(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, Object[] arguments) {
@@ -273,7 +279,11 @@ public abstract class SQLMethod implements MethodInterceptor {
             executeSQL = sb.toString();
             arguments = emptyArguments;
         }
-        return doInvoke(executeSQL, arguments);
+        if (resultSetCallback == null) {
+            return doInvoke(executeSQL, arguments);
+        } else {
+            return sqlStoreService.query(readonly, executeSQL, (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()), arguments);
+        }
     }
 
     abstract protected Object doInvoke(String sql, Object[] arguments);

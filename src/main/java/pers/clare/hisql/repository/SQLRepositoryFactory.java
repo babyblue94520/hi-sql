@@ -44,11 +44,10 @@ public class SQLRepositoryFactory implements BeanClassLoaderAware, BeanFactoryAw
         ProxyFactory result = new ProxyFactory();
         Object target;
         if (SQLCrudRepository.class.isAssignableFrom(repositoryInterface)) {
-            target = new SQLCrudRepositoryImpl(context, sqlStoreService, repositoryInterface);
+            target = new SQLCrudRepositoryImpl<>(context, sqlStoreService, repositoryInterface);
             result.setInterfaces(repositoryInterface, SQLCrudRepository.class);
         } else {
-            target = new SQLRepository() {
-            };
+            target = new SQLRepositoryImpl(sqlStoreService);
             result.setInterfaces(repositoryInterface, SQLRepository.class);
         }
         result.setTarget(target);

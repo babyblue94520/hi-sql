@@ -20,9 +20,7 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
 
     private final Class<? extends T> repositoryInterface;
 
-    private SQLRepositoryFactory factory;
-
-    private AnnotationAttributes annotationAttributes;
+    private final AnnotationAttributes annotationAttributes;
 
     private T repository;
 
@@ -47,7 +45,7 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
     }
 
     @Override
-    public T getObject() throws Exception {
+    public T getObject() {
         return this.repository;
     }
 
@@ -71,16 +69,16 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
         Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
 
         DataSource write;
-        if (dataSourceName == null || dataSourceName.length() == 0) {
+        if (dataSourceName.length() == 0) {
             write = beanFactory.getBean(DataSource.class);
         } else {
             write = (DataSource) beanFactory.getBean(dataSourceName);
         }
         DataSource read = write;
-        if (readDataSourceName != null && readDataSourceName.length() > 0)
+        if (readDataSourceName.length() > 0)
             read = (DataSource) beanFactory.getBean(readDataSourceName);
         HiSqlContext hiSqlContext;
-        if (contextName == null || contextName.length() == 0) {
+        if (contextName.length() == 0) {
             hiSqlContext = new HiSqlContext();
         } else {
             hiSqlContext = (HiSqlContext) beanFactory.getBean(contextName);
@@ -96,11 +94,11 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
         }
 
         SQLStoreService sqlStoreService = new SQLStoreService(hiSqlContext, write, read);
-        this.factory = new SQLRepositoryFactory();
-        this.factory.setContext(hiSqlContext);
-        this.factory.setBeanClassLoader(classLoader);
-        this.factory.setBeanFactory(beanFactory);
-        this.repository = this.factory.getRepository(repositoryInterface, sqlStoreService);
+        SQLRepositoryFactory factory = new SQLRepositoryFactory();
+        factory.setContext(hiSqlContext);
+        factory.setBeanClassLoader(classLoader);
+        factory.setBeanFactory(beanFactory);
+        this.repository = factory.getRepository(repositoryInterface, sqlStoreService);
     }
 
 }

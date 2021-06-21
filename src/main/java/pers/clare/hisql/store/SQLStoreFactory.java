@@ -10,7 +10,9 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Transient;
+import java.io.InputStream;
 import java.lang.reflect.*;
+import java.sql.Blob;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,7 +32,7 @@ public class SQLStoreFactory {
     public static boolean isIgnore(Class<?> clazz) {
         return clazz == null
                 || clazz.isPrimitive()
-                || clazz.getName().startsWith("java.lang")
+                || clazz.getName().startsWith("java.")
                 || clazz.isArray()
                 || Collection.class.isAssignableFrom(clazz)
                 || clazz.isEnum()
@@ -234,6 +236,8 @@ public class SQLStoreFactory {
         if (resultSetValueConverter == null) {
             if (field.getType() == Object.class) {
                 return (target, rs, index) -> field.set(target, rs.getObject(index));
+            } else if (Blob.class.isAssignableFrom(field.getType())) {
+                return (target, rs, index) -> field.set(target, rs.getBlob(index));
             } else {
                 return (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
             }

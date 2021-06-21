@@ -21,11 +21,12 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class SQLCrudRepositoryImpl<T> implements SQLCrudRepository<T> {
+public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCrudRepository<T> {
     private final SQLCrudStore<T> sqlStore;
     private final SQLStoreService sqlStoreService;
 
     public SQLCrudRepositoryImpl(HiSqlContext context, SQLStoreService sqlStoreService, Class<T> repositoryClass) {
+        super(sqlStoreService);
         this.sqlStoreService = sqlStoreService;
         sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(context, findFirstActualTypeArgument(repositoryClass), true);
     }

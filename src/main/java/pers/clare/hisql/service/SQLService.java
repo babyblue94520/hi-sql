@@ -2,6 +2,7 @@ package pers.clare.hisql.service;
 
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.function.ResultSetHandler;
 import pers.clare.hisql.page.*;
 import pers.clare.hisql.support.ConnectionReuse;
@@ -66,6 +67,25 @@ public class SQLService {
         try {
             connection = getConnection(readonly);
             return doQueryHandler(connection, readonly, sql, valueType, parameters, resultSetHandler);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection);
+        }
+    }
+
+    public <R> R query(
+            boolean readonly
+            , String sql
+            , ResultSetCallback<R> resultSetCallback
+            , Object... parameters
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection(readonly);
+            return resultSetCallback.apply(ConnectionUtil.query(connection, sql, parameters));
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {

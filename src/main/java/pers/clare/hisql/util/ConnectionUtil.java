@@ -3,10 +3,12 @@ package pers.clare.hisql.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.ConnectionReuseHolder;
 
+import java.io.InputStream;
 import java.sql.*;
 
 public class ConnectionUtil {
@@ -101,7 +103,7 @@ public class ConnectionUtil {
         int index = 1;
         if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
-            if (value instanceof Pagination || value instanceof Sort) continue;
+            if (value instanceof Pagination || value instanceof Sort||value instanceof ResultSetCallback) continue;
             ps.setObject(index++, value);
         }
     }
@@ -113,7 +115,11 @@ public class ConnectionUtil {
         int index = 1;
         if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
-            ps.setObject(index++, value);
+            if (value instanceof InputStream) {
+                ps.setBinaryStream(index++, (InputStream) value);
+            } else {
+                ps.setObject(index++, value);
+            }
         }
     }
 }

@@ -29,7 +29,11 @@ public class ResultSetUtil {
 
     public static <T> T to(ResultSet rs, Class<T> clazz) throws SQLException {
         if (rs.next()) {
-            return rs.getObject(1, clazz);
+            if(Blob.class.isAssignableFrom(clazz)){
+                return (T) rs.getBlob(1);
+            }else{
+                return rs.getObject(1, clazz);
+            }
         }
         return null;
     }
