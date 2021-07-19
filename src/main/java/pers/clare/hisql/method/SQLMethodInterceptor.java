@@ -4,6 +4,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.hisql.exception.HiSqlException;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +43,11 @@ public class SQLMethodInterceptor implements MethodInterceptor {
                 throw new HiSqlException("%s not found", methodInvocation.getMethod());
             return handler.invoke(methodInvocation);
         } else {
-            return method.invoke(target, methodInvocation.getArguments());
+            try{
+                return method.invoke(target, methodInvocation.getArguments());
+            }catch (InvocationTargetException e){
+                throw e.getTargetException();
+            }
         }
     }
 }
