@@ -461,17 +461,10 @@ public class HiSqlConfig {
     </SQL>
     ```
 
-* **@SqlConnectionReuse**
+* **Support @Transactional**
   
-    Use the same connection to call different methods
-
-    * **User-Defined Variables**
-    * **Transaction**
-    
-    **Same connection**
-      
     ```java
-    @Repository
+    import org.springframework.transaction.annotation.Propagation;@Repository
     public interface TransactionRepository extends SQLRepository {
     
         // mysql
@@ -483,40 +476,10 @@ public class HiSqlConfig {
     }
   
     public class Service{
-        
-        @SqlConnectionReuse
+        @Transactional(propagtion = Propagation.SUPPORTS)
         public String queryDefineValue(Long id, String name) {
             transactionRepository.updateName(id, name);
             return String.format("old name:%s , new name:%s", transactionRepository.getOldName(), name);
-        }
-  
-    }
-    ```
-      
-    **Transaction**
-        
-    * **Rollback on any exception**
-
-    ```java
-    public class TransactionExample {
-        @SqlConnectionReuse(transaction = true)
-        public void transaction(StringBuffer result, Long id, String name, int count) {
-            //
-        }
-    }
-    ```
-
-    **Isolation**
-
-    Use a different **Isolation** to create a new connection
-
-    ```java
-    import java.hiSql.Connection;
-    
-    public class IsolationExample {
-        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
-        public void transaction(StringBuffer result, Long id, String name, int count) {
-          
         }
     }
     ```
@@ -524,7 +487,7 @@ public class HiSqlConfig {
     **Rollback example**
 
     ```java
-    public class RollbackExample {
+    import org.springframework.transaction.annotation.Isolation;public class RollbackExample {
         public String rollback(Long id, String name) {
             StringBuilder sb = new StringBuilder();
             try {
@@ -536,7 +499,7 @@ public class HiSqlConfig {
             return sb.toString();
         }
         
-        @SqlConnectionReuse(transaction = true)
+        @Transactional(propagtion = Propagation.REQUIRED)
         public void updateException(StringBuilder sb, Long id, String name) {
         
             // first update user name
@@ -566,12 +529,12 @@ public class HiSqlConfig {
             throw new RuntimeException("rollback");
         }
         
-        @SqlConnectionReuse
+        @Transactional
         public User findById(Long id) {
             return userRepository.findById(id);
         }
         
-        @SqlConnectionReuse(isolation = Connection.TRANSACTION_READ_UNCOMMITTED)
+        @Transactional(isolation = Isolation.READ_UNCOMMITTED)
         public User findByIdUncommitted(Long id) {
             return userRepository.findById(id);
         }
