@@ -34,15 +34,16 @@ public class SQLStoreService extends SQLService {
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             return doQueryHandler(connection, readonly, sqlStore, sql, parameters, storeResultSetHandler);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -69,15 +70,16 @@ public class SQLStoreService extends SQLService {
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             return doQueryHandler(connection, readonly, sqlStore, entity, storeResultSetHandler);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -185,8 +187,9 @@ public class SQLStoreService extends SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
@@ -194,7 +197,7 @@ public class SQLStoreService extends SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -205,8 +208,9 @@ public class SQLStoreService extends SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters), sqlStore);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
@@ -214,7 +218,7 @@ public class SQLStoreService extends SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -235,8 +239,9 @@ public class SQLStoreService extends SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
@@ -244,7 +249,7 @@ public class SQLStoreService extends SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -256,8 +261,9 @@ public class SQLStoreService extends SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sqlStore.getSelect()), parameters), sqlStore);
             long total = list.size();
             int size = pagination.getSize();
@@ -278,7 +284,7 @@ public class SQLStoreService extends SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 

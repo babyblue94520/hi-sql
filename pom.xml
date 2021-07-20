@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.5.1-RELEASE</version>
+    <version>0.0.6-RELEASE</version>
     <name>hi-sql</name>
     <description>Have fun using SQL</description>
     <packaging>jar</packaging>
@@ -42,6 +42,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
+            <version>5.2.10.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
             <version>5.2.10.RELEASE</version>
         </dependency>
         <dependency>

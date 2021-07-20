@@ -2,12 +2,13 @@ package pers.clare.hisql.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
-import pers.clare.hisql.support.ConnectionReuseHolder;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.sql.*;
 
@@ -85,15 +86,8 @@ public class ConnectionUtil {
         return statement.executeUpdate(sql);
     }
 
-    public static void close(Connection connection) {
-        if (connection == null) return;
-        try {
-            if (ConnectionReuseHolder.get() == null) {
-                connection.close();
-            }
-        } catch (Exception e) {
-            throw new HiSqlException(e);
-        }
+    public static void close(Connection connection, DataSource dataSource) {
+        DataSourceUtils.releaseConnection(connection, dataSource);
     }
 
     public static void setQueryValue(
@@ -103,7 +97,7 @@ public class ConnectionUtil {
         int index = 1;
         if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
-            if (value instanceof Pagination || value instanceof Sort||value instanceof ResultSetCallback) continue;
+            if (value instanceof Pagination || value instanceof Sort || value instanceof ResultSetCallback) continue;
             ps.setObject(index++, value);
         }
     }

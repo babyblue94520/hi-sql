@@ -13,6 +13,7 @@ import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -172,8 +173,9 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     @Override
     public Collection<T> insertAll(Collection<T> entities) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(false);
+            connection = sqlStoreService.getConnection(dataSource);
             Field autoKey = sqlStore.getAutoKey();
             if (autoKey == null) {
                 for (T entity : entities) {
@@ -188,15 +190,16 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
         } catch (SQLException | IllegalAccessException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
     @Override
     public T[] insertAll(T[] entities) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(false);
+            connection = sqlStoreService.getConnection(dataSource);
             Field autoKey = sqlStore.getAutoKey();
             Statement statement = connection.createStatement();
             if (autoKey == null) {
@@ -215,15 +218,16 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
         } catch (SQLException | IllegalAccessException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
     @Override
     public int[] updateAll(Collection<T> entities) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(false);
+            connection = sqlStoreService.getConnection(dataSource);
             Statement statement = connection.createStatement();
             int[] counts = new int[entities.size()];
             int i = 0;
@@ -234,15 +238,16 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
         } catch (SQLException | IllegalAccessException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
     @Override
     public int[] updateAll(T[] entities) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(false);
+            connection = sqlStoreService.getConnection(dataSource);
             Statement statement = connection.createStatement();
             int l = entities.length;
             int[] counts = new int[l];
@@ -253,7 +258,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
         } catch (SQLException | IllegalAccessException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 

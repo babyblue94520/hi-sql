@@ -1,12 +1,11 @@
 package pers.clare.hisql.service;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.function.ResultSetHandler;
 import pers.clare.hisql.page.*;
-import pers.clare.hisql.support.ConnectionReuse;
-import pers.clare.hisql.support.ConnectionReuseHolder;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
@@ -43,13 +42,8 @@ public class SQLService {
         return readonly ? read : write;
     }
 
-    public Connection getConnection(boolean readonly) throws SQLException {
-        ConnectionReuse connectionReuse = ConnectionReuseHolder.get();
-        if (connectionReuse == null) {
-            return getDataSource(readonly).getConnection();
-        } else {
-            return connectionReuse.getConnection(getDataSource(readonly && connectionReuse.isReadonly()));
-        }
+    public Connection getConnection(DataSource dataSource) throws SQLException {
+        return DataSourceUtils.getConnection(dataSource);
     }
 
     protected <T> boolean retry(T result, boolean readonly) {
@@ -64,15 +58,16 @@ public class SQLService {
             , ResultSetHandler<T, R> resultSetHandler
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             return doQueryHandler(connection, readonly, sql, valueType, parameters, resultSetHandler);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -83,15 +78,16 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             return resultSetCallback.apply(ConnectionUtil.query(connection, sql, parameters));
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -196,8 +192,9 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
@@ -205,7 +202,7 @@ public class SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -217,8 +214,9 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
             return Next.of(pagination.getPage(), pagination.getSize(), list);
         } catch (HiSqlException e) {
@@ -226,7 +224,7 @@ public class SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -238,8 +236,9 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
@@ -247,7 +246,7 @@ public class SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -268,8 +267,9 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
         try {
-            connection = getConnection(readonly);
+            connection = getConnection(dataSource);
             List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
@@ -277,7 +277,7 @@ public class SQLService {
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -287,8 +287,9 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(false);
         try {
-            connection = getConnection(false);
+            connection = getConnection(dataSource);
             Statement statement = ConnectionUtil.insert(connection, sql, parameters);
             if (statement.getUpdateCount() == 0) return null;
             ResultSet rs = statement.getGeneratedKeys();
@@ -296,7 +297,7 @@ public class SQLService {
         } catch (SQLException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -305,13 +306,14 @@ public class SQLService {
             , Object... parameters
     ) {
         Connection connection = null;
+        DataSource dataSource = getDataSource(false);
         try {
-            connection = getConnection(false);
+            connection = getConnection(dataSource);
             return ConnectionUtil.update(connection, sql, parameters);
         } catch (SQLException e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 }

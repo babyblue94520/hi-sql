@@ -7,6 +7,7 @@ import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.util.ConnectionUtil;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 
 public class SQLRepositoryImpl implements SQLRepository {
@@ -39,15 +40,16 @@ public class SQLRepositoryImpl implements SQLRepository {
     @Override
     public <R> R connection(boolean readonly, ConnectionCallback<R> callback) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(readonly);
         try {
-            connection = sqlStoreService.getConnection(readonly);
+            connection = sqlStoreService.getConnection(dataSource);
             return callback.apply(connection);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 
@@ -59,15 +61,16 @@ public class SQLRepositoryImpl implements SQLRepository {
     @Override
     public <R> R preparedStatement(boolean readonly, String sql, PreparedStatementCallback<R> callback) {
         Connection connection = null;
+        DataSource dataSource = sqlStoreService.getDataSource(readonly);
         try {
-            connection = sqlStoreService.getConnection(readonly);
+            connection = sqlStoreService.getConnection(dataSource);
             return callback.apply(connection.prepareStatement(sql));
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
-            ConnectionUtil.close(connection);
+            ConnectionUtil.close(connection, dataSource);
         }
     }
 }
