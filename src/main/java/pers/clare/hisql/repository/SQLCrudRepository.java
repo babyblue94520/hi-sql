@@ -1,6 +1,9 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.page.*;
+import pers.clare.hisql.page.Next;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.Sort;
 
 import java.util.Collection;
 import java.util.List;

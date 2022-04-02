@@ -1,11 +1,11 @@
 package pers.clare.hisql.util;
 
+import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.exception.HiSqlException;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Collection;
 
 
 public class SQLQueryUtil {

@@ -7,8 +7,8 @@ import pers.clare.hisql.naming.LowerCaseNamingStrategy;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.MySQLPaginationMode;
 import pers.clare.hisql.page.PaginationMode;
-import pers.clare.hisql.repository.SQLScanRegistrar;
 import pers.clare.hisql.repository.SQLRepositoryFactoryBean;
+import pers.clare.hisql.repository.SQLScanRegistrar;
 
 import java.lang.annotation.*;
 

@@ -7,7 +7,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +60,7 @@ public class SQLInjector {
         if(!root.endsWith("/")){
             path.append("/");
         }
-        return path.append(clazz.getName().replaceAll("\\.", "/"))
+        return path.append(clazz.getSimpleName())
                 .append(".xml")
                 .toString();
     }

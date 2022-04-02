@@ -3,14 +3,18 @@ package pers.clare.hisql.method;
 import org.aopalliance.intercept.MethodInterceptor;
 import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.annotation.HiSql;
-import pers.clare.hisql.page.*;
-import pers.clare.hisql.util.MethodUtil;
-import pers.clare.hisql.store.SQLStoreFactory;
-import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.page.Next;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.store.SQLStoreFactory;
+import pers.clare.hisql.util.MethodUtil;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 

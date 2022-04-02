@@ -6,7 +6,10 @@ import pers.clare.hisql.function.StoreResultSetHandler;
 import pers.clare.hisql.store.SQLStore;
 
 import java.lang.reflect.Constructor;
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.*;
 
 public class ResultSetUtil {
@@ -29,9 +32,9 @@ public class ResultSetUtil {
 
     public static <T> T to(ResultSet rs, Class<T> clazz) throws SQLException {
         if (rs.next()) {
-            if(Blob.class.isAssignableFrom(clazz)){
+            if (Blob.class.isAssignableFrom(clazz)) {
                 return (T) rs.getBlob(1);
-            }else{
+            } else {
                 return rs.getObject(1, clazz);
             }
         }
@@ -153,8 +156,8 @@ public class ResultSetUtil {
         T target = constructor.newInstance();
         int i = 1;
         for (FieldSetHandler field : fields) {
-            if (field == null) continue;
-            field.apply(target, rs, i++);
+            if (field != null) field.apply(target, rs, i);
+            i++;
         }
         return target;
     }

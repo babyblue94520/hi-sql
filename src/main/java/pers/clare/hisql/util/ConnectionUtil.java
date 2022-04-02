@@ -3,7 +3,6 @@ package pers.clare.hisql.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;

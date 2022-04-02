@@ -2,7 +2,7 @@ package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.hisql.*;
+import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentGetHandler;
 import pers.clare.hisql.function.ResultSetCallback;

@@ -4,7 +4,7 @@ package pers.clare.hisql.store;
 import pers.clare.hisql.function.FieldSetHandler;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Map;
 
 public class SQLStore<T> {
     private final Constructor<T> constructor;
