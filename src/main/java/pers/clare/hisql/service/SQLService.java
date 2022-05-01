@@ -1,7 +1,7 @@
 package pers.clare.hisql.service;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import pers.clare.hisql.HiSqlContext;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.function.ResultSetHandler;
@@ -22,11 +22,11 @@ import java.util.Set;
 
 public class SQLService {
 
-    protected HiSqlContext context;
-    protected DataSource write;
-    protected DataSource read;
+    protected final HiSqlContext context;
+    protected final DataSource write;
+    protected final DataSource read;
 
-    protected boolean hasRead;
+    protected final boolean hasRead;
 
     public SQLService(HiSqlContext context, DataSource write) {
         this(context, write, write);
@@ -43,11 +43,15 @@ public class SQLService {
         hasRead = read != null && write != read;
     }
 
+    public HiSqlContext getContext() {
+        return context;
+    }
+
     public DataSource getDataSource(boolean readonly) {
         return readonly ? read : write;
     }
 
-    public Connection getConnection(DataSource dataSource) throws SQLException {
+    public Connection getConnection(DataSource dataSource) {
         return DataSourceUtils.getConnection(dataSource);
     }
 
@@ -58,7 +62,7 @@ public class SQLService {
     protected <T, R> R queryHandler(
             Boolean readonly
             , String sql
-            , Class<T> valueType
+            , Class<T> returnType
             , Object[] parameters
             , ResultSetHandler<T, R> resultSetHandler
     ) {
@@ -66,7 +70,7 @@ public class SQLService {
         DataSource dataSource = getDataSource(readonly);
         try {
             connection = getConnection(dataSource);
-            return doQueryHandler(connection, readonly, sql, valueType, parameters, resultSetHandler);
+            return doQueryHandler(connection, readonly, sql, returnType, parameters, resultSetHandler);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
@@ -123,13 +127,13 @@ public class SQLService {
             Connection connection
             , Boolean readonly
             , String sql
-            , Class<T> valueType
+            , Class<T> returnType
             , Object[] parameters
             , ResultSetHandler<T, R> resultSetHandler
     ) throws Exception {
-        R result = resultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), valueType);
+        R result = resultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), returnType);
         if (retry(result, readonly)) {
-            return doQueryHandler(connection, false, sql, valueType, parameters, resultSetHandler);
+            return doQueryHandler(connection, false, sql, returnType, parameters, resultSetHandler);
         } else {
             return result;
         }
@@ -138,55 +142,55 @@ public class SQLService {
     public <T> Map<String, T> find(
             boolean readonly
             , String sql
-            , Class<T> valueType
+            , Class<T> returnType
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, Map<String, T>>) ResultSetUtil.toMap);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, Map<String, T>>) ResultSetUtil.toMap);
     }
 
     public <T> Set<T> findSet(
             boolean readonly
-            , Class<T> valueType
+            , Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, Set<T>>) ResultSetUtil.toSet);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, Set<T>>) ResultSetUtil.toSet);
     }
 
     public <T> T findFirst(
             boolean readonly
-            , Class<T> valueType
+            , Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, T>) ResultSetUtil.to);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, T>) ResultSetUtil.to);
     }
 
     public <T> Set<Map<String, T>> findAllMapSet(
             boolean readonly
-            , Class<T> valueType
+            , Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, Set<Map<String, T>>>) ResultSetUtil.toMapSet);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, Set<Map<String, T>>>) ResultSetUtil.toMapSet);
     }
 
     public <T> List<Map<String, T>> findAllMap(
             boolean readonly
-            , Class<T> valueType
+            , Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, List<Map<String, T>>>) ResultSetUtil.toMapList);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, List<Map<String, T>>>) ResultSetUtil.toMapList);
     }
 
     public <T> List<T> findAll(
             boolean readonly
-            , Class<T> valueType
+            , Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(readonly, sql, valueType, parameters, (ResultSetHandler<T, List<T>>) ResultSetUtil.toList);
+        return queryHandler(readonly, sql, returnType, parameters, (ResultSetHandler<T, List<T>>) ResultSetUtil.toList);
     }
 
     public <T> Next<T> basicNext(

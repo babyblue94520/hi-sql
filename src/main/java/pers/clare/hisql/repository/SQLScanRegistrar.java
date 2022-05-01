@@ -24,8 +24,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         AnnotationAttributes attributes = AnnotationAttributes
                 .fromMap(importingClassMetadata.getAnnotationAttributes(EnableHiSql.class.getName()));
         if (attributes != null) {
-            registerBeanDefinitions(importingClassMetadata, attributes, registry,
-                    generateBaseBeanName(importingClassMetadata));
+            registerBeanDefinitions(importingClassMetadata, attributes, registry);
         }
     }
 
@@ -33,7 +32,6 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             AnnotationMetadata annotationMetadata
             , AnnotationAttributes annotationAttributes
             , BeanDefinitionRegistry registry
-            , String beanName
     ) {
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLScanner.class);
         builder.addPropertyValue("annotationAttributes", annotationAttributes);
@@ -52,13 +50,12 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             basePackages.add(getDefaultBasePackage(annotationMetadata));
         }
         builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
-
+        String beanName = generateBaseBeanName(annotationMetadata, SQLScanner.class);
         registry.registerBeanDefinition(beanName, builder.getBeanDefinition());
-
     }
 
-    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
-        return importingClassMetadata.getClassName() + "#" + SQLScanRegistrar.class.getSimpleName();
+    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, Class<?> clazz) {
+        return importingClassMetadata.getClassName() + "#" + clazz.getSimpleName();
     }
 
     private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {

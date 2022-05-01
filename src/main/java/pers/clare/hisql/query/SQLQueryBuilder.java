@@ -84,11 +84,7 @@ public class SQLQueryBuilder {
     }
 
     private static void put(Map<String, List<Integer>> keyIndex, String key, Integer index) {
-        List<Integer> list = keyIndex.get(key);
-        if (list == null) {
-            keyIndex.put(key, list = new ArrayList<>());
-        }
-        list.add(index);
+        keyIndex.computeIfAbsent(key, k -> new ArrayList<>()).add(index);
     }
 
     public static void main(String[] args) {

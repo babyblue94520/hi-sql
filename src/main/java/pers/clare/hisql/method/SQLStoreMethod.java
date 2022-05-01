@@ -4,16 +4,15 @@ import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.store.SQLStoreFactory;
 
 public abstract class SQLStoreMethod extends SQLMethod {
-    protected Class<?> valueType;
     protected SQLStore<?> sqlStore;
 
-    SQLStoreMethod(Class<?> valueType) {
-        this.valueType = valueType;
+    SQLStoreMethod(Class<?> returnType) {
+        super(returnType);
     }
 
     @Override
     public void init() {
-        this.sqlStore = SQLStoreFactory.build(context, valueType, false);
         super.init();
+        this.sqlStore = SQLStoreFactory.build(sqlStoreService.getContext(), this.returnType, false);
     }
 }

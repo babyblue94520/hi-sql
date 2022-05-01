@@ -6,17 +6,16 @@ import pers.clare.hisql.store.SQLStoreFactory;
 
 
 public class SQLEntityNext extends PageMethod {
-    protected Class<?> valueType;
     protected SQLStore<?> sqlStore;
 
-    SQLEntityNext(Class<?> valueType) {
-        this.valueType = valueType;
+    SQLEntityNext(Class<?> returnType) {
+        super(returnType);
     }
 
     @Override
     public void init() {
-        this.sqlStore = SQLStoreFactory.build(context, valueType, false);
         super.init();
+        this.sqlStore = SQLStoreFactory.build(sqlStoreService.getContext(), this.returnType, false);
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {

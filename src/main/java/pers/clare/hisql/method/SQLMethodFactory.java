@@ -1,7 +1,7 @@
 package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
-import pers.clare.hisql.HiSqlContext;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Next;
@@ -26,10 +26,10 @@ public class SQLMethodFactory {
     }
 
     public static Map<Method, MethodInterceptor> create(
-            HiSqlContext context
-            , SQLStoreService sqlStoreService
+            SQLStoreService sqlStoreService
             , Class<?> repositoryInterface
     ) {
+        HiSqlContext context = sqlStoreService.getContext();
         Method[] methods = repositoryInterface.getDeclaredMethods();
         Map<String, String> contents = SQLInjector.getContents(context.getXmlRoot(), repositoryInterface);
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
@@ -52,11 +52,10 @@ public class SQLMethodFactory {
             if (sqlMethod == null) {
                 throw new HiSqlException("%s not support return type", method.getName());
             }
-            sqlMethod.setContext(context);
+            sqlMethod.setSqlStoreService(sqlStoreService);
             sqlMethod.setMethod(method);
             sqlMethod.setSql(command);
             sqlMethod.setReadonly(readonly);
-            sqlMethod.setSqlStoreService(sqlStoreService);
             sqlMethod.init();
             methodInterceptors.put(method, sqlMethod);
         }
@@ -103,14 +102,14 @@ public class SQLMethodFactory {
      * build set result method interceptor
      */
     private static SQLMethod buildSet(Method method) {
-        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
-        if (valueType == null || valueType == Map.class) {
-            return new BasicTypeMapSet(getParameterMapValueClass(method, valueType));
+        Class<?> returnType = MethodUtil.getReturnClass(method, 0);
+        if (returnType == null || returnType == Map.class) {
+            return new BasicTypeMapSet(getParameterMapValueClass(method, returnType));
         } else {
-            if (SQLStoreFactory.isIgnore(valueType)) {
-                return new BasicTypeSet(valueType);
+            if (SQLStoreFactory.isIgnore(returnType)) {
+                return new BasicTypeSet(returnType);
             } else {
-                return new SQLEntitySet(valueType);
+                return new SQLEntitySet(returnType);
             }
         }
     }
@@ -119,14 +118,14 @@ public class SQLMethodFactory {
      * build list result method interceptor
      */
     private static SQLMethod buildList(Method method) {
-        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
-        if (valueType == null || valueType == Map.class) {
-            return new BasicTypeMapList(getParameterMapValueClass(method, valueType));
+        Class<?> returnType = MethodUtil.getReturnClass(method, 0);
+        if (returnType == null || returnType == Map.class) {
+            return new BasicTypeMapList(getParameterMapValueClass(method, returnType));
         } else {
-            if (SQLStoreFactory.isIgnore(valueType)) {
-                return new BasicTypeList(valueType);
+            if (SQLStoreFactory.isIgnore(returnType)) {
+                return new BasicTypeList(returnType);
             } else {
-                return new SQLEntityList(valueType);
+                return new SQLEntityList(returnType);
             }
         }
     }
@@ -135,15 +134,15 @@ public class SQLMethodFactory {
      * build page result method interceptor
      */
     private static SQLMethod buildPage(Method method) {
-        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
-        if (valueType == null || valueType == Map.class) {
-            valueType = getParameterMapValueClass(method, null);
-            return new BasicTypeMapPage(valueType);
+        Class<?> returnType = MethodUtil.getReturnClass(method, 0);
+        if (returnType == null || returnType == Map.class) {
+            returnType = getParameterMapValueClass(method, null);
+            return new BasicTypeMapPage(returnType);
         } else {
-            if (SQLStoreFactory.isIgnore(valueType)) {
-                return new BasicTypPage(valueType);
+            if (SQLStoreFactory.isIgnore(returnType)) {
+                return new BasicTypPage(returnType);
             } else {
-                return new SQLEntityPage(valueType);
+                return new SQLEntityPage(returnType);
             }
         }
     }
@@ -152,15 +151,15 @@ public class SQLMethodFactory {
      * build next result method interceptor
      */
     private static SQLMethod buildNext(Method method) {
-        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
-        if (valueType == null || valueType == Map.class) {
-            valueType = getParameterMapValueClass(method, null);
-            return new BasicTypeMapNext(valueType);
+        Class<?> returnType = MethodUtil.getReturnClass(method, 0);
+        if (returnType == null || returnType == Map.class) {
+            returnType = getParameterMapValueClass(method, null);
+            return new BasicTypeMapNext(returnType);
         } else {
-            if (SQLStoreFactory.isIgnore(valueType)) {
-                return new BasicTypeNext(valueType);
+            if (SQLStoreFactory.isIgnore(returnType)) {
+                return new BasicTypeNext(returnType);
             } else {
-                return new SQLEntityNext(valueType);
+                return new SQLEntityNext(returnType);
             }
         }
     }
@@ -184,13 +183,13 @@ public class SQLMethodFactory {
     }
 
     private static Class<?> getMapValueClass(Method method) {
-        Class<?> valueType = MethodUtil.getReturnClass(method, 0);
-        return valueType == null ? Object.class : valueType;
+        Class<?> returnType = MethodUtil.getReturnClass(method, 0);
+        return returnType == null ? Object.class : returnType;
     }
 
-    private static Class<?> getParameterMapValueClass(Method method, Class<?> valueType) {
-        if (valueType == null) return Object.class;
-        valueType = (Class<?>) MethodUtil.getType(MethodUtil.getReturnType(method, 0), 1);
-        return valueType == null ? Object.class : valueType;
+    private static Class<?> getParameterMapValueClass(Method method, Class<?> returnType) {
+        if (returnType == null) return Object.class;
+        returnType = (Class<?>) MethodUtil.getType(MethodUtil.getReturnType(method, 0), 1);
+        return returnType == null ? Object.class : returnType;
     }
 }

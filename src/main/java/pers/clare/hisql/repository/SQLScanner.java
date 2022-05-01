@@ -3,6 +3,8 @@ package pers.clare.hisql.repository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -18,23 +20,36 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.service.SQLStoreService;
 
+import javax.sql.DataSource;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.springframework.util.Assert.notNull;
 
-public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware {
+public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware, BeanFactoryAware {
 
     private ApplicationContext applicationContext;
+    protected BeanFactory beanFactory;
+
     private String beanName;
     private String basePackage;
     private boolean processPropertyPlaceHolders;
     private AnnotationAttributes annotationAttributes;
+    private SQLStoreService sqlStoreService;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 
     private Environment getEnvironment() {
@@ -42,8 +57,41 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     }
 
     @Override
-    public void afterPropertiesSet() {
+    public void afterPropertiesSet() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         notNull(this.basePackage, "Property 'basePackage' is required");
+        String dataSourceName = annotationAttributes.getString("dataSourceRef");
+        String readDataSourceName = annotationAttributes.getString("readDataSourceRef");
+        String contextName = annotationAttributes.getString("contextRef");
+        String xmlRootPath = annotationAttributes.getString("xmlRootPath");
+        Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
+        Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
+
+        DataSource write;
+        if (dataSourceName.length() == 0) {
+            write = beanFactory.getBean(DataSource.class);
+        } else {
+            write = (DataSource) beanFactory.getBean(dataSourceName);
+        }
+        DataSource read = write;
+        if (readDataSourceName.length() > 0)
+            read = (DataSource) beanFactory.getBean(readDataSourceName);
+
+        HiSqlContext hiSqlContext;
+        if (contextName.length() == 0) {
+            hiSqlContext = new HiSqlContext();
+        } else {
+            hiSqlContext = (HiSqlContext) beanFactory.getBean(contextName);
+        }
+        if (hiSqlContext.getXmlRoot() == null) {
+            hiSqlContext.setXmlRoot(xmlRootPath);
+        }
+        if (hiSqlContext.getPaginationMode() == null) {
+            hiSqlContext.setPaginationMode(paginationModeClass.getConstructor().newInstance());
+        }
+        if (hiSqlContext.getNaming() == null) {
+            hiSqlContext.setNaming(namingClass.getConstructor().newInstance());
+        }
+        this.sqlStoreService = new SQLStoreService(hiSqlContext, write, read);
     }
 
     @Override
@@ -51,9 +99,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         if (this.processPropertyPlaceHolders) {
             processPropertyPlaceHolders();
         }
-
-        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry);
-        scanner.setAnnotationAttributes(this.annotationAttributes);
+        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry, annotationAttributes, sqlStoreService);
         scanner.setResourceLoader(this.applicationContext);
         scanner.registerFilters();
         scanner.scan(
@@ -66,10 +112,10 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     }
 
     private void processPropertyPlaceHolders() {
-        Map<String, PropertyResourceConfigurer> prcs = applicationContext.getBeansOfType(PropertyResourceConfigurer.class,
+        Map<String, PropertyResourceConfigurer> propertyResourceConfigurer = applicationContext.getBeansOfType(PropertyResourceConfigurer.class,
                 false, false);
 
-        if (!prcs.isEmpty() && applicationContext instanceof ConfigurableApplicationContext) {
+        if (!propertyResourceConfigurer.isEmpty() && applicationContext instanceof ConfigurableApplicationContext) {
             BeanDefinition mapperScannerBean = ((ConfigurableApplicationContext) applicationContext).getBeanFactory()
                     .getBeanDefinition(beanName);
 
@@ -79,7 +125,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
             DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
             factory.registerBeanDefinition(beanName, mapperScannerBean);
 
-            for (PropertyResourceConfigurer prc : prcs.values()) {
+            for (PropertyResourceConfigurer prc : propertyResourceConfigurer.values()) {
                 prc.postProcessBeanFactory(factory);
             }
 
@@ -91,6 +137,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     }
 
 
+    @SuppressWarnings("SameParameterValue")
     private String updatePropertyValue(String propertyName, PropertyValues values) {
         PropertyValue property = values.getPropertyValue(propertyName);
 

@@ -7,16 +7,16 @@ public class FieldColumn {
     private final Field field;
     private final boolean id;
     private final boolean auto;
-    private final boolean nullable;
+    private final boolean notNullable;
     private final boolean insertable;
     private final boolean updatable;
     private final String columnName;
 
-    public FieldColumn(Field field, boolean id, boolean auto, boolean nullable, boolean insertable, boolean updatable, String columnName) {
+    public FieldColumn(Field field, boolean id, boolean auto, boolean notNullable, boolean insertable, boolean updatable, String columnName) {
         this.field = field;
         this.id = id;
         this.auto = auto;
-        this.nullable = nullable;
+        this.notNullable = notNullable;
         this.insertable = insertable;
         this.updatable = updatable;
         this.columnName = columnName;
@@ -34,8 +34,8 @@ public class FieldColumn {
         return auto;
     }
 
-    public boolean isNullable() {
-        return nullable;
+    public boolean isNotNullable() {
+        return notNullable;
     }
 
     public boolean isInsertable() {

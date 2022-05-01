@@ -4,13 +4,11 @@ import pers.clare.hisql.page.Pagination;
 
 public class BasicTypeMapNext extends PageMethod {
 
-    protected Class<?> valueType;
-
-    BasicTypeMapNext(Class<?> valueType) {
-        this.valueType = valueType;
+    BasicTypeMapNext(Class<?> returnType) {
+        super(returnType);
     }
 
     protected Object doInvoke(String sql, Pagination pagination, Object[] arguments) {
-        return sqlStoreService.next(readonly, valueType, sql, pagination, arguments);
+        return sqlStoreService.next(readonly, returnType, sql, pagination, arguments);
     }
 }

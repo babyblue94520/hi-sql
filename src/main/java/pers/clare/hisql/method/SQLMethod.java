@@ -2,7 +2,7 @@ package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.hisql.HiSqlContext;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentGetHandler;
 import pers.clare.hisql.function.ResultSetCallback;
@@ -20,10 +20,10 @@ import java.util.function.Function;
 
 public abstract class SQLMethod implements MethodInterceptor {
     protected static final Object[] emptyArguments = new Object[0];
+    protected final Class<?> returnType;
+    protected SQLStoreService sqlStoreService;
     protected String sql;
     protected boolean readonly;
-    protected HiSqlContext context;
-    protected SQLStoreService sqlStoreService;
     protected SQLQueryReplaceBuilder sqlQueryReplaceBuilder;
     protected SQLQueryBuilder sqlQueryBuilder;
     protected Map<String, ArgumentGetHandler> replaces;
@@ -33,8 +33,11 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected ArgumentGetHandler sortHandler;
     protected ArgumentGetHandler resultSetCallback;
 
+    protected SQLMethod(Class<?> returnType) {
+        this.returnType = returnType;
+    }
+
     public void init() {
-        Parameter[] parameters = method.getParameters();
         char[] cs = sql.toCharArray();
         if (SQLQueryReplaceBuilder.findKeyCount(cs) > 0) {
             sqlQueryReplaceBuilder = new SQLQueryReplaceBuilder(cs);
@@ -44,13 +47,15 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
         this.valueHandlers = new HashMap<>();
         int c = 0;
+        Parameter[] parameters = method.getParameters();
         for (Parameter p : parameters) {
-            buildArgumentValueHandler(p, c++);
+            int index = c++;
+            buildArgumentValueHandler(p.getType(), p.getParameterizedType(), p.getName(), (arguments) -> arguments[index]);
         }
     }
 
-    public void setContext(HiSqlContext context) {
-        this.context = context;
+    public void setSqlStoreService(SQLStoreService sqlStoreService) {
+        this.sqlStoreService = sqlStoreService;
     }
 
     public void setSql(String sql) {
@@ -65,10 +70,6 @@ public abstract class SQLMethod implements MethodInterceptor {
         this.method = method;
     }
 
-    public void setSqlStoreService(SQLStoreService sqlStoreService) {
-        this.sqlStoreService = sqlStoreService;
-    }
-
     protected Pagination getPagination(Object[] arguments) {
         if (paginationHandler == null) return null;
         return (Pagination) paginationHandler.apply(arguments);
@@ -79,131 +80,110 @@ public abstract class SQLMethod implements MethodInterceptor {
         return (Sort) sortHandler.apply(arguments);
     }
 
-    private void buildArgumentValueHandler(Parameter p, int index) {
-        Class<?> type = p.getType();
-        ArgumentGetHandler handler = (arguments) -> arguments[index];
-        if (isSimpleType(type)) {
-            if (Collection.class.isAssignableFrom(type)) {
-                Type[] types = ((ParameterizedType) p.getParameterizedType()).getActualTypeArguments();
+
+    private void buildArgumentValueHandler(Class<?> clazz, Type type, String name, ArgumentGetHandler handler) {
+        Class<?> componentType = clazz.getComponentType();
+        if (clazz == Pagination.class) {
+            paginationHandler = handler;
+        } else if (clazz == Sort.class) {
+            sortHandler = handler;
+        } else if (clazz == ResultSetCallback.class) {
+            resultSetCallback = handler;
+        } else if (isSimpleType(clazz)) {
+            setArgumentValueHandler(name, handler);
+        } else if (clazz.isArray()) {
+            if (isSimpleType(componentType)) {
+                setArgumentValueHandler(name, handler);
+            } else {
+                if (componentType.isArray()) {
+                    setArgumentValueHandler(name, handler);
+                } else {
+                    setArgumentValueHandler(name, buildArrayValueHandler(componentType, handler));
+                }
+            }
+        } else if (Collection.class.isAssignableFrom(clazz)) {
+            if (type instanceof ParameterizedType) {
+                Type[] types = ((ParameterizedType) type).getActualTypeArguments();
                 Class<?> actualType = types.length > 0 ? (Class<?>) types[0] : null;
                 if (actualType == null || isSimpleType(actualType)) {
-                    setArgumentValueHandler(p.getName(), handler);
+                    setArgumentValueHandler(name, handler);
                 } else {
                     if (actualType.isArray()) {
-                        setArgumentValueHandler(p.getName(), handler);
+                        setArgumentValueHandler(name, handler);
                     } else {
-                        setArgumentValueHandler(p.getName(), buildCollectionArgumentValueHandler((Class<?>) types[0], handler));
+                        setArgumentValueHandler(name, buildCollectionValueHandler(actualType, handler));
                     }
                 }
             } else {
-                setArgumentValueHandler(p.getName(), handler);
+                setArgumentValueHandler(name, handler);
             }
-        } else if (type.isArray()) {
-            Class<?> componentType = type.getComponentType();
-            if (isSimpleType(componentType)) {
-                setArgumentValueHandler(p.getName(), handler);
-            } else {
-                if (componentType.isArray()) {
-                    setArgumentValueHandler(p.getName(), handler);
-                } else {
-                    setArgumentValueHandler(p.getName(), buildArrayArgumentValueHandler(componentType, handler));
-                }
-            }
-        } else if (type == Pagination.class) {
-            paginationHandler = handler;
-        } else if (type == Sort.class) {
-            sortHandler = handler;
-        } else if (type == ResultSetCallback.class) {
-            resultSetCallback = handler;
         } else {
-            buildArgumentValueHandler(type, p.getName(), handler);
+            buildReturnValueHandler(clazz, name, handler);
         }
     }
 
-    private void buildArgumentValueHandler(Class<?> clazz, String key, ArgumentGetHandler handler) {
-        Field[] fields = clazz.getDeclaredFields();
-        int modifier;
-        Class<?> type;
-        ArgumentGetHandler fieldHandler;
-        for (Field field : fields) {
-            modifier = field.getModifiers();
-            if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
-            type = field.getType();
-            field.setAccessible(true);
-            fieldHandler = (arguments) -> {
+    private void buildReturnValueHandler(Class<?> clazz, String name, ArgumentGetHandler argumentGetHandler) {
+        String fieldName;
+        ArgumentGetHandler handler;
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (notGetMethod(method)) continue;
+            fieldName = toFieldName(method.getName());
+            handler = (arguments) -> {
                 try {
-                    return field.get(handler.apply(arguments));
+                    return method.invoke(argumentGetHandler.apply(arguments));
                 } catch (Exception e) {
                     throw new HiSqlException(e);
                 }
             };
-            if (isSimpleType(type)) {
-                setArgumentValueHandler(key + '.' + field.getName(), fieldHandler);
-                setArgumentValueHandler(field.getName(), fieldHandler);
-            } else if (type == Pagination.class) {
-                paginationHandler = fieldHandler;
-            } else if (type == Sort.class) {
-                sortHandler = fieldHandler;
-            } else {
-                buildArgumentValueHandler(type, key + '.' + field.getName(), fieldHandler);
-            }
+            buildArgumentValueHandler(method.getReturnType(), method.getGenericReturnType(), name + '.' + fieldName, handler);
         }
         Class<?> superClazz = clazz.getSuperclass();
         if (superClazz != null && !isSimpleType(superClazz)) {
-            buildArgumentValueHandler(superClazz, key, handler);
+            buildReturnValueHandler(superClazz, name, argumentGetHandler);
         }
     }
 
-    private ArgumentGetHandler buildArrayArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+    private ArgumentGetHandler buildArrayValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
         List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Object[] array = (Object[]) handler.apply(arguments);
             Object[][] result = new Object[array.length][];
-            Object[] values;
-            int i = 0, j;
+            int i = 0;
             for (Object o : array) {
-                values = new Object[functions.size()];
-                j = 0;
-                for (Function<Object, Object> valueHandler : functions) {
-                    values[j++] = valueHandler.apply(o);
-                }
-                result[i++] = values;
+                result[i++] = getValues(o, functions);
             }
             return result;
         };
     }
 
-    @SuppressWarnings("unchecked")
-    private ArgumentGetHandler buildCollectionArgumentValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+    private ArgumentGetHandler buildCollectionValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
         List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Collection<Object> collection = (Collection<Object>) handler.apply(arguments);
             Object[][] result = new Object[collection.size()][];
-            Object[] values;
-            int i = 0, j;
+            int i = 0;
             for (Object o : collection) {
-                values = new Object[functions.size()];
-                j = 0;
-                for (Function<Object, Object> valueHandler : functions) {
-                    values[j++] = valueHandler.apply(o);
-                }
-                result[i++] = values;
+                result[i++] = getValues(o, functions);
             }
             return result;
         };
     }
 
+    private Object[] getValues(Object target, List<Function<Object, Object>> functions) {
+        Object[] values = new Object[functions.size()];
+        for (int j = 0, l = functions.size(); j < l; j++) {
+            values[j] = functions.get(j).apply(target);
+        }
+        return values;
+    }
+
     private List<Function<Object, Object>> getFieldHandlers(Class<?> clazz) {
-        Field[] fields = clazz.getDeclaredFields();
-        int modifier;
         List<Function<Object, Object>> valueHandlers = new ArrayList<>();
-        for (Field field : fields) {
-            modifier = field.getModifiers();
-            if (Modifier.isStatic(modifier) || Modifier.isFinal(modifier)) continue;
-            field.setAccessible(true);
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (notGetMethod(method)) continue;
             valueHandlers.add((target) -> {
                 try {
-                    return field.get(target);
+                    return method.invoke(target);
                 } catch (Exception e) {
                     throw new HiSqlException(e);
                 }
@@ -223,6 +203,13 @@ public abstract class SQLMethod implements MethodInterceptor {
 
     private boolean isSimpleType(Class<?> type) {
         return type.isPrimitive() || type.getName().startsWith("java.");
+    }
+
+    private boolean notGetMethod(Method method) {
+        return !method.getName().startsWith("get")
+                || method.getParameters().length > 0
+                || Modifier.isStatic(method.getModifiers())
+                || Modifier.isPrivate(method.getModifiers());
     }
 
     protected SQLQuery toSqlQuery(SQLQueryReplaceBuilder sqlQueryReplaceBuilder, Object[] arguments) {
@@ -265,16 +252,16 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
         if (query == null) {
             if (pagination != null) {
-                executeSQL = context.getPaginationMode().buildPaginationSQL(pagination, executeSQL);
+                executeSQL = sqlStoreService.getContext().getPaginationMode().buildPaginationSQL(pagination, executeSQL);
             } else if (sort != null) {
-                executeSQL = context.getPaginationMode().buildSortSQL(sort, executeSQL);
+                executeSQL = sqlStoreService.getContext().getPaginationMode().buildSortSQL(sort, executeSQL);
             }
         } else {
             StringBuilder sb = query.toSQL();
             if (pagination != null) {
-                context.getPaginationMode().appendPaginationSQL(sb, pagination);
+                sqlStoreService.getContext().getPaginationMode().appendPaginationSQL(sb, pagination);
             } else if (sort != null) {
-                context.getPaginationMode().appendSortSQL(sb, sort.getSorts());
+                sqlStoreService.getContext().getPaginationMode().appendSortSQL(sb, sort.getSorts());
             }
             executeSQL = sb.toString();
             arguments = emptyArguments;
@@ -283,6 +270,17 @@ public abstract class SQLMethod implements MethodInterceptor {
             return doInvoke(executeSQL, arguments);
         } else {
             return sqlStoreService.query(readonly, executeSQL, (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()), arguments);
+        }
+    }
+
+    private static String toFieldName(String name) {
+        if (name.startsWith("get") && name.length() > 3) {
+            char[] cs = new char[name.length() - 3];
+            name.getChars(3, name.length(), cs, 0);
+            cs[0] = Character.toLowerCase(cs[0]);
+            return new String(cs);
+        } else {
+            return name;
         }
     }
 

@@ -1,6 +1,6 @@
 package pers.clare.hisql.service;
 
-import pers.clare.hisql.HiSqlContext;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.StoreResultSetHandler;
 import pers.clare.hisql.page.Next;

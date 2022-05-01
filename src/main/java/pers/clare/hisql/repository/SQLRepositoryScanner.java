@@ -15,6 +15,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
+import pers.clare.hisql.service.SQLStoreService;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,10 +24,17 @@ import java.util.Set;
 public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
     private static final Logger log = LogManager.getLogger();
 
-    private AnnotationAttributes annotationAttributes;
+    private final AnnotationAttributes annotationAttributes;
+    private final SQLStoreService sqlStoreService;
 
-    public SQLRepositoryScanner(BeanDefinitionRegistry registry) {
+    public SQLRepositoryScanner(
+            BeanDefinitionRegistry registry
+            , AnnotationAttributes annotationAttributes
+            , SQLStoreService sqlStoreService
+    ) {
         super(registry);
+        this.annotationAttributes = annotationAttributes;
+        this.sqlStoreService = sqlStoreService;
     }
 
     public void registerFilters() {
@@ -76,7 +84,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
         GenericBeanDefinition definition;
-        Class<? extends SQLRepositoryFactoryBean<?>> factoryBeanClass = annotationAttributes.getClass("factoryBean");
+        Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
@@ -85,7 +93,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                 log.warn("beanClassName is null.");
             } else {
                 definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
-                definition.getConstructorArgumentValues().addGenericArgumentValue(annotationAttributes);
+                definition.getConstructorArgumentValues().addGenericArgumentValue(this.sqlStoreService);
                 definition.setBeanClass(factoryBeanClass);
                 definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
             }
@@ -103,9 +111,5 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
             return metadataReader.getClassMetadata().isInterface() && super.match(metadataReader, metadataReaderFactory);
         }
-    }
-
-    public void setAnnotationAttributes(AnnotationAttributes annotationAttributes) {
-        this.annotationAttributes = annotationAttributes;
     }
 }

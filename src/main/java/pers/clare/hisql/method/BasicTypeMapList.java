@@ -2,12 +2,12 @@ package pers.clare.hisql.method;
 
 public class BasicTypeMapList extends SQLSelectMethod {
 
-    BasicTypeMapList(Class<?> valueType) {
-        super(valueType);
+    BasicTypeMapList(Class<?> returnType) {
+        super(returnType);
     }
 
     @Override
     protected Object doInvoke(String sql, Object[] arguments) {
-        return sqlStoreService.findAllMap(readonly, valueType, sql, arguments);
+        return sqlStoreService.findAllMap(readonly, returnType, sql, arguments);
     }
 }

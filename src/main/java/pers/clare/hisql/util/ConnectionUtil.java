@@ -69,6 +69,7 @@ public class ConnectionUtil {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public static int insert(
             Statement statement
             , String sql

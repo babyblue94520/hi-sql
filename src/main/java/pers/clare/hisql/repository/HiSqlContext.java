@@ -1,4 +1,4 @@
-package pers.clare.hisql;
+package pers.clare.hisql.repository;
 
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.naming.NamingStrategy;

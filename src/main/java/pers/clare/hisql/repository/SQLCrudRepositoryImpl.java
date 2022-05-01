@@ -1,6 +1,5 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
@@ -24,15 +23,15 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
 
-
+@SuppressWarnings("unused")
 public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCrudRepository<T> {
     private final SQLCrudStore<T> sqlStore;
     private final SQLStoreService sqlStoreService;
 
-    public SQLCrudRepositoryImpl(HiSqlContext context, SQLStoreService sqlStoreService, Class<T> repositoryClass) {
+    public SQLCrudRepositoryImpl(SQLStoreService sqlStoreService, Class<T> repositoryClass) {
         super(sqlStoreService);
         this.sqlStoreService = sqlStoreService;
-        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(context, findFirstActualTypeArgument(repositoryClass), true);
+        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(sqlStoreService.getContext(), findFirstActualTypeArgument(repositoryClass), true);
     }
 
 
@@ -48,15 +47,31 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     }
 
     public long count(T entity) {
-        return count(false, entity);
+        return doCount(false, entity);
     }
 
-    public long count(
+    public long count(Boolean readonly, T entity) {
+        return doCount(readonly, entity);
+    }
+
+    public long countById(Object... ids) {
+        return doCount(false, ids);
+    }
+
+    public long countById(
             Boolean readonly
-            , T entity
+            , Object... ids
+    ) {
+        return doCount(readonly, ids);
+    }
+
+    private long doCount(
+            Boolean readonly
+            , Object... args
     ) {
         try {
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            if (args.length == 0) return 0;
+            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), args));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -65,16 +80,12 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
         }
     }
 
-    public long countById(Object... ids) {
-        return countById(false, ids);
-    }
-
-    public long countById(
+    private long doCount(
             Boolean readonly
-            , Object... ids
+            , T entity
     ) {
         try {
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), ids));
+            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -190,7 +201,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
                 }
             }
             return entities;
-        } catch (SQLException | IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new HiSqlException(e);
         } finally {
             ConnectionUtil.close(connection, dataSource);
@@ -303,7 +314,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             value = fieldColumn.getField().get(entity);
             if (value == null) {
                 if (fieldColumn.isAuto()) continue;
-                if (!fieldColumn.isNullable()) continue;
+                if (fieldColumn.isNotNullable()) continue;
             }
             columns.append(fieldColumn.getColumnName())
                     .append(',');
@@ -338,7 +349,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
                 wheres.append(" and ");
             } else {
                 if (!fieldColumn.isUpdatable()) continue;
-                if (value == null && !fieldColumn.isNullable()) continue;
+                if (value == null && fieldColumn.isNotNullable()) continue;
 
                 values.append(fieldColumn.getColumnName())
                         .append('=');

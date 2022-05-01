@@ -13,7 +13,7 @@ import java.sql.Connection;
 public class SQLRepositoryImpl implements SQLRepository {
     private final SQLStoreService sqlStoreService;
 
-    public SQLRepositoryImpl( SQLStoreService sqlStoreService) {
+    public SQLRepositoryImpl(SQLStoreService sqlStoreService) {
         this.sqlStoreService = sqlStoreService;
     }
 

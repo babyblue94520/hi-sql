@@ -1,0 +1,41 @@
+
+spring:
+  profiles:
+    include:
+      - h2
+#      - mysql
+    active: dev
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: '*'
+  endpoint:
+    env:
+      enabled: true
+    mappings:
+      enabled: true
+    beans:
+      enabled: true
+    health:
+      enabled: true
+      show-details: always
+    configprops:
+      enabled: true
+    info:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  info:
+    git:
+      mode: full
+logging:
+  level:
+    pers.clare: debug

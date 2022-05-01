@@ -1,5 +1,6 @@
 package pers.clare.hisql.annotation;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
@@ -17,10 +18,10 @@ import java.lang.annotation.*;
 @Documented
 @Inherited
 @Import({SQLScanRegistrar.class})
-@Component
+@Configuration
 public @interface EnableHiSql {
     @AliasFor(
-            annotation = Component.class
+            annotation = Configuration.class
     )
     String value() default "";
     String[] basePackages() default {};

@@ -1,37 +1,43 @@
 package pers.clare.hisql.repository;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.util.Assert;
-import pers.clare.hisql.HiSqlContext;
-import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.method.SQLMethodFactory;
+import pers.clare.hisql.method.SQLMethodInterceptor;
+import pers.clare.hisql.repository.SQLCrudRepository;
+import pers.clare.hisql.repository.SQLCrudRepositoryImpl;
+import pers.clare.hisql.repository.SQLRepository;
+import pers.clare.hisql.repository.SQLRepositoryImpl;
 import pers.clare.hisql.service.SQLStoreService;
 
-import javax.sql.DataSource;
 
-public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBean<T>, BeanClassLoaderAware,
-        BeanFactoryAware, ApplicationEventPublisherAware {
+
+public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware,
+        BeanFactoryAware {
+    private static final Logger log = LogManager.getLogger();
+
     protected ClassLoader classLoader;
     protected BeanFactory beanFactory;
 
-    private final Class<? extends T> repositoryInterface;
+    private final Class<?> repositoryInterface;
 
-    private final AnnotationAttributes annotationAttributes;
+    private final SQLStoreService sqlStoreService;
 
-    private T repository;
+    private Object repository;
 
     public SQLRepositoryFactoryBean(
-            Class<? extends T> repositoryInterface
-            , AnnotationAttributes annotationAttributes
+            Class<?> repositoryInterface
+            , SQLStoreService sqlStoreService
     ) {
         Assert.notNull(repositoryInterface, "Repository interface must not be null!");
-        Assert.notNull(annotationAttributes, "Repository annotationAttributes must not be null!");
+        Assert.notNull(sqlStoreService, "Repository sqlStoreService must not be null!");
         this.repositoryInterface = repositoryInterface;
-        this.annotationAttributes = annotationAttributes;
+        this.sqlStoreService = sqlStoreService;
     }
 
     @Override
@@ -45,7 +51,7 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
     }
 
     @Override
-    public T getObject() {
+    public Object getObject() {
         return this.repository;
     }
 
@@ -55,50 +61,33 @@ public class SQLRepositoryFactoryBean<T> implements InitializingBean, FactoryBea
     }
 
     @Override
-    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-
+    public void afterPropertiesSet() {
+        this.repository = getRepository(sqlStoreService);
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        String dataSourceName = annotationAttributes.getString("dataSourceRef");
-        String readDataSourceName = annotationAttributes.getString("readDataSourceRef");
-        String contextName = annotationAttributes.getString("contextRef");
-        String xmlRootPath = annotationAttributes.getString("xmlRootPath");
-        Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
-        Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
-
-        DataSource write;
-        if (dataSourceName.length() == 0) {
-            write = beanFactory.getBean(DataSource.class);
+    public Object getRepository(
+            SQLStoreService sqlStoreService
+    ) {
+        if (!SQLRepository.class.isAssignableFrom(repositoryInterface)) {
+            throw new Error(String.format("%s must inherit %s interface", repositoryInterface, SQLRepository.class.getSimpleName()));
+        }
+        ProxyFactory result = new ProxyFactory();
+        Object target;
+        if (SQLCrudRepository.class.isAssignableFrom(repositoryInterface)) {
+            target = new SQLCrudRepositoryImpl<>(sqlStoreService, repositoryInterface);
+            result.setInterfaces(repositoryInterface, SQLCrudRepository.class);
         } else {
-            write = (DataSource) beanFactory.getBean(dataSourceName);
+            target = new SQLRepositoryImpl(sqlStoreService);
+            result.setInterfaces(repositoryInterface, SQLRepository.class);
         }
-        DataSource read = write;
-        if (readDataSourceName.length() > 0)
-            read = (DataSource) beanFactory.getBean(readDataSourceName);
-        HiSqlContext hiSqlContext;
-        if (contextName.length() == 0) {
-            hiSqlContext = new HiSqlContext();
-        } else {
-            hiSqlContext = (HiSqlContext) beanFactory.getBean(contextName);
-        }
-        if (hiSqlContext.getXmlRoot() == null) {
-            hiSqlContext.setXmlRoot(xmlRootPath);
-        }
-        if (hiSqlContext.getPaginationMode() == null) {
-            hiSqlContext.setPaginationMode(paginationModeClass.newInstance());
-        }
-        if (hiSqlContext.getNaming() == null) {
-            hiSqlContext.setNaming(namingClass.newInstance());
-        }
+        result.setTarget(target);
+        result.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
+        result.addAdvice(new SQLMethodInterceptor(repositoryInterface, SQLMethodFactory.create(sqlStoreService, repositoryInterface), target));
+        Object repository = result.getProxy(classLoader);
 
-        SQLStoreService sqlStoreService = new SQLStoreService(hiSqlContext, write, read);
-        SQLRepositoryFactory factory = new SQLRepositoryFactory();
-        factory.setContext(hiSqlContext);
-        factory.setBeanClassLoader(classLoader);
-        factory.setBeanFactory(beanFactory);
-        this.repository = factory.getRepository(repositoryInterface, sqlStoreService);
+        if (log.isDebugEnabled()) {
+            log.debug("Finished creation of repository instance for {}.", repositoryInterface.getName());
+        }
+        return repository;
     }
-
 }

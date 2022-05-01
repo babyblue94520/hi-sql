@@ -28,7 +28,7 @@ public class ResultSetUtil {
         return names;
     }
 
-    public static ResultSetHandler<?, ?> to = ResultSetUtil::to;
+    public static final ResultSetHandler<?, ?> to = ResultSetUtil::to;
 
     public static <T> T to(ResultSet rs, Class<T> clazz) throws SQLException {
         if (rs.next()) {
@@ -41,7 +41,7 @@ public class ResultSetUtil {
         return null;
     }
 
-    public static ResultSetHandler<?, ?> toMap = ResultSetUtil::toMap;
+    public static final ResultSetHandler<?, ?> toMap = ResultSetUtil::toMap;
 
     @SuppressWarnings("unchecked")
     public static <T> Map<String, T> toMap(ResultSet rs, Class<T> valueClass) throws SQLException {
@@ -55,7 +55,7 @@ public class ResultSetUtil {
         return null;
     }
 
-    public static ResultSetHandler<?, ?> toSet = ResultSetUtil::toSet;
+    public static final ResultSetHandler<?, ?> toSet = ResultSetUtil::toSet;
 
     public static <T> Set<T> toSet(ResultSet rs, Class<T> clazz) throws SQLException {
         Set<T> result = new HashSet<>();
@@ -65,19 +65,19 @@ public class ResultSetUtil {
         return result;
     }
 
-    public static ResultSetHandler<?, ?> toMapSet = ResultSetUtil::toMapSet;
+    public static final ResultSetHandler<?, ?> toMapSet = ResultSetUtil::toMapSet;
 
     public static <T> Set<Map<String, T>> toMapSet(ResultSet rs, Class<T> valueClass) throws SQLException {
         return (Set<Map<String, T>>) toMapCollection(rs, valueClass, new HashSet<>());
     }
 
-    public static ResultSetHandler<?, ?> toMapList = ResultSetUtil::toMapList;
+    public static final ResultSetHandler<?, ?> toMapList = ResultSetUtil::toMapList;
 
     public static <T> List<Map<String, T>> toMapList(ResultSet rs, Class<T> valueClass) throws SQLException {
         return (List<Map<String, T>>) toMapCollection(rs, valueClass, new ArrayList<>());
     }
 
-    public static ResultSetHandler<?, ?> toList = ResultSetUtil::toList;
+    public static final ResultSetHandler<?, ?> toList = ResultSetUtil::toList;
 
     public static <T> List<T> toList(ResultSet rs, Class<T> clazz) throws SQLException {
         List<T> result = new ArrayList<>();
@@ -87,7 +87,7 @@ public class ResultSetUtil {
         return result;
     }
 
-    public static StoreResultSetHandler<?, ?> toInstance = ResultSetUtil::toInstance;
+    public static final StoreResultSetHandler<?, ?> toInstance = ResultSetUtil::toInstance;
 
     public static <T> T toInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         FieldSetHandler[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
@@ -97,7 +97,7 @@ public class ResultSetUtil {
         return null;
     }
 
-    public static StoreResultSetHandler<?, ?> toSetInstance = ResultSetUtil::toSetInstance;
+    public static final StoreResultSetHandler<?, ?> toSetInstance = ResultSetUtil::toSetInstance;
 
     public static <T> Set<T> toSetInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         Set<T> result = new HashSet<>();
@@ -108,7 +108,7 @@ public class ResultSetUtil {
         return result;
     }
 
-    public static StoreResultSetHandler<?, ?> toInstances = ResultSetUtil::toInstances;
+    public static final StoreResultSetHandler<?, ?> toInstances = ResultSetUtil::toInstances;
 
     public static <T> List<T> toInstances(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         List<T> list = new ArrayList<>();

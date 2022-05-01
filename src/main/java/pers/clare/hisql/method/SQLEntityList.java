@@ -2,8 +2,8 @@ package pers.clare.hisql.method;
 
 public class SQLEntityList extends SQLStoreMethod {
 
-    SQLEntityList(Class<?> valueType) {
-        super(valueType);
+    SQLEntityList(Class<?> returnType) {
+        super(returnType);
     }
 
     @Override

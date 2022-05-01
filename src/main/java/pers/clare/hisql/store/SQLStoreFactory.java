@@ -1,6 +1,6 @@
 package pers.clare.hisql.store;
 
-import pers.clare.hisql.HiSqlContext;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.FieldSetHandler;
 import pers.clare.hisql.function.ResultSetValueConverter;
@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public class SQLStoreFactory {
 
-    static Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
+    static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
@@ -109,7 +109,7 @@ public class SQLStoreFactory {
                 insertable = column.insertable();
                 updatable = column.updatable();
             }
-            fieldColumns[fieldColumnCount++] = new FieldColumn(field, id, auto, nullable, insertable, updatable, columnName);
+            fieldColumns[fieldColumnCount++] = new FieldColumn(field, id, auto, !nullable, insertable, updatable, columnName);
 
             if (id) {
                 keyFields[keyCount++] = field;

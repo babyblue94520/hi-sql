@@ -382,7 +382,6 @@ public class HiSqlConfig {
         **Advanced**
     
         * **bean parameter**
-      
             ```java
             @Getter
             @Setter
@@ -393,7 +392,9 @@ public class HiSqlConfig {
                 private Long id;
                 private String name;
             }
+            ```
           
+            ```java
             @Getter
             @Setter
             public class UserSortQuery {
@@ -403,16 +404,21 @@ public class HiSqlConfig {
                 private Long id;
                 private String name;
             }
-            
-            @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-            Page<User> page(
-                String andId
-                , String andName
-                , UserPageQuery query
-            );
+            ```
+          
+            ```java
+            @Repository
+            public class UserRepository {
+                @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+                Page<User> page(
+                    String andId
+                    , String andName
+                    , UserPageQuery query
+                );
     
-            @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-            List<User> sort(String andId, String andName, UserSortQuery query);
+                @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
+                List<User> sort(String andId, String andName, UserSortQuery query);
+            }
             ```
         
         * **in()**
@@ -434,10 +440,10 @@ public class HiSqlConfig {
 
 * **Write SQL on XML**
 
-    * **root path resources/sqlquery/**
+    * **root path resources/hisql/**
     * **{class package}/Repository.XML**
       
-      ex: resources\sqlquery\pers\clare\demo\data\hiSql\UserQueryRepository.xml
+      ex: resources\hisql\pers\clare\demo\data\hiSql\UserQueryRepository.xml
       
     * Get SQL by **Method Name** or **@Sql(name=...)**
     
@@ -502,7 +508,7 @@ public class HiSqlConfig {
         @Transactional(propagtion = Propagation.REQUIRED)
         public void updateException(StringBuilder sb, Long id, String name) {
         
-            // first update user name
+            // first update username
             String result = queryDefineValue(id, name);
             sb.append(result).append('\n');
             sb.append("------some connection------").append('\n');
@@ -511,7 +517,7 @@ public class HiSqlConfig {
             User user = userRepository.findById(id);
             sb.append(user).append('\n');
         
-            // second update user name
+            // second update username
             result = queryDefineValue(id, name+2);
             sb.append(result).append('\n');
         
