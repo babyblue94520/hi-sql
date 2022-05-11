@@ -30,7 +30,7 @@ public class SQLRepositoryTest {
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
         assertNotNull(userRepository.insert(user));
-        user = userRepository.query("select * from user where id=?", resultSet -> {
+        user = userRepository.query("select * from user where id=?", new Object[]{user.getId()}, resultSet -> {
             User query = null;
             ResultSetMetaData metaData = resultSet.getMetaData();
             Map<String, Integer> nameIndexMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -44,7 +44,7 @@ public class SQLRepositoryTest {
                 query.setCreateTime(resultSet.getLong(nameIndexMap.get("create_time")));
             }
             return query;
-        }, user.getId());
+        });
         assertNotNull(user);
         assertNotNull(user.getId());
         assertNotNull(user.getAccount());

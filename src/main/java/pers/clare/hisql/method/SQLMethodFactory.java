@@ -1,6 +1,7 @@
 package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
+import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.exception.HiSqlException;
@@ -9,18 +10,16 @@ import pers.clare.hisql.page.Page;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.MethodUtil;
+import pers.clare.hisql.util.SQLQueryUtil;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 
 public class SQLMethodFactory {
-    // check string is select sql
-    private static final Pattern select = Pattern.compile("^[\\s\\n]?s", Pattern.CASE_INSENSITIVE);
 
     private SQLMethodFactory() {
     }
@@ -48,12 +47,14 @@ public class SQLMethodFactory {
             if (command == null || command.length() == 0) {
                 throw new HiSqlException("%s.%s method must set XML or Sql.query", repositoryInterface.getName(), method.getName());
             }
-            sqlMethod = buildMethod(method, command);
+            int commandType = SQLQueryUtil.getCommandType(command);
+            sqlMethod = buildMethod(method, commandType);
             if (sqlMethod == null) {
                 throw new HiSqlException("%s not support return type", method.getName());
             }
             sqlMethod.setSqlStoreService(sqlStoreService);
             sqlMethod.setMethod(method);
+            sqlMethod.setCommandType(commandType);
             sqlMethod.setSql(command);
             sqlMethod.setReadonly(readonly);
             sqlMethod.init();
@@ -65,36 +66,33 @@ public class SQLMethodFactory {
     /**
      * build method interceptor by command type
      */
-    private static SQLMethod buildMethod(Method method, String command) {
+    private static SQLMethod buildMethod(Method method, int commandType) {
         Class<?> returnType = method.getReturnType();
-        if (select.matcher(command).find()) {
-            if (Collection.class.isAssignableFrom(returnType)) {
-                if (returnType == Set.class) {
-                    return buildSet(method);
+        switch (commandType) {
+            case CommandType.Select:
+                if (Collection.class.isAssignableFrom(returnType)) {
+                    if (returnType == Set.class) {
+                        return buildSet(method);
+                    } else {
+                        return buildList(method);
+                    }
+                } else if (returnType == Map.class) {
+                    return new BasicTypeMap(getMapValueClass(method));
+                } else if (Page.class.isAssignableFrom(returnType)) {
+                    return buildPage(method);
+                } else if (Next.class.isAssignableFrom(returnType)) {
+                    return buildNext(method);
                 } else {
-                    return buildList(method);
+                    if (SQLStoreFactory.isIgnore(returnType)) {
+                        return new BasicType(returnType);
+                    } else {
+                        return new SQLEntity(returnType);
+                    }
                 }
-            } else if (returnType == Map.class) {
-                return new BasicTypeMap(getMapValueClass(method));
-            } else if (Page.class.isAssignableFrom(returnType)) {
-                return buildPage(method);
-            } else if (Next.class.isAssignableFrom(returnType)) {
-                return buildNext(method);
-            } else {
-                if (SQLStoreFactory.isIgnore(returnType)) {
-                    return new BasicType(returnType);
-                } else {
-                    return new SQLEntity(returnType);
-                }
-            }
-        } else {
-            if (returnType == void.class || returnType == Integer.class || returnType == int.class) {
-                return new SQLUpdateMethod();
-            } else if (returnType == Long.class || returnType == long.class) {
-                return new SQLUpdateLongMethod();
-            } else {
-                throw new HiSqlException("%s return type must be int or long", method);
-            }
+            case CommandType.Insert:
+                return new SQLInsertMethod(returnType);
+            default:
+                return new SQLUpdateMethod(returnType);
         }
     }
 

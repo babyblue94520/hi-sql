@@ -1,8 +1,8 @@
 package pers.clare.hisql.method;
 
 public class SQLUpdateMethod extends SQLMethod {
-    public SQLUpdateMethod() {
-        super(Integer.class);
+    public SQLUpdateMethod(Class<?> returnType) {
+        super(returnType);
     }
 
     @Override

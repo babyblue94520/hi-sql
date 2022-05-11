@@ -3,6 +3,8 @@ package pers.clare.hisql.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import pers.clare.hisql.function.ConnectionCallback;
+import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -41,31 +43,29 @@ public class ConnectionUtil {
         log.debug(sql);
         if (parameters.length == 0) {
             Statement statement = conn.createStatement();
-            statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+            insert(statement, sql);
             return statement;
         } else {
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            int i = 1;
-            for (Object value : parameters) {
-                ps.setObject(i++, value);
-            }
-            ps.executeUpdate();
+            insert(ps, sql, parameters);
             return ps;
         }
     }
 
-    public static int update(
+    public static Statement update(
             Connection conn
             , String sql
             , Object... parameters
     ) throws SQLException {
         log.debug(sql);
         if (parameters.length == 0) {
-            return conn.createStatement().executeUpdate(sql);
+            Statement statement = conn.createStatement();
+            update(statement, sql);
+            return statement;
         } else {
             PreparedStatement ps = conn.prepareStatement(sql);
-            setUpdateValue(ps, parameters);
-            return ps.executeUpdate();
+            update(ps, parameters);
+            return ps;
         }
     }
 
@@ -78,6 +78,15 @@ public class ConnectionUtil {
         return statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
     }
 
+    public static int insert(
+            PreparedStatement ps
+            , Object... parameters
+    ) throws SQLException {
+        setUpdateValue(ps, parameters);
+        return ps.executeUpdate();
+    }
+
+
     public static int update(
             Statement statement
             , String sql
@@ -85,6 +94,15 @@ public class ConnectionUtil {
         log.debug(sql);
         return statement.executeUpdate(sql);
     }
+
+    public static int update(
+            PreparedStatement ps
+            , Object... parameters
+    ) throws SQLException {
+        setUpdateValue(ps, parameters);
+        return ps.executeUpdate();
+    }
+
 
     public static void close(Connection connection, DataSource dataSource) {
         DataSourceUtils.releaseConnection(connection, dataSource);
@@ -97,7 +115,12 @@ public class ConnectionUtil {
         int index = 1;
         if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
-            if (value instanceof Pagination || value instanceof Sort || value instanceof ResultSetCallback) continue;
+            if (value instanceof Pagination
+                    || value instanceof Sort
+                    || value instanceof ConnectionCallback
+                    || value instanceof PreparedStatementCallback
+                    || value instanceof ResultSetCallback
+            ) continue;
             ps.setObject(index++, value);
         }
     }
@@ -109,6 +132,10 @@ public class ConnectionUtil {
         int index = 1;
         if (parameters == null || parameters.length == 0) return;
         for (Object value : parameters) {
+            if ( value instanceof ConnectionCallback
+                    || value instanceof PreparedStatementCallback
+                    || value instanceof ResultSetCallback
+            ) continue;
             if (value instanceof InputStream) {
                 ps.setBinaryStream(index++, (InputStream) value);
             } else {

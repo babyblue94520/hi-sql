@@ -1,14 +1,19 @@
 package pers.clare.hisql.util;
 
+import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-
+import java.util.regex.Pattern;
 
 public class SQLQueryUtil {
+    // check string is select sql
+    private static final Pattern select = Pattern.compile("^[\\s\\n]?select", Pattern.CASE_INSENSITIVE);
+    private static final Pattern insert = Pattern.compile("^[\\s\\n]?insert", Pattern.CASE_INSENSITIVE);
+
 
     private SQLQueryUtil() {
     }
@@ -92,5 +97,11 @@ public class SQLQueryUtil {
         } catch (Exception e) {
             throw new HiSqlException(e);
         }
+    }
+
+    public static int getCommandType(String command){
+        if(select.matcher(command).find())return CommandType.Select;
+        if(insert.matcher(command).find())return CommandType.Insert;
+        return CommandType.Update;
     }
 }

@@ -9,13 +9,8 @@ import org.springframework.beans.factory.*;
 import org.springframework.util.Assert;
 import pers.clare.hisql.method.SQLMethodFactory;
 import pers.clare.hisql.method.SQLMethodInterceptor;
-import pers.clare.hisql.repository.SQLCrudRepository;
-import pers.clare.hisql.repository.SQLCrudRepositoryImpl;
-import pers.clare.hisql.repository.SQLRepository;
-import pers.clare.hisql.repository.SQLRepositoryImpl;
+import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.service.SQLStoreService;
-
-
 
 public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware,
         BeanFactoryAware {
@@ -77,7 +72,7 @@ public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<O
             target = new SQLCrudRepositoryImpl<>(sqlStoreService, repositoryInterface);
             result.setInterfaces(repositoryInterface, SQLCrudRepository.class);
         } else {
-            target = new SQLRepositoryImpl(sqlStoreService);
+            target = new SQLRepositoryImpl<SQLService>(sqlStoreService);
             result.setInterfaces(repositoryInterface, SQLRepository.class);
         }
         result.setTarget(target);

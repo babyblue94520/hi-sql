@@ -2,11 +2,11 @@ package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.ArgumentGetHandler;
-import pers.clare.hisql.function.ResultSetCallback;
+import pers.clare.hisql.function.*;
 import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
@@ -21,6 +21,7 @@ import java.util.function.Function;
 public abstract class SQLMethod implements MethodInterceptor {
     protected static final Object[] emptyArguments = new Object[0];
     protected final Class<?> returnType;
+    protected int commandType;
     protected SQLStoreService sqlStoreService;
     protected String sql;
     protected boolean readonly;
@@ -31,13 +32,15 @@ public abstract class SQLMethod implements MethodInterceptor {
     protected Method method;
     protected ArgumentGetHandler paginationHandler;
     protected ArgumentGetHandler sortHandler;
+    protected ArgumentGetHandler connectionCallback;
+    protected ArgumentGetHandler preparedStatementCallback;
     protected ArgumentGetHandler resultSetCallback;
 
     protected SQLMethod(Class<?> returnType) {
         this.returnType = returnType;
     }
 
-    public void init() {
+    void init() {
         char[] cs = sql.toCharArray();
         if (SQLQueryReplaceBuilder.findKeyCount(cs) > 0) {
             sqlQueryReplaceBuilder = new SQLQueryReplaceBuilder(cs);
@@ -54,32 +57,35 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
     }
 
-    public void setSqlStoreService(SQLStoreService sqlStoreService) {
+    void setSqlStoreService(SQLStoreService sqlStoreService) {
         this.sqlStoreService = sqlStoreService;
     }
 
-    public void setSql(String sql) {
+    void setCommandType(int commandType) {
+        this.commandType = commandType;
+    }
+
+    void setSql(String sql) {
         this.sql = sql;
     }
 
-    public void setReadonly(boolean readonly) {
+    void setReadonly(boolean readonly) {
         this.readonly = readonly;
     }
 
-    public void setMethod(Method method) {
+    void setMethod(Method method) {
         this.method = method;
     }
 
-    protected Pagination getPagination(Object[] arguments) {
+    Pagination getPagination(Object[] arguments) {
         if (paginationHandler == null) return null;
         return (Pagination) paginationHandler.apply(arguments);
     }
 
-    protected Sort getSort(Object[] arguments) {
+    Sort getSort(Object[] arguments) {
         if (sortHandler == null) return null;
         return (Sort) sortHandler.apply(arguments);
     }
-
 
     private void buildArgumentValueHandler(Class<?> clazz, Type type, String name, ArgumentGetHandler handler) {
         Class<?> componentType = clazz.getComponentType();
@@ -89,6 +95,10 @@ public abstract class SQLMethod implements MethodInterceptor {
             sortHandler = handler;
         } else if (clazz == ResultSetCallback.class) {
             resultSetCallback = handler;
+        } else if (clazz == PreparedStatementCallback.class) {
+            preparedStatementCallback = handler;
+        } else if (clazz == ConnectionCallback.class) {
+            connectionCallback = handler;
         } else if (isSimpleType(clazz)) {
             setArgumentValueHandler(name, handler);
         } else if (clazz.isArray()) {
@@ -242,6 +252,7 @@ public abstract class SQLMethod implements MethodInterceptor {
     public Object invoke(MethodInvocation methodInvocation) {
         Object[] arguments = methodInvocation.getArguments();
         Pagination pagination = getPagination(arguments);
+        PaginationMode paginationMode = sqlStoreService.getContext().getPaginationMode();
         Sort sort = getSort(arguments);
         SQLQuery query = null;
         String executeSQL = this.sql;
@@ -252,25 +263,46 @@ public abstract class SQLMethod implements MethodInterceptor {
         }
         if (query == null) {
             if (pagination != null) {
-                executeSQL = sqlStoreService.getContext().getPaginationMode().buildPaginationSQL(pagination, executeSQL);
+                executeSQL = paginationMode.buildPaginationSQL(pagination, executeSQL);
             } else if (sort != null) {
-                executeSQL = sqlStoreService.getContext().getPaginationMode().buildSortSQL(sort, executeSQL);
+                executeSQL = paginationMode.buildSortSQL(sort, executeSQL);
             }
         } else {
             StringBuilder sb = query.toSQL();
             if (pagination != null) {
-                sqlStoreService.getContext().getPaginationMode().appendPaginationSQL(sb, pagination);
+                paginationMode.appendPaginationSQL(sb, pagination);
             } else if (sort != null) {
-                sqlStoreService.getContext().getPaginationMode().appendSortSQL(sb, sort.getSorts());
+                paginationMode.appendSortSQL(sb, sort.getSorts());
             }
             executeSQL = sb.toString();
             arguments = emptyArguments;
         }
-        if (resultSetCallback == null) {
-            return doInvoke(executeSQL, arguments);
-        } else {
-            return sqlStoreService.query(readonly, executeSQL, (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()), arguments);
+        if (connectionCallback != null) {
+            return sqlStoreService.connection(readonly, executeSQL, methodInvocation.getArguments()
+                    , (ConnectionCallback<?>) connectionCallback.apply(methodInvocation.getArguments())
+            );
         }
+        if (preparedStatementCallback != null) {
+            return sqlStoreService.prepared(readonly, executeSQL, methodInvocation.getArguments()
+                    , (PreparedStatementCallback<?>) preparedStatementCallback.apply(methodInvocation.getArguments())
+            );
+        }
+        if (resultSetCallback != null) {
+            switch (commandType) {
+                case CommandType.Select:
+                    return sqlStoreService.query(readonly, executeSQL, methodInvocation.getArguments()
+                            , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
+                case CommandType.Insert:
+                    return sqlStoreService.insert(executeSQL, methodInvocation.getArguments()
+                            , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
+                default:
+                    return sqlStoreService.update(executeSQL, methodInvocation.getArguments()
+                            , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
+            }
+
+        }
+
+        return doInvoke(executeSQL, arguments);
     }
 
     private static String toFieldName(String name) {

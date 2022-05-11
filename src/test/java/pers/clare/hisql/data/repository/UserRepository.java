@@ -8,7 +8,7 @@ import pers.clare.hisql.data.entity.User;
 @Repository
 public interface UserRepository extends SQLCrudRepository<User>{
     @HiSql("insert into user (account)values(:account)")
-    void insert(String account);
+    Long insert(String account);
 
     @HiSql("select * from user where account=:account")
     User findByAccount(String account);

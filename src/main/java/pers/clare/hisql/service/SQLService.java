@@ -1,6 +1,8 @@
 package pers.clare.hisql.service;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import pers.clare.hisql.function.ConnectionCallback;
+import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
@@ -59,6 +61,46 @@ public class SQLService {
         return result == null && readonly && hasRead;
     }
 
+    public <R> R connection(
+            boolean readonly
+            , String sql
+            , Object[] parameters
+            , ConnectionCallback<R> callback
+    ) {
+        Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
+        try {
+            connection = getConnection(dataSource);
+            return callback.apply(connection, sql, parameters);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection, dataSource);
+        }
+    }
+
+    public <R> R prepared(
+            boolean readonly
+            , String sql
+            , Object[] parameters
+            , PreparedStatementCallback<R> callback
+    ) {
+        Connection connection = null;
+        DataSource dataSource = getDataSource(readonly);
+        try {
+            connection = getConnection(dataSource);
+            return callback.apply(connection.prepareStatement(sql), parameters);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection, dataSource);
+        }
+    }
+
     protected <T, R> R queryHandler(
             Boolean readonly
             , String sql
@@ -83,8 +125,8 @@ public class SQLService {
     public <R> R query(
             boolean readonly
             , String sql
+            , Object[] parameters
             , ResultSetCallback<R> resultSetCallback
-            , Object... parameters
     ) {
         Connection connection = null;
         DataSource dataSource = getDataSource(readonly);
@@ -290,6 +332,26 @@ public class SQLService {
         }
     }
 
+    public <R> R insert(
+            String sql
+            , Object[] parameters
+            , ResultSetCallback<R> resultSetCallback
+    ) {
+        Connection connection = null;
+        DataSource dataSource = getDataSource(false);
+        try {
+            connection = getConnection(dataSource);
+            Statement statement = ConnectionUtil.insert(connection, sql, parameters);
+            return resultSetCallback.apply(statement.getGeneratedKeys());
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection, dataSource);
+        }
+    }
+
     public <T> T insert(
             String sql
             , Class<T> keyType
@@ -302,8 +364,29 @@ public class SQLService {
             Statement statement = ConnectionUtil.insert(connection, sql, parameters);
             if (statement.getUpdateCount() == 0) return null;
             ResultSet rs = statement.getGeneratedKeys();
+
             return rs.next() ? rs.getObject(1, keyType) : null;
         } catch (SQLException e) {
+            throw new HiSqlException(e);
+        } finally {
+            ConnectionUtil.close(connection, dataSource);
+        }
+    }
+
+    public <R> R update(
+            String sql
+            , Object[] parameters
+            , ResultSetCallback<R> resultSetCallback
+    ) {
+        Connection connection = null;
+        DataSource dataSource = getDataSource(false);
+        try {
+            connection = getConnection(dataSource);
+            Statement statement = ConnectionUtil.update(connection, sql, parameters);
+            return resultSetCallback.apply(statement.getResultSet());
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
             throw new HiSqlException(e);
         } finally {
             ConnectionUtil.close(connection, dataSource);
@@ -318,7 +401,8 @@ public class SQLService {
         DataSource dataSource = getDataSource(false);
         try {
             connection = getConnection(dataSource);
-            return ConnectionUtil.update(connection, sql, parameters);
+            Statement statement = ConnectionUtil.update(connection, sql, parameters);
+            return statement.getUpdateCount();
         } catch (SQLException e) {
             throw new HiSqlException(e);
         } finally {

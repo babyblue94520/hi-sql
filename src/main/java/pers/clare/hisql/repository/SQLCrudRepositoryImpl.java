@@ -24,16 +24,13 @@ import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCrudRepository<T> {
-    private final SQLCrudStore<T> sqlStore;
-    private final SQLStoreService sqlStoreService;
+public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<T> {
+    protected final SQLCrudStore<T> sqlStore;
 
-    public SQLCrudRepositoryImpl(SQLStoreService sqlStoreService, Class<T> repositoryClass) {
-        super(sqlStoreService);
-        this.sqlStoreService = sqlStoreService;
-        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(sqlStoreService.getContext(), findFirstActualTypeArgument(repositoryClass), true);
+    public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<T> repositoryClass) {
+        super(sqlService);
+        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(sqlService.getContext(), findFirstActualTypeArgument(repositoryClass), true);
     }
-
 
     public long count() {
         return count(false);
@@ -42,7 +39,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     public long count(
             Boolean readonly
     ) {
-        Long count = sqlStoreService.findFirst(readonly, Long.class, sqlStore.getCount());
+        Long count = sqlService.findFirst(readonly, Long.class, sqlStore.getCount());
         return count == null ? 0 : count;
     }
 
@@ -71,7 +68,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     ) {
         try {
             if (args.length == 0) return 0;
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), args));
+            Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), args));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -85,7 +82,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             , T entity
     ) {
         try {
-            Long count = sqlStoreService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -102,23 +99,23 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     public List<T> findAll(
             Sort sort
     ) {
-        return sqlStoreService.findAll(false, sqlStore, sqlStore.getSelect(), sort);
+        return sqlService.findAll(false, sqlStore, sqlStore.getSelect(), sort);
     }
 
     @Override
     public Page<T> page(Pagination pagination) {
-        return sqlStoreService.page(false, sqlStore, pagination);
+        return sqlService.page(false, sqlStore, pagination);
     }
 
     @Override
     public Next<T> next(Pagination pagination) {
-        return sqlStoreService.next(false, sqlStore, pagination);
+        return sqlService.next(false, sqlStore, pagination);
     }
 
     public List<T> findAll(
             Boolean readonly
     ) {
-        return sqlStoreService.findAll(readonly, sqlStore, sqlStore.getSelect());
+        return sqlService.findAll(readonly, sqlStore, sqlStore.getSelect());
     }
 
     public T findById(Object... ids) {
@@ -129,7 +126,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             Boolean readonly
             , Object... ids
     ) {
-        return sqlStoreService.find(readonly, sqlStore, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
+        return sqlService.find(readonly, sqlStore, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
     }
 
     public T find(
@@ -142,7 +139,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             Boolean readonly
             , T entity
     ) {
-        return sqlStoreService.find(readonly, sqlStore, entity);
+        return sqlService.find(readonly, sqlStore, entity);
     }
 
     public T insert(
@@ -152,9 +149,9 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             String sql = toInsertSQL(sqlStore, entity);
             Field autoKey = sqlStore.getAutoKey();
             if (autoKey == null) {
-                sqlStoreService.update(sql);
+                sqlService.update(sql);
             } else {
-                autoKey.set(entity, sqlStoreService.insert(sql, autoKey.getType()));
+                autoKey.set(entity, sqlService.insert(sql, autoKey.getType()));
             }
             return entity;
         } catch (IllegalAccessException e) {
@@ -166,7 +163,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
             T entity
     ) {
         try {
-            return sqlStoreService.update(toUpdateSQL(sqlStore, entity));
+            return sqlService.update(toUpdateSQL(sqlStore, entity));
         } catch (IllegalAccessException e) {
             throw new HiSqlException(e);
         }
@@ -175,29 +172,29 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     public int delete(
             T entity
     ) {
-        return sqlStoreService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
+        return sqlService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
     }
 
     public int deleteById(
             Object... id
     ) {
-        return sqlStoreService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
+        return sqlService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
     }
 
     @Override
     public Collection<T> insertAll(Collection<T> entities) {
         Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(false);
+        DataSource dataSource = sqlService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(dataSource);
+            connection = sqlService.getConnection(dataSource);
             Field autoKey = sqlStore.getAutoKey();
             if (autoKey == null) {
                 for (T entity : entities) {
-                    sqlStoreService.update(toInsertSQL(sqlStore, entity));
+                    sqlService.update(toInsertSQL(sqlStore, entity));
                 }
             } else {
                 for (T entity : entities) {
-                    autoKey.set(entity, sqlStoreService.insert(toInsertSQL(sqlStore, entity), autoKey.getType()));
+                    autoKey.set(entity, sqlService.insert(toInsertSQL(sqlStore, entity), autoKey.getType()));
                 }
             }
             return entities;
@@ -211,9 +208,9 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     @Override
     public T[] insertAll(T[] entities) {
         Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(false);
+        DataSource dataSource = sqlService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(dataSource);
+            connection = sqlService.getConnection(dataSource);
             Field autoKey = sqlStore.getAutoKey();
             Statement statement = connection.createStatement();
             if (autoKey == null) {
@@ -239,9 +236,9 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     @Override
     public int[] updateAll(Collection<T> entities) {
         Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(false);
+        DataSource dataSource = sqlService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(dataSource);
+            connection = sqlService.getConnection(dataSource);
             Statement statement = connection.createStatement();
             int[] counts = new int[entities.size()];
             int i = 0;
@@ -259,9 +256,9 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     @Override
     public int[] updateAll(T[] entities) {
         Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(false);
+        DataSource dataSource = sqlService.getDataSource(false);
         try {
-            connection = sqlStoreService.getConnection(dataSource);
+            connection = sqlService.getConnection(dataSource);
             Statement statement = connection.createStatement();
             int l = entities.length;
             int[] counts = new int[l];
@@ -277,7 +274,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl implements SQLCr
     }
 
     public int deleteAll() {
-        return sqlStoreService.update(sqlStore.getDeleteAll());
+        return sqlService.update(sqlStore.getDeleteAll());
     }
 
     @SuppressWarnings("unchecked")

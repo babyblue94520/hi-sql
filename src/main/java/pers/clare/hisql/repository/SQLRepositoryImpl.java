@@ -1,76 +1,59 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
-import pers.clare.hisql.service.SQLStoreService;
-import pers.clare.hisql.util.ConnectionUtil;
+import pers.clare.hisql.service.SQLService;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
+public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
+    protected final S sqlService;
 
-public class SQLRepositoryImpl implements SQLRepository {
-    private final SQLStoreService sqlStoreService;
-
-    public SQLRepositoryImpl(SQLStoreService sqlStoreService) {
-        this.sqlStoreService = sqlStoreService;
+    public SQLRepositoryImpl(S sqlService) {
+        this.sqlService = sqlService;
     }
 
     @Override
-    public <R> R query(String sql, ResultSetCallback<R> resultSetCallback, Object... parameters) {
-        return query(false, sql, resultSetCallback, parameters);
+    public <R> R connection(String sql, Object[] parameters, ConnectionCallback<R> callback) {
+        return sqlService.connection(false, sql, parameters, callback);
+    }
+
+    @Override
+    public <R> R connection(boolean readonly, String sql, Object[] parameters, ConnectionCallback<R> callback) {
+        return sqlService.connection(readonly, sql, parameters, callback);
+    }
+
+    @Override
+    public <R> R prepared(String sql, Object[] parameters, PreparedStatementCallback<R> callback) {
+        return sqlService.prepared(false, sql, parameters, callback);
+    }
+
+    @Override
+    public <R> R prepared(boolean readonly, String sql, Object[] parameters, PreparedStatementCallback<R> callback) {
+        return sqlService.prepared(readonly, sql, parameters, callback);
+    }
+
+    @Override
+    public <R> R query(String sql, Object[] parameters, ResultSetCallback<R> resultSetCallback) {
+        return sqlService.query(false, sql, parameters, resultSetCallback);
     }
 
     @Override
     public <R> R query(
             boolean readonly
             , String sql
+            , Object[] parameters
             , ResultSetCallback<R> resultSetCallback
-            , Object... parameters
     ) {
-        return sqlStoreService.query(readonly, sql, resultSetCallback, parameters);
+        return sqlService.query(readonly, sql, parameters, resultSetCallback);
     }
 
     @Override
-    public <R> R connection(ConnectionCallback<R> callback) {
-        return connection(false, callback);
+    public <R> R insert(String sql, Object[] args, ResultSetCallback<R> callback) {
+        return sqlService.insert(sql, args, callback);
     }
 
     @Override
-    public <R> R connection(boolean readonly, ConnectionCallback<R> callback) {
-        Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(readonly);
-        try {
-            connection = sqlStoreService.getConnection(dataSource);
-            return callback.apply(connection);
-        } catch (HiSqlException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new HiSqlException(e);
-        } finally {
-            ConnectionUtil.close(connection, dataSource);
-        }
-    }
-
-    @Override
-    public <R> R preparedStatement(String sql, PreparedStatementCallback<R> callback) {
-        return preparedStatement(false, sql, callback);
-    }
-
-    @Override
-    public <R> R preparedStatement(boolean readonly, String sql, PreparedStatementCallback<R> callback) {
-        Connection connection = null;
-        DataSource dataSource = sqlStoreService.getDataSource(readonly);
-        try {
-            connection = sqlStoreService.getConnection(dataSource);
-            return callback.apply(connection.prepareStatement(sql));
-        } catch (HiSqlException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new HiSqlException(e);
-        } finally {
-            ConnectionUtil.close(connection, dataSource);
-        }
+    public <R> R update(String sql, Object[] args, ResultSetCallback<R> callback) {
+        return sqlService.update(sql, args, callback);
     }
 }
