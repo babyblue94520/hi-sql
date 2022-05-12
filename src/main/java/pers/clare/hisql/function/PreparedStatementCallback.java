@@ -5,5 +5,5 @@ import java.sql.SQLException;
 
 @FunctionalInterface
 public interface PreparedStatementCallback<R> {
-    R apply(PreparedStatement preparedStatement, Object[] parameters) throws SQLException;
+    R apply(PreparedStatement preparedStatement) throws SQLException;
 }

@@ -1,6 +1,9 @@
 package pers.clare.hisql.repository;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.entity.User;
@@ -14,12 +17,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-@DisplayName("SQLCrudRepositoryTest")
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
@@ -257,12 +257,14 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void deleteAll() {
+        userRepository.deleteAll();
         int count = 10;
         for (int i = 0; i < count; i++) {
             buildUser();
         }
-        assertTrue(userRepository.count() > 0);
-        userRepository.deleteAll();
+        assertEquals(count, userRepository.count());
+        int result = userRepository.deleteAll();
+        assertEquals(count, result);
         assertEquals(0, userRepository.count());
     }
 }

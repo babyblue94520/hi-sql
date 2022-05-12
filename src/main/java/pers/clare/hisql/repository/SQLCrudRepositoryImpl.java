@@ -16,20 +16,23 @@ import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unused")
-public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<T> {
-    protected final SQLCrudStore<T> sqlStore;
+public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity> {
+    protected final SQLCrudStore<Entity> sqlStore;
 
-    public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<T> repositoryClass) {
+    public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<Entity> repositoryClass) {
         super(sqlService);
-        sqlStore = (SQLCrudStore<T>) SQLStoreFactory.build(sqlService.getContext(), findFirstActualTypeArgument(repositoryClass), true);
+        sqlStore = (SQLCrudStore<Entity>) SQLStoreFactory.build(sqlService.getContext(), findEntityClass(repositoryClass), true);
     }
 
     public long count() {
@@ -43,11 +46,11 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
         return count == null ? 0 : count;
     }
 
-    public long count(T entity) {
+    public long count(Entity entity) {
         return doCount(false, entity);
     }
 
-    public long count(Boolean readonly, T entity) {
+    public long count(Boolean readonly, Entity entity) {
         return doCount(readonly, entity);
     }
 
@@ -79,7 +82,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
 
     private long doCount(
             Boolean readonly
-            , T entity
+            , Entity entity
     ) {
         try {
             Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
@@ -91,59 +94,59 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
         }
     }
 
-    public List<T> findAll(
+    public List<Entity> findAll(
     ) {
         return findAll(false);
     }
 
-    public List<T> findAll(
+    public List<Entity> findAll(
             Sort sort
     ) {
         return sqlService.findAll(false, sqlStore, sqlStore.getSelect(), sort);
     }
 
     @Override
-    public Page<T> page(Pagination pagination) {
+    public Page<Entity> page(Pagination pagination) {
         return sqlService.page(false, sqlStore, pagination);
     }
 
     @Override
-    public Next<T> next(Pagination pagination) {
+    public Next<Entity> next(Pagination pagination) {
         return sqlService.next(false, sqlStore, pagination);
     }
 
-    public List<T> findAll(
+    public List<Entity> findAll(
             Boolean readonly
     ) {
         return sqlService.findAll(readonly, sqlStore, sqlStore.getSelect());
     }
 
-    public T findById(Object... ids) {
+    public Entity findById(Object... ids) {
         return findById(false, ids);
     }
 
-    public T findById(
+    public Entity findById(
             Boolean readonly
             , Object... ids
     ) {
         return sqlService.find(readonly, sqlStore, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
     }
 
-    public T find(
-            T entity
+    public Entity find(
+            Entity entity
     ) {
         return find(false, entity);
     }
 
-    public T find(
+    public Entity find(
             Boolean readonly
-            , T entity
+            , Entity entity
     ) {
         return sqlService.find(readonly, sqlStore, entity);
     }
 
-    public T insert(
-            T entity
+    public Entity insert(
+            Entity entity
     ) {
         try {
             String sql = toInsertSQL(sqlStore, entity);
@@ -160,7 +163,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     public int update(
-            T entity
+            Entity entity
     ) {
         try {
             return sqlService.update(toUpdateSQL(sqlStore, entity));
@@ -170,7 +173,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     public int delete(
-            T entity
+            Entity entity
     ) {
         return sqlService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
     }
@@ -182,18 +185,18 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     @Override
-    public Collection<T> insertAll(Collection<T> entities) {
+    public Collection<Entity> insertAll(Collection<Entity> entities) {
         Connection connection = null;
         DataSource dataSource = sqlService.getDataSource(false);
         try {
             connection = sqlService.getConnection(dataSource);
             Field autoKey = sqlStore.getAutoKey();
             if (autoKey == null) {
-                for (T entity : entities) {
+                for (Entity entity : entities) {
                     sqlService.update(toInsertSQL(sqlStore, entity));
                 }
             } else {
-                for (T entity : entities) {
+                for (Entity entity : entities) {
                     autoKey.set(entity, sqlService.insert(toInsertSQL(sqlStore, entity), autoKey.getType()));
                 }
             }
@@ -206,7 +209,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     @Override
-    public T[] insertAll(T[] entities) {
+    public Entity[] insertAll(Entity[] entities) {
         Connection connection = null;
         DataSource dataSource = sqlService.getDataSource(false);
         try {
@@ -214,12 +217,12 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
             Field autoKey = sqlStore.getAutoKey();
             Statement statement = connection.createStatement();
             if (autoKey == null) {
-                for (T entity : entities) {
+                for (Entity entity : entities) {
                     ConnectionUtil.insert(statement, toInsertSQL(sqlStore, entity));
                 }
             } else {
                 ResultSet rs;
-                for (T entity : entities) {
+                for (Entity entity : entities) {
                     ConnectionUtil.insert(statement, toInsertSQL(sqlStore, entity));
                     rs = statement.getGeneratedKeys();
                     autoKey.set(entity, rs.next() ? rs.getObject(1, autoKey.getType()) : null);
@@ -234,7 +237,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     @Override
-    public int[] updateAll(Collection<T> entities) {
+    public int[] updateAll(Collection<Entity> entities) {
         Connection connection = null;
         DataSource dataSource = sqlService.getDataSource(false);
         try {
@@ -242,7 +245,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
             Statement statement = connection.createStatement();
             int[] counts = new int[entities.size()];
             int i = 0;
-            for (T entity : entities) {
+            for (Entity entity : entities) {
                 counts[i++] = ConnectionUtil.update(statement, toUpdateSQL(sqlStore, entity));
             }
             return counts;
@@ -254,7 +257,7 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
     }
 
     @Override
-    public int[] updateAll(T[] entities) {
+    public int[] updateAll(Entity[] entities) {
         Connection connection = null;
         DataSource dataSource = sqlService.getDataSource(false);
         try {
@@ -277,28 +280,46 @@ public class SQLCrudRepositoryImpl<T> extends SQLRepositoryImpl<SQLStoreService>
         return sqlService.update(sqlStore.getDeleteAll());
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> Class<T> findFirstActualTypeArgument(Class<T> repositoryClass) {
-        Type[] interfaces = repositoryClass.getGenericInterfaces();
-        if (interfaces.length == 0) {
-            throw new IllegalArgumentException("SQLCrudRepository interface must not be null!");
+    private static Class<?> findEntityClass(Class<?> clazz) {
+        Map<Class<?>, Type[]> typesMap = new HashMap<>();
+        Type entityType = findEntityClass(clazz, typesMap);
+        if (entityType instanceof Class) {
+            return (Class<?>) entityType;
         }
-        ParameterizedType parameterizedType = null;
-        for (Type anInterface : interfaces) {
-            if (anInterface instanceof ParameterizedType
-                    && ((ParameterizedType) anInterface).getRawType() == SQLCrudRepository.class) {
-                parameterizedType = (ParameterizedType) anInterface;
-                break;
+        throw new IllegalArgumentException(String.format("%s entity class not found!", clazz.getName()));
+    }
+
+    private static Type findEntityClass(Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
+        Type entityType;
+        for (Type type : clazz.getGenericInterfaces()) {
+            if (type instanceof ParameterizedType) {
+                ParameterizedType parameterizedType = (ParameterizedType) type;
+                typesMap.put((Class<?>) parameterizedType.getRawType(), parameterizedType.getActualTypeArguments());
+                if (parameterizedType.getRawType() == SQLCrudRepository.class) {
+                    entityType = parameterizedType.getActualTypeArguments()[0];
+                } else {
+                    entityType = findEntityClass((Class<?>) parameterizedType.getRawType(), typesMap);
+                }
+                if (entityType instanceof Class) return entityType;
+                if (entityType instanceof TypeVariable) {
+                    for (int i = 0; i < clazz.getTypeParameters().length; i++) {
+                        System.out.println(entityType.getTypeName());
+                        if (entityType.getTypeName().equals(clazz.getTypeParameters()[i].getTypeName()))
+                            return typesMap.get(clazz)[i];
+                    }
+                }
+            } else if (type instanceof Class) {
+                entityType = findEntityClass((Class<?>) type, typesMap);
+                if (entityType instanceof Class) return entityType;
+                if (entityType instanceof TypeVariable) {
+                    for (int i = 0; i < clazz.getTypeParameters().length; i++) {
+                        if (((TypeVariable<?>) entityType).getName().equals(clazz.getTypeParameters()[i].getName()))
+                            return typesMap.get(clazz)[i];
+                    }
+                }
             }
         }
-        if (parameterizedType == null) {
-            throw new IllegalArgumentException("SQLCrudRepository interface not found!");
-        }
-        Type[] types = parameterizedType.getActualTypeArguments();
-        if (types == null || types.length == 0) {
-            throw new IllegalArgumentException("SQLCrudRepository entity class must not be null!");
-        }
-        return (Class<T>) types[0];
+        return null;
     }
 
     private static String toInsertSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {

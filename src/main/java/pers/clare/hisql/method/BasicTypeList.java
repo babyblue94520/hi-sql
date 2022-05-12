@@ -1,7 +1,5 @@
 package pers.clare.hisql.method;
 
-import pers.clare.hisql.service.SQLStoreService;
-
 public class BasicTypeList extends SQLSelectMethod {
 
     BasicTypeList(Class<?> returnType) {

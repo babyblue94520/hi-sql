@@ -19,7 +19,7 @@ public interface CallbackRepository extends SQLRepository {
     <T> T prepared(T value, PreparedStatementCallback<T> callback);
 
     @HiSql("select ?")
-    <T> T prepared2(T value, PreparedStatementCallback<T> callback);
+    <T> T prepared2(PreparedStatementCallback<T> callback);
 
     @HiSql("select ?")
     <T> T prepared3(PreparedStatementCallback<T> callback);

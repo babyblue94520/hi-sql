@@ -3,7 +3,6 @@ package pers.clare.hisql.annotation;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
-import org.springframework.stereotype.Component;
 import pers.clare.hisql.naming.LowerCaseNamingStrategy;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.MySQLPaginationMode;

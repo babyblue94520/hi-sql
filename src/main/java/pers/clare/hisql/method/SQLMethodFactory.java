@@ -1,12 +1,14 @@
 package pers.clare.hisql.method;
 
 import org.aopalliance.intercept.MethodInterceptor;
-import pers.clare.hisql.constant.CommandType;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.annotation.HiSql;
+import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
+import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.repository.SQLCrudRepository;
+import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.MethodUtil;
@@ -28,15 +30,33 @@ public class SQLMethodFactory {
             SQLStoreService sqlStoreService
             , Class<?> repositoryInterface
     ) {
+        Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
+        buildMethod(methodInterceptors, sqlStoreService, repositoryInterface);
+        return methodInterceptors;
+    }
+
+    private static void buildMethod(
+            Map<Method, MethodInterceptor> methodInterceptors
+            , SQLStoreService sqlStoreService
+            , Class<?> repositoryInterface
+    ) {
+        if (repositoryInterface == null
+                || repositoryInterface == SQLRepository.class
+                || repositoryInterface == SQLCrudRepository.class
+        ) return;
+        Class<?>[] superInterfaces = repositoryInterface.getInterfaces();
+        for (Class<?> superInterface : superInterfaces) {
+            buildMethod(methodInterceptors, sqlStoreService, superInterface);
+        }
         HiSqlContext context = sqlStoreService.getContext();
         Method[] methods = repositoryInterface.getDeclaredMethods();
         Map<String, String> contents = SQLInjector.getContents(context.getXmlRoot(), repositoryInterface);
-        Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
         String command;
         SQLMethod sqlMethod;
         boolean readonly;
         HiSql hiSql;
         for (Method method : methods) {
+            if (methodInterceptors.containsKey(method)) continue;
             hiSql = method.getAnnotation(HiSql.class);
             readonly = hiSql != null && hiSql.readonly();
             command = contents.get(method.getName());
@@ -60,7 +80,6 @@ public class SQLMethodFactory {
             sqlMethod.init();
             methodInterceptors.put(method, sqlMethod);
         }
-        return methodInterceptors;
     }
 
     /**
@@ -160,24 +179,6 @@ public class SQLMethodFactory {
                 return new SQLEntityNext(returnType);
             }
         }
-    }
-
-    /**
-     * get sql string
-     */
-    private static String findSqlCommand(
-            Map<String, String> contents
-            , Method method
-    ) {
-        String command = contents.get(method.getName());
-        if (command == null) {
-            HiSql hiSql = method.getAnnotation(HiSql.class);
-            if (hiSql != null) {
-                command = contents.get(hiSql.name());
-                if (command == null) command = hiSql.value();
-            }
-        }
-        return command;
     }
 
     private static Class<?> getMapValueClass(Method method) {

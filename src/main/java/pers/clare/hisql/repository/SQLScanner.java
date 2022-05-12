@@ -3,10 +3,7 @@ package pers.clare.hisql.repository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyResourceConfigurer;
@@ -31,16 +28,19 @@ import java.util.Optional;
 
 import static org.springframework.util.Assert.notNull;
 
-public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware, BeanNameAware, BeanFactoryAware {
+public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware
+        , BeanNameAware, BeanFactoryAware, BeanClassLoaderAware {
 
     private ApplicationContext applicationContext;
     protected BeanFactory beanFactory;
+    private ClassLoader classLoader;
 
     private String beanName;
     private String basePackage;
     private boolean processPropertyPlaceHolders;
     private AnnotationAttributes annotationAttributes;
     private SQLStoreService sqlStoreService;
+
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -51,6 +51,12 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }
+
+    @Override
+    public void setBeanClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
+
 
     private Environment getEnvironment() {
         return this.applicationContext.getEnvironment();
@@ -99,7 +105,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         if (this.processPropertyPlaceHolders) {
             processPropertyPlaceHolders();
         }
-        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry, annotationAttributes, sqlStoreService);
+        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry, classLoader, annotationAttributes, sqlStoreService);
         scanner.setResourceLoader(this.applicationContext);
         scanner.registerFilters();
         scanner.scan(

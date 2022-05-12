@@ -23,13 +23,13 @@ public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
     }
 
     @Override
-    public <R> R prepared(String sql, Object[] parameters, PreparedStatementCallback<R> callback) {
-        return sqlService.prepared(false, sql, parameters, callback);
+    public <R> R prepared(String sql, PreparedStatementCallback<R> callback) {
+        return sqlService.prepared(false, sql, callback);
     }
 
     @Override
-    public <R> R prepared(boolean readonly, String sql, Object[] parameters, PreparedStatementCallback<R> callback) {
-        return sqlService.prepared(readonly, sql, parameters, callback);
+    public <R> R prepared(boolean readonly, String sql, PreparedStatementCallback<R> callback) {
+        return sqlService.prepared(readonly, sql, callback);
     }
 
     @Override

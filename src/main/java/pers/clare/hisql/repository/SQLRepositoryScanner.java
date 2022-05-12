@@ -11,28 +11,44 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
+import org.springframework.stereotype.Repository;
 import pers.clare.hisql.service.SQLStoreService;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
     private static final Logger log = LogManager.getLogger();
+    private static final Set<String> repositoryNameSet = new HashSet<>();
+    private static final Set<Class<?>> repositoryClassSet = new HashSet<>();
 
+    static {
+        repositoryNameSet.add(SQLRepository.class.getName());
+        repositoryNameSet.add(SQLCrudRepository.class.getName());
+        repositoryClassSet.add(SQLRepository.class);
+        repositoryClassSet.add(SQLCrudRepository.class);
+    }
+
+    private final ClassLoader classLoader;
     private final AnnotationAttributes annotationAttributes;
     private final SQLStoreService sqlStoreService;
 
     public SQLRepositoryScanner(
             BeanDefinitionRegistry registry
+            , ClassLoader classLoader
             , AnnotationAttributes annotationAttributes
             , SQLStoreService sqlStoreService
     ) {
         super(registry);
+        this.classLoader = classLoader;
         this.annotationAttributes = annotationAttributes;
         this.sqlStoreService = sqlStoreService;
     }
@@ -44,29 +60,45 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
     @Override
     public Set<BeanDefinitionHolder> doScan(String... basePackages) {
         Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
-
         if (beanDefinitions.isEmpty()) {
             log.warn("No SQLRepository was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
         } else {
             processBeanDefinitions(beanDefinitions);
         }
-
         return beanDefinitions;
     }
 
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
-        if (SQLRepository.class.getName().equals(beanDefinition.getBeanClassName())
-                || SQLCrudRepository.class.getName().equals(beanDefinition.getBeanClassName())) {
-            return false;
-        }
+        if (repositoryNameSet.contains(beanDefinition.getBeanClassName())) return false;
+
         AnnotationMetadata annotationMetadata = beanDefinition.getMetadata();
+        if (!isRepository(annotationMetadata)) return false;
+
         String[] interfaceNames = annotationMetadata.getInterfaceNames();
-        for (String interfaceName : interfaceNames) {
-            if (SQLRepository.class.getName().equals(interfaceName)
-                    || SQLCrudRepository.class.getName().equals(interfaceName)) {
-                return true;
+        try {
+            for (String interfaceName : interfaceNames) {
+                if (repositoryNameSet.contains(interfaceName)) return true;
+                if (isCandidateInterfaces(this.classLoader.loadClass(interfaceName))) return true;
             }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean isRepository(AnnotationMetadata annotationMetadata) {
+        for (MergedAnnotation<Annotation> annotation : annotationMetadata.getAnnotations()) {
+            if (annotation.getType().getName().equals(Repository.class.getName())) return true;
+        }
+        return false;
+    }
+
+    private boolean isCandidateInterfaces(Class<?> clazz) {
+        Class<?>[] interfaces = clazz.getInterfaces();
+        for (Class<?> anInterface : interfaces) {
+            if (repositoryClassSet.contains(anInterface)) return true;
+            if (isCandidateInterfaces(anInterface)) return true;
         }
         return false;
     }

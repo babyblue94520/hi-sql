@@ -1,13 +1,15 @@
 package pers.clare.hisql.repository;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import pers.clare.hisql.data.entity.User;
-import pers.clare.hisql.data.repository.UserCallbackRepository;
+import pers.clare.hisql.common.data.CommonUser;
+import pers.clare.hisql.data.repository.CommonRepositoryImpl;
+import pers.clare.hisql.data.repository.CommonRepositoryImpl2;
 
 import java.sql.Statement;
 
@@ -18,17 +20,21 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
-public class UserCallbackRepositoryTest {
+@RequiredArgsConstructor
+public class CommonRepositoryTest {
 
     @Autowired
-    private UserCallbackRepository repository;
+    private CommonRepositoryImpl commonRepositoryImpl;
 
-    User buildUser() {
-        User user = new User();
+    @Autowired
+    private CommonRepositoryImpl2 commonRepositoryImpl2;
+
+    CommonUser buildUser() {
+        CommonUser user = new CommonUser();
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
-        repository.insert(user);
-        user = repository.findById(user.getId());
+        commonRepositoryImpl.insert(user);
+        user = commonRepositoryImpl.findById(user.getId());
         assertNotNull(user);
         assertEquals(account, user.getAccount());
         return user;
@@ -36,11 +42,11 @@ public class UserCallbackRepositoryTest {
 
     @Test
     void connection() {
-        User user = buildUser();
-        User result = repository.update(user.getId(), "Test", (connection, sql, parameters) -> {
+        CommonUser user = buildUser();
+        CommonUser result = commonRepositoryImpl.update(user.getId(), "Test", (connection, sql, parameters) -> {
             Statement statement = connection.createStatement();
             if (statement.executeUpdate(sql) > 0) {
-                return repository.findById(parameters[0]);
+                return commonRepositoryImpl.findById(parameters[0]);
             } else {
                 return null;
             }
@@ -50,10 +56,17 @@ public class UserCallbackRepositoryTest {
 
     @Test
     void update() {
-        User user = buildUser();
-        repository.update(user.getId(), "Test");
-        user = repository.findById(user.getId());
+        CommonUser user = buildUser();
+        commonRepositoryImpl.update(user.getId(), "Test");
+        user = commonRepositoryImpl.findById(user.getId());
         assertEquals("1", user.getName());
     }
 
+    @Test
+    void update2() {
+        CommonUser user = buildUser();
+        commonRepositoryImpl2.update(user.getId(), "Test");
+        user = commonRepositoryImpl2.findById(user.getId());
+        assertEquals("1", user.getName());
+    }
 }

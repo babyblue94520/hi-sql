@@ -1,15 +1,15 @@
 package pers.clare.hisql.service;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
-import pers.clare.hisql.repository.HiSqlContext;
-import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.function.ResultSetHandler;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
@@ -84,14 +84,13 @@ public class SQLService {
     public <R> R prepared(
             boolean readonly
             , String sql
-            , Object[] parameters
             , PreparedStatementCallback<R> callback
     ) {
         Connection connection = null;
         DataSource dataSource = getDataSource(readonly);
         try {
             connection = getConnection(dataSource);
-            return callback.apply(connection.prepareStatement(sql), parameters);
+            return callback.apply(connection.prepareStatement(sql));
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {

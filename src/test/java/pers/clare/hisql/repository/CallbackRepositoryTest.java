@@ -1,6 +1,9 @@
 package pers.clare.hisql.repository;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.repository.CallbackRepository;
@@ -55,8 +58,7 @@ public class CallbackRepositoryTest {
     @Test
     void prepared() {
         long value = 1L;
-        long result = callbackRepository.prepared(1L, (preparedStatement, parameters) -> {
-            ConnectionUtil.setQueryValue(preparedStatement, parameters);
+        long result = callbackRepository.prepared(value, (preparedStatement) -> {
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return resultSet.getLong(1);
@@ -70,8 +72,8 @@ public class CallbackRepositoryTest {
     @Test
     void prepared2() {
         long value = 1L;
-        long result = callbackRepository.prepared2(1L, (preparedStatement, parameters) -> {
-            ConnectionUtil.setQueryValue(preparedStatement, parameters);
+        long result = callbackRepository.prepared2((preparedStatement) -> {
+            preparedStatement.setLong(1, value);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return resultSet.getLong(1);
@@ -85,8 +87,8 @@ public class CallbackRepositoryTest {
     @Test
     void prepared3() {
         String value = "1";
-        String result = callbackRepository.prepared3((preparedStatement, parameters) -> {
-            ConnectionUtil.setQueryValue(preparedStatement, value);
+        String result = callbackRepository.prepared3((preparedStatement) -> {
+            preparedStatement.setObject(1, value);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return String.valueOf(resultSet.getLong(1));
@@ -100,7 +102,7 @@ public class CallbackRepositoryTest {
     @Test
     void resultSet() {
         long value = 1L;
-        long result = callbackRepository.resultSet(1L, (resultSet) -> {
+        long result = callbackRepository.resultSet(value, (resultSet) -> {
             if (resultSet.next()) {
                 return resultSet.getLong(1);
             } else {

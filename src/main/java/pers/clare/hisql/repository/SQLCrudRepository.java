@@ -8,41 +8,41 @@ import pers.clare.hisql.page.Sort;
 import java.util.Collection;
 import java.util.List;
 
-public interface SQLCrudRepository<T> extends SQLRepository {
+public interface SQLCrudRepository<Entity> extends SQLRepository {
 
     long count();
 
-    long count(T entity);
+    long count(Entity entity);
 
     long countById(Object... keys);
 
-    List<T> findAll();
+    List<Entity> findAll();
 
-    List<T> findAll(Sort sort);
+    List<Entity> findAll(Sort sort);
 
-    Page<T> page(Pagination pagination);
+    Page<Entity> page(Pagination pagination);
 
-    Next<T> next(Pagination pagination);
+    Next<Entity> next(Pagination pagination);
 
-    T find(T entity);
+    Entity find(Entity entity);
 
-    T findById(Object... keys);
+    Entity findById(Object... keys);
 
-    T insert(T entity);
+    Entity insert(Entity entity);
 
-    int update(T entity);
+    int update(Entity entity);
 
-    int delete(T entity);
+    int delete(Entity entity);
 
     int deleteById(Object... keys);
 
-    Collection<T> insertAll(Collection<T> entities);
+    Collection<Entity> insertAll(Collection<Entity> entities);
 
-    T[] insertAll(T[] entities);
+    Entity[] insertAll(Entity[] entities);
 
-    int[] updateAll(Collection<T> entities);
+    int[] updateAll(Collection<Entity> entities);
 
-    int[] updateAll(T[] entities);
+    int[] updateAll(Entity[] entities);
 
     int deleteAll();
 }

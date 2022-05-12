@@ -1,15 +1,12 @@
 package pers.clare.hisql.store;
 
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.FieldSetHandler;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.query.SQLQueryBuilder;
+import pers.clare.hisql.repository.HiSqlContext;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.Blob;
@@ -40,13 +37,13 @@ public class SQLStoreFactory {
                 ;
     }
 
-    public static <T> SQLStore<T> build(HiSqlContext context, Class<T> clazz, boolean crud) {
+    public static <R extends SQLStore<T>, T> R build(HiSqlContext context, Class<T> clazz, boolean crud) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
-        if (crud && store instanceof SQLCrudStore) return store;
+        if (crud && store instanceof SQLCrudStore) return (R) store;
         store = crud ? buildCrud(context, clazz) : build(context, clazz);
         sqlStoreCacheMap.put(clazz, store);
-        return store;
+        return (R) store;
     }
 
     private static <T> SQLStore<T> build(HiSqlContext context, Class<T> clazz) {
@@ -70,7 +67,13 @@ public class SQLStoreFactory {
     }
 
     private static <T> SQLCrudStore<T> buildCrud(HiSqlContext context, Class<T> clazz) {
-        String tableName = context.getNaming().turnCamelCase(clazz.getSimpleName());
+        String tableName;
+        Table table = clazz.getAnnotation(Table.class);
+        if (table == null) {
+            tableName = context.getNaming().turnCamelCase(clazz.getSimpleName());
+        } else {
+            tableName = table.name();
+        }
         StringBuilder selectColumns = new StringBuilder();
         StringBuilder whereId = new StringBuilder(" where ");
         Collection<Field> fields = getAllField(clazz);

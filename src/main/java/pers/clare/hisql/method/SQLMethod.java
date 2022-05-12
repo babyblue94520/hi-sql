@@ -4,7 +4,10 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.*;
+import pers.clare.hisql.function.ArgumentGetHandler;
+import pers.clare.hisql.function.ConnectionCallback;
+import pers.clare.hisql.function.PreparedStatementCallback;
+import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.page.Sort;
@@ -283,20 +286,20 @@ public abstract class SQLMethod implements MethodInterceptor {
             );
         }
         if (preparedStatementCallback != null) {
-            return sqlStoreService.prepared(readonly, executeSQL, methodInvocation.getArguments()
+            return sqlStoreService.prepared(readonly, executeSQL
                     , (PreparedStatementCallback<?>) preparedStatementCallback.apply(methodInvocation.getArguments())
             );
         }
         if (resultSetCallback != null) {
             switch (commandType) {
                 case CommandType.Select:
-                    return sqlStoreService.query(readonly, executeSQL, methodInvocation.getArguments()
+                    return sqlStoreService.query(readonly, executeSQL, arguments
                             , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
                 case CommandType.Insert:
-                    return sqlStoreService.insert(executeSQL, methodInvocation.getArguments()
+                    return sqlStoreService.insert(executeSQL, arguments
                             , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
                 default:
-                    return sqlStoreService.update(executeSQL, methodInvocation.getArguments()
+                    return sqlStoreService.update(executeSQL, arguments
                             , (ResultSetCallback<?>) resultSetCallback.apply(methodInvocation.getArguments()));
             }
 

@@ -3,7 +3,6 @@ package pers.clare.hisql.method;
 import org.aopalliance.intercept.MethodInvocation;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.query.SQLQuery;
-import pers.clare.hisql.service.SQLStoreService;
 
 public abstract class PageMethod extends SQLMethod {
 

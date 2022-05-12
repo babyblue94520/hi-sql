@@ -11,9 +11,9 @@ public interface SQLRepository {
 
     <R> R connection(boolean readonly, String sql, Object[] args, ConnectionCallback<R> callback);
 
-    <R> R prepared(String sql, Object[] args, PreparedStatementCallback<R> callback);
+    <R> R prepared(String sql, PreparedStatementCallback<R> callback);
 
-    <R> R prepared(boolean readonly, String sql, Object[] args, PreparedStatementCallback<R> callback);
+    <R> R prepared(boolean readonly, String sql, PreparedStatementCallback<R> callback);
 
     <R> R query(String sql, Object[] args, ResultSetCallback<R> callback);
 
