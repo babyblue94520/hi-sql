@@ -1,6 +1,7 @@
 package pers.clare.hisql.repository;
 
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
@@ -27,13 +28,20 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity> {
+public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity, Key> {
     protected final SQLCrudStore<Entity> sqlStore;
+    protected final KeySQLBuilder<Key> keySQLBuilder;
 
     public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<Entity> repositoryClass) {
         super(sqlService);
-        sqlStore = (SQLCrudStore<Entity>) SQLStoreFactory.build(sqlService.getContext(), findEntityClass(repositoryClass), true);
+        Type[] types = findTypes(repositoryClass);
+        Class<Entity> entityClass = (Class<Entity>) types[0];
+        sqlStore = SQLStoreFactory.build(sqlService.getContext(), entityClass, true);
+
+        Class<Key> keyClass = (Class<Key>) types[1];
+        keySQLBuilder = SQLStoreFactory.buildKey(keyClass, sqlStore);
     }
+
 
     public long count() {
         return count(false);
@@ -47,31 +55,12 @@ public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreSer
     }
 
     public long count(Entity entity) {
-        return doCount(false, entity);
+        return count(false, entity);
     }
 
     public long count(Boolean readonly, Entity entity) {
-        return doCount(readonly, entity);
-    }
-
-    public long countById(Object... ids) {
-        return doCount(false, ids);
-    }
-
-    public long countById(
-            Boolean readonly
-            , Object... ids
-    ) {
-        return doCount(readonly, ids);
-    }
-
-    private long doCount(
-            Boolean readonly
-            , Object... args
-    ) {
         try {
-            if (args.length == 0) return 0;
-            Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), args));
+            Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -80,12 +69,16 @@ public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreSer
         }
     }
 
-    private long doCount(
+    public long countById(Key key) {
+        return countById(false, key);
+    }
+
+    public long countById(
             Boolean readonly
-            , Entity entity
+            , Key key
     ) {
         try {
-            Long count = sqlService.findFirst(readonly, Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            Long count = sqlService.findFirst(readonly, Long.class, keySQLBuilder.apply(sqlStore.getCountById(), key));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -121,15 +114,15 @@ public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreSer
         return sqlService.findAll(readonly, sqlStore, sqlStore.getSelect());
     }
 
-    public Entity findById(Object... ids) {
-        return findById(false, ids);
+    public Entity findById(Key key) {
+        return findById(false, key);
     }
 
     public Entity findById(
             Boolean readonly
-            , Object... ids
+            , Key key
     ) {
-        return sqlService.find(readonly, sqlStore, SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), ids));
+        return sqlService.find(readonly, sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
     }
 
     public Entity find(
@@ -179,9 +172,9 @@ public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreSer
     }
 
     public int deleteById(
-            Object... id
+            Key key
     ) {
-        return sqlService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), id));
+        return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), key));
     }
 
     @Override
@@ -280,46 +273,51 @@ public class SQLCrudRepositoryImpl<Entity> extends SQLRepositoryImpl<SQLStoreSer
         return sqlService.update(sqlStore.getDeleteAll());
     }
 
-    private static Class<?> findEntityClass(Class<?> clazz) {
+    private static Type[] findTypes(Class<?> clazz) {
         Map<Class<?>, Type[]> typesMap = new HashMap<>();
-        Type entityType = findEntityClass(clazz, typesMap);
-        if (entityType instanceof Class) {
-            return (Class<?>) entityType;
+        Type[] types = findTypes(clazz, typesMap);
+        if (types == null) {
+            throw new IllegalArgumentException(String.format("%s entity class not found!", clazz));
         }
-        throw new IllegalArgumentException(String.format("%s entity class not found!", clazz.getName()));
+        for (Type type : types) {
+            if (!(type instanceof Class)) {
+                throw new IllegalArgumentException(String.format("%s %s class not found!", clazz, type));
+            }
+        }
+        return types;
     }
 
-    private static Type findEntityClass(Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
-        Type entityType;
+    private static Type[] findTypes(Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
+        Type[] types = null;
         for (Type type : clazz.getGenericInterfaces()) {
             if (type instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) type;
                 typesMap.put((Class<?>) parameterizedType.getRawType(), parameterizedType.getActualTypeArguments());
                 if (parameterizedType.getRawType() == SQLCrudRepository.class) {
-                    entityType = parameterizedType.getActualTypeArguments()[0];
+                    types = parameterizedType.getActualTypeArguments();
                 } else {
-                    entityType = findEntityClass((Class<?>) parameterizedType.getRawType(), typesMap);
+                    types = findTypes((Class<?>) parameterizedType.getRawType(), typesMap);
                 }
-                if (entityType instanceof Class) return entityType;
-                if (entityType instanceof TypeVariable) {
-                    for (int i = 0; i < clazz.getTypeParameters().length; i++) {
-                        System.out.println(entityType.getTypeName());
-                        if (entityType.getTypeName().equals(clazz.getTypeParameters()[i].getTypeName()))
-                            return typesMap.get(clazz)[i];
-                    }
-                }
+                findTypeVariableToClass(types, clazz, typesMap);
             } else if (type instanceof Class) {
-                entityType = findEntityClass((Class<?>) type, typesMap);
-                if (entityType instanceof Class) return entityType;
-                if (entityType instanceof TypeVariable) {
-                    for (int i = 0; i < clazz.getTypeParameters().length; i++) {
-                        if (((TypeVariable<?>) entityType).getName().equals(clazz.getTypeParameters()[i].getName()))
-                            return typesMap.get(clazz)[i];
+                types = findTypes((Class<?>) type, typesMap);
+                findTypeVariableToClass(types, clazz, typesMap);
+            }
+        }
+        return types;
+    }
+
+    private static void findTypeVariableToClass(Type[] types, Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
+        for (int i = 0; i < types.length; i++) {
+            Type type = types[i];
+            if (type instanceof TypeVariable) {
+                for (int j = 0; j < clazz.getTypeParameters().length; j++) {
+                    if (type.getTypeName().equals(clazz.getTypeParameters()[j].getTypeName())) {
+                        types[i] = typesMap.get(clazz)[j];
                     }
                 }
             }
         }
-        return null;
     }
 
     private static String toInsertSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {

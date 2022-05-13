@@ -2,9 +2,12 @@ package pers.clare.hisql.store;
 
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.util.ClassUtil;
+import pers.clare.hisql.util.SQLQueryUtil;
 
 import javax.persistence.*;
 import java.lang.reflect.Field;
@@ -35,6 +38,26 @@ public class SQLStoreFactory {
                 || clazz.isEnum()
                 || clazz.isInterface()
                 ;
+    }
+
+    public static <T> KeySQLBuilder<T> buildKey(Class<T> keyClass, SQLCrudStore<?> sqlStore) {
+        if (ClassUtil.isBasicType(keyClass)
+                || keyClass.isArray()
+        ) {
+            return (builder, key) -> SQLQueryUtil.setValue(builder, sqlStore.getKeyFields(), new Object[]{key});
+        } else {
+            Field[] keyFields = new Field[sqlStore.getKeyFields().length];
+            int count = 0;
+            for (Field field : sqlStore.getKeyFields()) {
+                try {
+                    Field keyField = keyFields[count++] = keyClass.getDeclaredField(field.getName());
+                    keyField.setAccessible(true);
+                } catch (NoSuchFieldException e) {
+                    throw new IllegalArgumentException(String.format("%s %s field not found!", keyClass, field.getName()));
+                }
+            }
+            return (builder, key) -> SQLQueryUtil.setValue(builder, keyFields, key);
+        }
     }
 
     public static <R extends SQLStore<T>, T> R build(HiSqlContext context, Class<T> clazz, boolean crud) {

@@ -50,12 +50,12 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             basePackages.add(getDefaultBasePackage(annotationMetadata));
         }
         builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
-        String beanName = generateBaseBeanName(annotationMetadata, SQLScanner.class);
+        String beanName = generateBaseBeanName(annotationMetadata);
         registry.registerBeanDefinition(beanName, builder.getBeanDefinition());
     }
 
-    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata, Class<?> clazz) {
-        return importingClassMetadata.getClassName() + "#" + clazz.getSimpleName();
+    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
+        return importingClassMetadata.getClassName() + "#" + SQLScanner.class.getSimpleName();
     }
 
     private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {

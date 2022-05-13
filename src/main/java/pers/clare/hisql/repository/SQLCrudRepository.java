@@ -8,13 +8,12 @@ import pers.clare.hisql.page.Sort;
 import java.util.Collection;
 import java.util.List;
 
-public interface SQLCrudRepository<Entity> extends SQLRepository {
+public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
 
     long count();
 
     long count(Entity entity);
 
-    long countById(Object... keys);
 
     List<Entity> findAll();
 
@@ -26,7 +25,6 @@ public interface SQLCrudRepository<Entity> extends SQLRepository {
 
     Entity find(Entity entity);
 
-    Entity findById(Object... keys);
 
     Entity insert(Entity entity);
 
@@ -34,7 +32,6 @@ public interface SQLCrudRepository<Entity> extends SQLRepository {
 
     int delete(Entity entity);
 
-    int deleteById(Object... keys);
 
     Collection<Entity> insertAll(Collection<Entity> entities);
 
@@ -45,4 +42,10 @@ public interface SQLCrudRepository<Entity> extends SQLRepository {
     int[] updateAll(Entity[] entities);
 
     int deleteAll();
+
+    long countById(Key key);
+
+    Entity findById(Key key);
+
+    int deleteById(Key key);
 }

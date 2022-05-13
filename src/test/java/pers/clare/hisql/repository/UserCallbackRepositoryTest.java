@@ -1,5 +1,6 @@
 package pers.clare.hisql.repository;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -18,12 +19,12 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class UserCallbackRepositoryTest {
 
-    @Autowired
-    private UserCallbackRepository repository;
+    private final UserCallbackRepository repository;
 
-    User buildUser() {
+    private User buildUser() {
         User user = new User();
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
@@ -40,7 +41,7 @@ public class UserCallbackRepositoryTest {
         User result = repository.update(user.getId(), "Test", (connection, sql, parameters) -> {
             Statement statement = connection.createStatement();
             if (statement.executeUpdate(sql) > 0) {
-                return repository.findById(parameters[0]);
+                return repository.findById(user.getId());
             } else {
                 return null;
             }

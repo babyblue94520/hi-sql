@@ -6,7 +6,7 @@ import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.repository.SQLCrudRepository;
 
 @Repository
-public interface UserRepository extends SQLCrudRepository<User>{
+public interface UserRepository extends SQLCrudRepository<User, Long> {
     @HiSql("insert into user (account)values(:account)")
     Long insert(String account);
 

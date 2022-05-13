@@ -4,7 +4,7 @@ import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.common.data.CommonUser;
 import pers.clare.hisql.repository.SQLCrudRepository;
 
-public interface CommonUserRepository<R,T> extends SQLCrudRepository<T>{
+public interface CommonInheritRepository1<R, T, K,V> extends SQLCrudRepository<T, K> {
     @HiSql("insert into user (account)values(:account)")
     Long insert(String account);
 

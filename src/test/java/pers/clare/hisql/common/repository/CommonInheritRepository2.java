@@ -1,4 +1,4 @@
-package pers.clare.hisql.data.repository;
+package pers.clare.hisql.common.repository;
 
 import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
@@ -6,7 +6,7 @@ import pers.clare.hisql.common.data.CommonUser;
 import pers.clare.hisql.function.ConnectionCallback;
 
 @Repository
-public interface CommonRepositoryImpl2 extends CommonRepositoryImpl {
+public interface CommonInheritRepository2<K> extends CommonInheritRepository1<String, CommonUser, K, Object> {
     @HiSql("update user set name = :name where id=:id")
     CommonUser update(Long id, String name, ConnectionCallback<CommonUser> callback);
 

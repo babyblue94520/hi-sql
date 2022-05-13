@@ -13,17 +13,11 @@ public abstract class PageMethod extends SQLMethod {
     @Override
     public Object invoke(MethodInvocation methodInvocation) {
         Object[] arguments = methodInvocation.getArguments();
-        Pagination pagination = getPagination(arguments);
-        SQLQuery query = null;
-        if (sqlQueryReplaceBuilder != null) {
-            query = toSqlQuery(sqlQueryReplaceBuilder, arguments);
-        } else if (sqlQueryBuilder != null) {
-            query = toSqlQuery(sqlQueryBuilder, arguments);
-        }
+        SQLQuery query = toSqlQuery(arguments);
         if (query == null) {
-            return doInvoke(sql, pagination, arguments);
+            return doInvoke(sql, getPagination(arguments), arguments);
         } else {
-            return doInvoke(query.toString(), pagination, emptyArguments);
+            return doInvoke(query.toString(), getPagination(arguments), emptyArguments);
         }
     }
 

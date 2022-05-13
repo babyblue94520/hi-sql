@@ -1,5 +1,6 @@
 package pers.clare.hisql.repository;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -19,10 +20,10 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class CallbackRepositoryTest {
 
-    @Autowired
-    private CallbackRepository callbackRepository;
+    private final CallbackRepository callbackRepository;
 
     @Test
     void connection() {

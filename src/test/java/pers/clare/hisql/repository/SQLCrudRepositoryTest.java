@@ -1,5 +1,6 @@
 package pers.clare.hisql.repository;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -23,12 +24,12 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class SQLCrudRepositoryTest {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    User buildUser() {
+    User create() {
         User user = new User();
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
@@ -43,28 +44,27 @@ public class SQLCrudRepositoryTest {
     void count() {
         userRepository.deleteAll();
         assertEquals(0, userRepository.count());
-        buildUser();
+        create();
         assertEquals(1, userRepository.count());
-        buildUser();
+        create();
         assertEquals(2, userRepository.count());
-        User user = buildUser();
+        User user = create();
         assertEquals(1, userRepository.count(user));
     }
 
     @Test
     void countById() {
-        User user = buildUser();
+        User user = create();
         assertEquals(1, userRepository.countById(user.getId()));
-        assertEquals(0, userRepository.countById());
     }
 
     @Test
     void findAll() {
         userRepository.deleteAll();
         assertEquals(0, userRepository.findAll().size());
-        buildUser();
+        create();
         assertEquals(1, userRepository.findAll().size());
-        buildUser();
+        create();
         assertEquals(2, userRepository.findAll().size());
         List<User> users = userRepository.findAll(Sort.of("id desc,account asc"));
         assertTrue(users.get(0).getId() > users.get(users.size() - 1).getId());
@@ -81,7 +81,7 @@ public class SQLCrudRepositoryTest {
         assertEquals(0, userPage.getTotal());
         int total = 23;
         for (int i = 0; i < total; i++) {
-            buildUser();
+            create();
         }
         int count = 0;
         while ((userPage = userRepository.page(Pagination.of(page++, size))).getRecords().size() > 0) {
@@ -106,7 +106,7 @@ public class SQLCrudRepositoryTest {
         assertEquals(0, userNext.getRecords().size());
         int total = 23;
         for (int i = 0; i < total; i++) {
-            buildUser();
+            create();
         }
         int count = 0;
         while ((userNext = userRepository.next(Pagination.of(page++, size))).getRecords().size() > 0) {
@@ -123,7 +123,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void find() {
-        User user = buildUser();
+        User user = create();
         User user2 = userRepository.find(user);
         assertNotNull(user2);
         assertEquals(user.getId(), user2.getId());
@@ -132,7 +132,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void findById() {
-        User user = buildUser();
+        User user = create();
         User user2 = userRepository.findById(user.getId());
         assertNotNull(user2);
         assertEquals(user.getId(), user2.getId());
@@ -141,7 +141,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void insert() {
-        User user = buildUser();
+        User user = create();
         assertEquals("", user.getName());
         assertEquals("", user.getEmail());
         assertEquals(1, user.getCount());
@@ -155,7 +155,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void update() {
-        User user = buildUser();
+        User user = create();
         String name = String.valueOf(System.currentTimeMillis());
         user.setName(name);
         int count = userRepository.update(user);
@@ -165,7 +165,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void delete() {
-        User user = buildUser();
+        User user = create();
         int count = userRepository.delete(user);
         assertEquals(1, count);
         assertNull(userRepository.find(user));
@@ -173,7 +173,7 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void deleteById() {
-        User user = buildUser();
+        User user = create();
         int count = userRepository.deleteById(user.getId());
         assertEquals(1, count);
         assertNull(userRepository.findById(user.getId()));
@@ -220,7 +220,7 @@ public class SQLCrudRepositoryTest {
         int count = 10;
         List<User> users = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            users.add(buildUser());
+            users.add(create());
         }
         long updateTime = System.currentTimeMillis();
         for (User user : users) {
@@ -240,7 +240,7 @@ public class SQLCrudRepositoryTest {
         int count = 10;
         User[] users = new User[count];
         for (int i = 0; i < count; i++) {
-            users[i] = buildUser();
+            users[i] = create();
         }
         long updateTime = System.currentTimeMillis();
         for (User user : users) {
@@ -260,7 +260,7 @@ public class SQLCrudRepositoryTest {
         userRepository.deleteAll();
         int count = 10;
         for (int i = 0; i < count; i++) {
-            buildUser();
+            create();
         }
         assertEquals(count, userRepository.count());
         int result = userRepository.deleteAll();

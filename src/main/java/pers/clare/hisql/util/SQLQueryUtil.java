@@ -2,18 +2,21 @@ package pers.clare.hisql.util;
 
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.function.ArgumentGetHandler;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
+import pers.clare.hisql.query.SQLQueryReplace;
+import pers.clare.hisql.query.SQLQueryReplaceBuilder;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class SQLQueryUtil {
     // check string is select sql
     private static final Pattern select = Pattern.compile("^[\\s\\n]?select", Pattern.CASE_INSENSITIVE);
     private static final Pattern insert = Pattern.compile("^[\\s\\n]?insert", Pattern.CASE_INSENSITIVE);
-
 
     private SQLQueryUtil() {
     }
@@ -99,9 +102,45 @@ public class SQLQueryUtil {
         }
     }
 
-    public static int getCommandType(String command){
-        if(select.matcher(command).find())return CommandType.Select;
-        if(insert.matcher(command).find())return CommandType.Insert;
+    public static int getCommandType(String command) {
+        if (select.matcher(command).find()) return CommandType.Select;
+        if (insert.matcher(command).find()) return CommandType.Insert;
         return CommandType.Update;
+    }
+
+
+    public static SQLQuery toSqlQuery(
+            SQLQueryReplaceBuilder sqlQueryReplaceBuilder
+            , Object[] arguments
+            , Map<String, ArgumentGetHandler> replaces
+            , Map<String, ArgumentGetHandler> valueHandlers
+    ) {
+        SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
+        Object value;
+        for (Map.Entry<String, ArgumentGetHandler> entry : replaces.entrySet()) {
+            value = entry.getValue().apply(arguments);
+            if (value instanceof String) {
+                replace.replace(entry.getKey(), (String) value);
+            } else {
+                throw new HiSqlException("%s must be String", entry.getKey());
+            }
+        }
+        SQLQuery query = replace.buildQuery();
+        for (Map.Entry<String, ArgumentGetHandler> entry : valueHandlers.entrySet()) {
+            query.value(entry.getKey(), entry.getValue().apply(arguments));
+        }
+        return query;
+    }
+
+    public static SQLQuery toSqlQuery(
+            SQLQueryBuilder sqlQueryBuilder
+            , Object[] arguments
+            , Map<String, ArgumentGetHandler> valueHandlers
+    ) {
+        SQLQuery query = sqlQueryBuilder.build();
+        for (Map.Entry<String, ArgumentGetHandler> entry : valueHandlers.entrySet()) {
+            query.value(entry.getKey(), entry.getValue().apply(arguments));
+        }
+        return query;
     }
 }

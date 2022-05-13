@@ -8,8 +8,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.common.data.CommonUser;
-import pers.clare.hisql.data.repository.CommonRepositoryImpl;
-import pers.clare.hisql.data.repository.CommonRepositoryImpl2;
+import pers.clare.hisql.data.repository.InheritRepository1;
+import pers.clare.hisql.data.repository.InheritRepository2;
 
 import java.sql.Statement;
 
@@ -20,21 +20,19 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
-@RequiredArgsConstructor
-public class CommonRepositoryTest {
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+public class InheritRepositoryTest {
 
-    @Autowired
-    private CommonRepositoryImpl commonRepositoryImpl;
+    private final InheritRepository1 inheritRepository1;
 
-    @Autowired
-    private CommonRepositoryImpl2 commonRepositoryImpl2;
+    private final InheritRepository2 inheritRepository2;
 
     CommonUser buildUser() {
         CommonUser user = new CommonUser();
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
-        commonRepositoryImpl.insert(user);
-        user = commonRepositoryImpl.findById(user.getId());
+        inheritRepository1.insert(user);
+        user = inheritRepository1.findById(user.getId());
         assertNotNull(user);
         assertEquals(account, user.getAccount());
         return user;
@@ -43,10 +41,10 @@ public class CommonRepositoryTest {
     @Test
     void connection() {
         CommonUser user = buildUser();
-        CommonUser result = commonRepositoryImpl.update(user.getId(), "Test", (connection, sql, parameters) -> {
+        CommonUser result = inheritRepository1.update(user.getId(), "Test", (connection, sql, parameters) -> {
             Statement statement = connection.createStatement();
             if (statement.executeUpdate(sql) > 0) {
-                return commonRepositoryImpl.findById(parameters[0]);
+                return inheritRepository1.findById(user.getId());
             } else {
                 return null;
             }
@@ -57,16 +55,16 @@ public class CommonRepositoryTest {
     @Test
     void update() {
         CommonUser user = buildUser();
-        commonRepositoryImpl.update(user.getId(), "Test");
-        user = commonRepositoryImpl.findById(user.getId());
+        inheritRepository1.update(user.getId(), "Test");
+        user = inheritRepository1.findById(user.getId());
         assertEquals("1", user.getName());
     }
 
     @Test
     void update2() {
         CommonUser user = buildUser();
-        commonRepositoryImpl2.update(user.getId(), "Test");
-        user = commonRepositoryImpl2.findById(user.getId());
+        inheritRepository2.update(user.getId(), "Test");
+        user = inheritRepository2.findById(user.getId());
         assertEquals("1", user.getName());
     }
 }

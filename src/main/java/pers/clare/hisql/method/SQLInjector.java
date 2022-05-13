@@ -46,7 +46,7 @@ public class SQLInjector {
                 node = nodeList.item(i);
                 if (Node.ELEMENT_NODE != node.getNodeType()) continue;
                 content = node.getTextContent();
-                if (StringUtils.isEmpty(content)) continue;
+                if (!StringUtils.hasLength(content)) continue;
                 map.put(node.getNodeName(), SPACE_PATTERN.matcher(content).replaceAll(" ").trim());
             }
         } catch (Exception e) {
