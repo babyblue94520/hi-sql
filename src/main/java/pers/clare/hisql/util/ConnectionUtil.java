@@ -2,17 +2,16 @@ package pers.clare.hisql.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 
-import javax.sql.DataSource;
 import java.io.InputStream;
 import java.sql.*;
 
+@SuppressWarnings("UnusedReturnValue")
 public class ConnectionUtil {
     private static final Logger log = LogManager.getLogger();
 
@@ -21,7 +20,7 @@ public class ConnectionUtil {
 
     public static ResultSet query(Connection connection, String sql, Object[] parameters) throws SQLException {
         log.debug(sql);
-        if (parameters.length == 0) {
+        if (parameters == null || parameters.length == 0) {
             return connection.createStatement().executeQuery(sql);
         } else {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -30,18 +29,13 @@ public class ConnectionUtil {
         }
     }
 
-    public static ResultSet query(Statement statement, String sql) throws SQLException {
-        log.debug(sql);
-        return statement.executeQuery(sql);
-    }
-
     public static Statement insert(
             Connection conn
             , String sql
             , Object... parameters
     ) throws SQLException {
         log.debug(sql);
-        if (parameters.length == 0) {
+        if (parameters == null || parameters.length == 0) {
             Statement statement = conn.createStatement();
             insert(statement, sql);
             return statement;
@@ -58,7 +52,7 @@ public class ConnectionUtil {
             , Object... parameters
     ) throws SQLException {
         log.debug(sql);
-        if (parameters.length == 0) {
+        if (parameters == null || parameters.length == 0) {
             Statement statement = conn.createStatement();
             update(statement, sql);
             return statement;
@@ -69,7 +63,6 @@ public class ConnectionUtil {
         }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     public static int insert(
             Statement statement
             , String sql
@@ -103,17 +96,12 @@ public class ConnectionUtil {
         return ps.executeUpdate();
     }
 
-
-    public static void close(Connection connection, DataSource dataSource) {
-        DataSourceUtils.releaseConnection(connection, dataSource);
-    }
-
     public static void setQueryValue(
             PreparedStatement ps
             , Object... parameters
     ) throws SQLException {
         int index = 1;
-        if (parameters == null || parameters.length == 0) return;
+        if (parameters == null || parameters.length == 0 || ps.getParameterMetaData().getParameterCount() == 0) return;
         for (Object value : parameters) {
             if (value instanceof Pagination
                     || value instanceof Sort
@@ -130,9 +118,9 @@ public class ConnectionUtil {
             , Object... parameters
     ) throws SQLException {
         int index = 1;
-        if (parameters == null || parameters.length == 0) return;
+        if (parameters == null || parameters.length == 0 || ps.getParameterMetaData().getParameterCount() == 0) return;
         for (Object value : parameters) {
-            if ( value instanceof ConnectionCallback
+            if (value instanceof ConnectionCallback
                     || value instanceof PreparedStatementCallback
                     || value instanceof ResultSetCallback
             ) continue;

@@ -6,22 +6,23 @@ import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.support.HiSqlResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 
 import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.sql.Blob;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("unused")
 public class SQLStoreFactory {
 
     static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
 
     public static <T> SQLStore<T> find(Class<T> clazz) {
+        @SuppressWarnings("unchecked")
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
         if (store == null) {
             throw new HiSqlException("%s have not build SQLStore", clazz.getName());
@@ -60,6 +61,7 @@ public class SQLStoreFactory {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <R extends SQLStore<T>, T> R build(HiSqlContext context, Class<T> clazz, boolean crud) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
@@ -305,17 +307,15 @@ public class SQLStoreFactory {
     }
 
     private static FieldSetHandler buildSetHandler(Field field) {
-        ResultSetValueConverter<?> resultSetValueConverter = HiSqlContext.getResultSetValueConverter(field.getType());
-        if (resultSetValueConverter == null) {
+        ResultSetValueConverter<?> valueConverter = HiSqlResultSetConverter.get(field.getType());
+        if (valueConverter == null) {
             if (field.getType() == Object.class) {
                 return (target, rs, index) -> field.set(target, rs.getObject(index));
-            } else if (Blob.class.isAssignableFrom(field.getType())) {
-                return (target, rs, index) -> field.set(target, rs.getBlob(index));
             } else {
                 return (target, rs, index) -> field.set(target, rs.getObject(index, field.getType()));
             }
         } else {
-            return (target, rs, index) -> field.set(target, resultSetValueConverter.apply(rs.getObject(index)));
+            return (target, rs, index) -> field.set(target, valueConverter.apply(rs, index));
         }
     }
 

@@ -13,14 +13,14 @@ public class SQLMethodInterceptor implements MethodInterceptor {
 
     private final Object target;
     private final Map<Method, Method> methods = new HashMap<>();
-    private final Map<Method, MethodInterceptor> queryMethods;
+    private final Map<Method, MethodInterceptor> methodInterceptorMap;
 
     public SQLMethodInterceptor(
             Class<?> interfaceClass
-            , Map<Method, MethodInterceptor> queryMethods
+            , Map<Method, MethodInterceptor> methodInterceptorMap
             , Object target
     ) {
-        this.queryMethods = queryMethods;
+        this.methodInterceptorMap = methodInterceptorMap;
         this.target = target;
         Class<?> targetClass = target.getClass();
         Method targetMethod;
@@ -38,14 +38,14 @@ public class SQLMethodInterceptor implements MethodInterceptor {
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
         Method method = this.methods.get(methodInvocation.getMethod());
         if (method == null) {
-            MethodInterceptor handler = queryMethods.get(methodInvocation.getMethod());
+            MethodInterceptor handler = methodInterceptorMap.get(methodInvocation.getMethod());
             if (handler == null)
                 throw new HiSqlException("%s not found", methodInvocation.getMethod());
             return handler.invoke(methodInvocation);
         } else {
-            try{
+            try {
                 return method.invoke(target, methodInvocation.getArguments());
-            }catch (InvocationTargetException e){
+            } catch (InvocationTargetException e) {
                 throw e.getTargetException();
             }
         }

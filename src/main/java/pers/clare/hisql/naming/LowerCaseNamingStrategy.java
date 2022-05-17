@@ -1,11 +1,9 @@
 package pers.clare.hisql.naming;
 
-public class LowerCaseNamingStrategy implements NamingStrategy{
+@SuppressWarnings("unused")
+public class LowerCaseNamingStrategy implements NamingStrategy {
 
-    public String turnCamelCase(String name) {
-        return turnCamelCase(new StringBuilder(), name).toString();
-    }
-
+    @Override
     public StringBuilder turnCamelCase(StringBuilder sb, String name) {
         int l = name.length();
         char[] cs = name.toCharArray();

@@ -17,14 +17,14 @@ public class HiSqlException extends RuntimeException {
     public HiSqlException(String message, Throwable cause) {
         super(message, cause);
 
-        if(cause instanceof SQLException){
+        if (cause instanceof SQLException) {
             this.sqlException = (SQLException) cause;
         }
     }
 
     public HiSqlException(Throwable cause) {
         super(cause);
-        if(cause instanceof SQLException){
+        if (cause instanceof SQLException) {
             this.sqlException = (SQLException) cause;
         }
     }

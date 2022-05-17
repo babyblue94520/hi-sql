@@ -63,18 +63,6 @@ public class SQLQueryReplaceBuilder {
         }
     }
 
-    public SQLQueryReplace build() {
-        return new SQLQueryReplace(sqlParts, keyIndex);
-    }
-
-    public int getKeySize(){
-        return keyIndex.size();
-    }
-
-    public boolean hasKey(String key){
-        return keyIndex.containsKey(key);
-    }
-
     public static int findKeyCount(char[] sqlChars) {
         int count = 0;
         for (char sqlChar : sqlChars) {
@@ -101,5 +89,13 @@ public class SQLQueryReplaceBuilder {
                         .values("bb", new int[]{1, 2}, new int[]{1, 2})
                         .value("cc", Arrays.asList(new int[]{1, 2}, new int[]{1, 2})).toString()
         );
+    }
+
+    public SQLQueryReplace build() {
+        return new SQLQueryReplace(sqlParts, keyIndex);
+    }
+
+    public boolean hasKey(String key) {
+        return keyIndex.containsKey(key);
     }
 }

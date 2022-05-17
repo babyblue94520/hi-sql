@@ -21,9 +21,6 @@ public interface CallbackRepository extends SQLRepository {
     @HiSql("select ?")
     <T> T prepared2(PreparedStatementCallback<T> callback);
 
-    @HiSql("select ?")
-    <T> T prepared3(PreparedStatementCallback<T> callback);
-
     @HiSql("select :value")
     <T> T resultSet(T value, ResultSetCallback<T> callback);
 }

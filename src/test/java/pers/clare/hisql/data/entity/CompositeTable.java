@@ -10,8 +10,8 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@IdClass(TestTableKey.class)
-public class TestTable {
+@IdClass(CompositeKey.class)
+public class CompositeTable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

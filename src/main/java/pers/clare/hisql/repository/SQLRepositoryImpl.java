@@ -5,6 +5,7 @@ import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.service.SQLService;
 
+@SuppressWarnings("unused")
 public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
     protected final S sqlService;
 
@@ -14,46 +15,31 @@ public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
 
     @Override
     public <R> R connection(String sql, Object[] parameters, ConnectionCallback<R> callback) {
-        return sqlService.connection(false, sql, parameters, callback);
-    }
-
-    @Override
-    public <R> R connection(boolean readonly, String sql, Object[] parameters, ConnectionCallback<R> callback) {
-        return sqlService.connection(readonly, sql, parameters, callback);
+        return sqlService.connection(sql, parameters, callback);
     }
 
     @Override
     public <R> R prepared(String sql, PreparedStatementCallback<R> callback) {
-        return sqlService.prepared(false, sql, callback);
-    }
-
-    @Override
-    public <R> R prepared(boolean readonly, String sql, PreparedStatementCallback<R> callback) {
-        return sqlService.prepared(readonly, sql, callback);
+        return sqlService.prepared(sql, callback);
     }
 
     @Override
     public <R> R query(String sql, Object[] parameters, ResultSetCallback<R> resultSetCallback) {
-        return sqlService.query(false, sql, parameters, resultSetCallback);
+        return sqlService.query(sql, parameters, resultSetCallback);
     }
 
     @Override
-    public <R> R query(
-            boolean readonly
-            , String sql
-            , Object[] parameters
-            , ResultSetCallback<R> resultSetCallback
-    ) {
-        return sqlService.query(readonly, sql, parameters, resultSetCallback);
+    public int insert(String sql, Object... args) {
+        return sqlService.insert(sql, args);
     }
 
     @Override
-    public <R> R insert(String sql, Object[] args, ResultSetCallback<R> callback) {
-        return sqlService.insert(sql, args, callback);
+    public <T> T insert(Class<T> keyType, String sql, Object... args) {
+        return sqlService.insert(keyType, sql, args);
     }
 
     @Override
-    public <R> R update(String sql, Object[] args, ResultSetCallback<R> callback) {
-        return sqlService.update(sql, args, callback);
+    public int update(String sql, Object... args) {
+        return sqlService.update(sql, args);
     }
 }

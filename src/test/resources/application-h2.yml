@@ -3,7 +3,7 @@ spring:
     initialization-mode: ALWAYS
     demo:
       hikari:
-#        schema: schema-demo_h2.sql
+        #        schema: schema-demo_h2.sql
         jdbc-url: jdbc:h2:file:./temp/data/demo;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
         driverClassName: org.h2.Driver
         username: sa
@@ -14,7 +14,7 @@ spring:
         max-lifetime: 1200000
     demo2:
       hikari:
-#        schema: schema-demo2_h2.sql
+      #        schema: schema-demo2_h2.sql
       jdbc-url: jdbc:h2:file:./temp/data/demo2;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MSSQLServer;DATABASE_TO_LOWER=FALSE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
       driverClassName: org.h2.Driver
       username: sa

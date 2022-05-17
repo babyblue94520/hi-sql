@@ -12,11 +12,19 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class TestTableKey implements Serializable {
+public class CompositeKey implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Id
     private String account;
+
+    public CompositeKey() {
+    }
+
+    public CompositeKey(Long id, String account) {
+        this.id = id;
+        this.account = account;
+    }
 }

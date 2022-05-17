@@ -20,11 +20,7 @@ public class SQLQueryReplace {
     }
 
     public SQLQueryReplace replace(String key, String sql) {
-        return replace(key, sql, false);
-    }
-
-    public SQLQueryReplace replace(String key, String sql, Boolean ignore) {
-        if (key == null || sql == null || ignore) return this;
+        if (key == null || sql == null || sql.length() == 0) return this;
         Integer index = keyIndex.get(key);
         if (index == null) return this;
         values[index] = sql;

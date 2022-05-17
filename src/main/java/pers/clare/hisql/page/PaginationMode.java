@@ -4,17 +4,34 @@ import pers.clare.hisql.exception.HiSqlException;
 
 public interface PaginationMode {
 
-    String buildTotalSQL(String sql);
+    default String buildTotalSQL(String sql) {
+        return "select count(*) from(" + sql + ")t";
+    }
 
-    String buildSortSQL(Sort sort, String sql);
+    default String buildSortSQL(
+            Sort sort
+            , String sql
+    ) {
+        if (sort == null || sort.getSorts().length == 0) return sql;
+        StringBuilder sb = new StringBuilder(sql);
+        appendSortSQL(sb, sort.getSorts());
+        return sb.toString();
+    }
 
-    String buildPaginationSQL(Pagination pagination, String sql);
+    default String buildPaginationSQL(
+            Pagination pagination
+            , String sql
+    ) {
+        if (pagination == null) return sql;
+        StringBuilder sb = new StringBuilder(sql);
+        appendPaginationSQL(sb, pagination);
+        return sb.toString();
+    }
 
     void appendPaginationSQL(StringBuilder sql, Pagination pagination);
 
-
     default void appendSortSQL(StringBuilder sql, String[] sorts) {
-        if (sorts == null) return;
+        if (sorts == null || sorts.length == 0) return;
         sql.append(" order by ");
         for (String sort : sorts) {
             if (sort == null || sort.length() == 0) continue;

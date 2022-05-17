@@ -69,10 +69,6 @@ public class SQLQueryBuilder {
         }
     }
 
-    public SQLQuery build() {
-        return new SQLQuery(sqlParts, keyIndex);
-    }
-
     public static int findKeyCount(char[] sqlChars) {
         int count = 0;
         for (int i = 0, l = sqlChars.length; i < l; i++) {
@@ -102,6 +98,10 @@ public class SQLQueryBuilder {
                         .values("bb", new int[]{1, 2}, new int[]{1, 2})
                         .value("cc", Arrays.asList(new int[]{1, 2}, new int[]{1, 2}))
         );
+    }
+
+    public SQLQuery build() {
+        return new SQLQuery(sqlParts, keyIndex);
     }
 
 }

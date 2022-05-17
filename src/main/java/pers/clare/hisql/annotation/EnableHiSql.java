@@ -12,6 +12,7 @@ import pers.clare.hisql.repository.SQLScanRegistrar;
 
 import java.lang.annotation.*;
 
+@SuppressWarnings("unused")
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
@@ -23,13 +24,20 @@ public @interface EnableHiSql {
             annotation = Configuration.class
     )
     String value() default "";
+
     String[] basePackages() default {};
+
     Class<?>[] basePackageClasses() default {};
+
     String dataSourceRef() default "";
-    String readDataSourceRef() default "";
+
     String contextRef() default "";
+
     String xmlRootPath() default "hisql"; // resources/hisql
+
     Class<? extends PaginationMode> paginationMode() default MySQLPaginationMode.class;
+
     Class<? extends NamingStrategy> naming() default LowerCaseNamingStrategy.class;
+
     Class<? extends SQLRepositoryFactoryBean> factoryBean() default SQLRepositoryFactoryBean.class;
 }

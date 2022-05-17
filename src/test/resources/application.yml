@@ -1,9 +1,8 @@
-
 spring:
   profiles:
     include:
       - h2
-#      - mysql
+    #      - mysql
     active: dev
   jpa:
     generate-ddl: true

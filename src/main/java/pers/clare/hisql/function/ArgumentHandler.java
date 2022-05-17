@@ -3,8 +3,6 @@ package pers.clare.hisql.function;
 import pers.clare.hisql.exception.HiSqlException;
 
 @FunctionalInterface
-public interface ArgumentGetHandler {
-    Object apply(Object[] arguments) throws HiSqlException;
-
-
+public interface ArgumentHandler<T> {
+    T apply(Object[] arguments) throws HiSqlException;
 }

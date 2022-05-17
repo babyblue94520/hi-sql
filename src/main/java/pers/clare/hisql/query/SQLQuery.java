@@ -13,17 +13,32 @@ import java.util.Map;
  */
 public class SQLQuery {
     private static final String NULL = "null";
-
-    private final char[][] sqlParts;
-
-    private final Map<String, List<Integer>> keyIndex;
-
     final Object[] values;
+    private final char[][] sqlParts;
+    private final Map<String, List<Integer>> keyIndex;
 
     SQLQuery(char[][] sqlParts, Map<String, List<Integer>> keyIndex) {
         this.sqlParts = sqlParts;
         this.keyIndex = keyIndex;
         this.values = new Object[sqlParts.length];
+    }
+
+    private static void append(
+            StringBuilder sb
+            , Object value
+    ) {
+        if (value == null) return;
+        if (value == NULL) {
+            sb.append(NULL);
+        } else {
+            Class<?> valueClass = value.getClass();
+            if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
+                SQLQueryUtil.appendInValue(sb, value);
+                sb.deleteCharAt(sb.length() - 1);
+            } else {
+                SQLQueryUtil.appendValue(sb, value);
+            }
+        }
     }
 
     public SQLQuery values(String key, Object... value) {
@@ -60,23 +75,5 @@ public class SQLQuery {
             }
         }
         return sb;
-    }
-
-    private static void append(
-            StringBuilder sb
-            , Object value
-    ) {
-        if (value == null) return;
-        if (value == NULL) {
-            sb.append(NULL);
-        } else {
-            Class<?> valueClass = value.getClass();
-            if (valueClass.isArray() || Collection.class.isAssignableFrom(valueClass)) {
-                SQLQueryUtil.appendInValue(sb, value);
-                sb.deleteCharAt(sb.length() - 1);
-            } else {
-                SQLQueryUtil.appendValue(sb, value);
-            }
-        }
     }
 }

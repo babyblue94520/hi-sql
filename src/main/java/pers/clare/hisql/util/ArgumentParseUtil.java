@@ -1,7 +1,7 @@
 package pers.clare.hisql.util;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.ArgumentGetHandler;
+import pers.clare.hisql.function.ArgumentHandler;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
@@ -12,10 +12,10 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.Function;
 
-public class ArgumentGetHandlerUtil {
+public class ArgumentParseUtil {
 
-    public static ArgumentGetterResult build(Method method) {
-        ArgumentGetterResult result = new ArgumentGetterResult();
+    public static ParseResult build(Method method) {
+        ParseResult result = new ParseResult();
         Parameter[] parameters = method.getParameters();
         int c = 0;
         for (Parameter p : parameters) {
@@ -25,19 +25,20 @@ public class ArgumentGetHandlerUtil {
         return result;
     }
 
-    public static void buildArgumentGetter(ArgumentGetterResult result, Class<?> clazz, Type type, String name, ArgumentGetHandler handler) {
-        Class<?> componentType = clazz.getComponentType();
+    @SuppressWarnings("unchecked")
+    public static void buildArgumentGetter(ParseResult result, Class<?> clazz, Type type, String name, ArgumentHandler<?> handler) {
         if (clazz == Pagination.class) {
-            result.pagination = handler;
+            result.pagination = (ArgumentHandler<Pagination>) handler;
         } else if (clazz == Sort.class) {
-            result.sort = handler;
-        } else if (clazz == ResultSetCallback.class) {
-            result.resultSet = handler;
-        } else if (clazz == PreparedStatementCallback.class) {
-            result.preparedStatement = handler;
+            result.sort = (ArgumentHandler<Sort>) handler;
         } else if (clazz == ConnectionCallback.class) {
-            result.connection = handler;
+            result.connection = (ArgumentHandler<ConnectionCallback<?>>) handler;
+        } else if (clazz == PreparedStatementCallback.class) {
+            result.preparedStatement = (ArgumentHandler<PreparedStatementCallback<?>>) handler;
+        } else if (clazz == ResultSetCallback.class) {
+            result.resultSet = (ArgumentHandler<ResultSetCallback<?>>) handler;
         } else if (clazz.isArray()) {
+            Class<?> componentType = clazz.getComponentType();
             if (ClassUtil.isBasicType(componentType)) {
                 result.getters.put(name, handler);
             } else {
@@ -70,15 +71,15 @@ public class ArgumentGetHandlerUtil {
         }
     }
 
-    private static void buildCustomTypeGetter(ArgumentGetterResult result, Class<?> clazz, String name, ArgumentGetHandler argumentGetHandler) {
+    private static void buildCustomTypeGetter(ParseResult result, Class<?> clazz, String name, ArgumentHandler<?> argumentHandler) {
         String fieldName;
-        ArgumentGetHandler handler;
+        ArgumentHandler<?> handler;
         for (Method method : clazz.getDeclaredMethods()) {
             if (notGetMethod(method)) continue;
             fieldName = toFieldName(method.getName());
             handler = (arguments) -> {
                 try {
-                    return method.invoke(argumentGetHandler.apply(arguments));
+                    return method.invoke(argumentHandler.apply(arguments));
                 } catch (Exception e) {
                     throw new HiSqlException(e);
                 }
@@ -87,11 +88,11 @@ public class ArgumentGetHandlerUtil {
         }
         Class<?> superClazz = clazz.getSuperclass();
         if (superClazz != null && !ClassUtil.isBasicType(superClazz)) {
-            buildCustomTypeGetter(result, superClazz, name, argumentGetHandler);
+            buildCustomTypeGetter(result, superClazz, name, argumentHandler);
         }
     }
 
-    private static ArgumentGetHandler buildArrayValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+    private static ArgumentHandler<?> buildArrayValueHandler(Class<?> clazz, ArgumentHandler<?> handler) {
         List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Object[] array = (Object[]) handler.apply(arguments);
@@ -104,7 +105,8 @@ public class ArgumentGetHandlerUtil {
         };
     }
 
-    private static ArgumentGetHandler buildCollectionValueHandler(Class<?> clazz, ArgumentGetHandler handler) {
+    @SuppressWarnings("unchecked")
+    private static ArgumentHandler<?> buildCollectionValueHandler(Class<?> clazz, ArgumentHandler<?> handler) {
         List<Function<Object, Object>> functions = getFieldHandlers(clazz);
         return (arguments) -> {
             Collection<Object> collection = (Collection<Object>) handler.apply(arguments);
@@ -159,36 +161,40 @@ public class ArgumentGetHandlerUtil {
         }
     }
 
-   public static class ArgumentGetterResult {
-        private final Map<String, ArgumentGetHandler> getters = new HashMap<>();
-        private ArgumentGetHandler pagination;
-        private ArgumentGetHandler sort;
-        private ArgumentGetHandler connection;
-        private ArgumentGetHandler preparedStatement;
-        private ArgumentGetHandler resultSet;
+    public static class ParseResult {
+        private final Map<String, ArgumentHandler<?>> getters = new HashMap<>();
+        private ArgumentHandler<Pagination> pagination;
+        private ArgumentHandler<Sort> sort;
+        private ArgumentHandler<ConnectionCallback<?>> connection;
+        private ArgumentHandler<PreparedStatementCallback<?>> preparedStatement;
+        private ArgumentHandler<ResultSetCallback<?>> resultSet;
 
-        public Map<String, ArgumentGetHandler> getGetters() {
+        public Map<String, ArgumentHandler<?>> getGetters() {
             return getters;
         }
 
-        public ArgumentGetHandler getPagination() {
+        public ArgumentHandler<Pagination> getPagination() {
             return pagination;
         }
 
-        public ArgumentGetHandler getSort() {
+        public ArgumentHandler<Sort> getSort() {
             return sort;
         }
 
-        public ArgumentGetHandler getConnection() {
+        public ArgumentHandler<ConnectionCallback<?>> getConnection() {
             return connection;
         }
 
-        public ArgumentGetHandler getPreparedStatement() {
+        public ArgumentHandler<PreparedStatementCallback<?>> getPreparedStatement() {
             return preparedStatement;
         }
 
-        public ArgumentGetHandler getResultSet() {
+        public ArgumentHandler<ResultSetCallback<?>> getResultSet() {
             return resultSet;
+        }
+
+        public boolean hasCallback() {
+            return connection != null || preparedStatement != null || resultSet != null;
         }
     }
 }

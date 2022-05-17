@@ -1,7 +1,10 @@
 package pers.clare.hisql.naming;
 
 public interface NamingStrategy {
-    String turnCamelCase(String name);
+
+    default String turnCamelCase(String name) {
+        return turnCamelCase(new StringBuilder(), name).toString();
+    }
 
     StringBuilder turnCamelCase(StringBuilder sb, String name);
 }

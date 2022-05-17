@@ -2,17 +2,19 @@ package pers.clare.hisql.page;
 
 @SuppressWarnings("unused")
 public class Sort {
-    private String[] sorts;
+    public static final String[] EMPTY = new String[]{};
 
-    public static Sort of(String... sorts) {
-        return new Sort(sorts);
-    }
+    private String[] sorts = EMPTY;
 
     public Sort() {
     }
 
     public Sort(String[] sorts) {
         this.sorts = sorts;
+    }
+
+    public static Sort of(String... sorts) {
+        return new Sort(sorts);
     }
 
     public String[] getSorts() {

@@ -57,7 +57,7 @@ public class SQLInjector {
 
     private static String toPath(String root, Class<?> clazz) {
         StringBuilder path = new StringBuilder(root);
-        if(!root.endsWith("/")){
+        if (!root.endsWith("/")) {
             path.append("/");
         }
         return path.append(clazz.getSimpleName())

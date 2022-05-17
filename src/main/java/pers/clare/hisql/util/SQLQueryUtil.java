@@ -2,7 +2,7 @@ package pers.clare.hisql.util;
 
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.ArgumentGetHandler;
+import pers.clare.hisql.function.ArgumentHandler;
 import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.query.SQLQueryReplace;
@@ -84,6 +84,7 @@ public class SQLQueryUtil {
 
     public static String setValue(SQLQueryBuilder sqlQueryBuilder, Field[] fields, Object[] parameters) {
         SQLQuery sqlQuery = sqlQueryBuilder.build();
+        if (parameters == null || parameters.length == 0) return sqlQuery.toString();
         for (int i = 0; i < parameters.length; i++) {
             sqlQuery.value(fields[i].getName(), parameters[i]);
         }
@@ -112,12 +113,12 @@ public class SQLQueryUtil {
     public static SQLQuery toSqlQuery(
             SQLQueryReplaceBuilder sqlQueryReplaceBuilder
             , Object[] arguments
-            , Map<String, ArgumentGetHandler> replaces
-            , Map<String, ArgumentGetHandler> valueHandlers
+            , Map<String, ArgumentHandler<?>> replaces
+            , Map<String, ArgumentHandler<?>> valueHandlers
     ) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
         Object value;
-        for (Map.Entry<String, ArgumentGetHandler> entry : replaces.entrySet()) {
+        for (Map.Entry<String, ArgumentHandler<?>> entry : replaces.entrySet()) {
             value = entry.getValue().apply(arguments);
             if (value instanceof String) {
                 replace.replace(entry.getKey(), (String) value);
@@ -126,7 +127,7 @@ public class SQLQueryUtil {
             }
         }
         SQLQuery query = replace.buildQuery();
-        for (Map.Entry<String, ArgumentGetHandler> entry : valueHandlers.entrySet()) {
+        for (Map.Entry<String, ArgumentHandler<?>> entry : valueHandlers.entrySet()) {
             query.value(entry.getKey(), entry.getValue().apply(arguments));
         }
         return query;
@@ -135,12 +136,14 @@ public class SQLQueryUtil {
     public static SQLQuery toSqlQuery(
             SQLQueryBuilder sqlQueryBuilder
             , Object[] arguments
-            , Map<String, ArgumentGetHandler> valueHandlers
+            , Map<String, ArgumentHandler<?>> valueHandlers
     ) {
         SQLQuery query = sqlQueryBuilder.build();
-        for (Map.Entry<String, ArgumentGetHandler> entry : valueHandlers.entrySet()) {
+        for (Map.Entry<String, ArgumentHandler<?>> entry : valueHandlers.entrySet()) {
             query.value(entry.getKey(), entry.getValue().apply(arguments));
         }
         return query;
     }
+
+
 }

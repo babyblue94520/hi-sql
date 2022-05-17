@@ -4,25 +4,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import pers.clare.hisql.method.SQLMethodFactory;
 import pers.clare.hisql.method.SQLMethodInterceptor;
 import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.service.SQLStoreService;
 
-public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware,
-        BeanFactoryAware {
+public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware {
     private static final Logger log = LogManager.getLogger();
-
-    protected ClassLoader classLoader;
-    protected BeanFactory beanFactory;
-
     private final Class<?> repositoryInterface;
-
     private final SQLStoreService sqlStoreService;
-
+    protected ClassLoader classLoader;
     private Object repository;
 
     public SQLRepositoryFactoryBean(
@@ -38,11 +33,6 @@ public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<O
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
-    }
-
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
     }
 
     @Override

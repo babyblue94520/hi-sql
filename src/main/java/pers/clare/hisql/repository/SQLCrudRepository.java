@@ -14,7 +14,6 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
 
     long count(Entity entity);
 
-
     List<Entity> findAll();
 
     List<Entity> findAll(Sort sort);
@@ -25,13 +24,11 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
 
     Entity find(Entity entity);
 
-
     Entity insert(Entity entity);
 
     int update(Entity entity);
 
     int delete(Entity entity);
-
 
     Collection<Entity> insertAll(Collection<Entity> entities);
 

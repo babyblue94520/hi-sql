@@ -28,11 +28,12 @@ import java.util.Optional;
 
 import static org.springframework.util.Assert.notNull;
 
+@SuppressWarnings("unused")
 public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware
         , BeanNameAware, BeanFactoryAware, BeanClassLoaderAware {
 
-    private ApplicationContext applicationContext;
     protected BeanFactory beanFactory;
+    private ApplicationContext applicationContext;
     private ClassLoader classLoader;
 
     private String beanName;
@@ -40,12 +41,6 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     private boolean processPropertyPlaceHolders;
     private AnnotationAttributes annotationAttributes;
     private SQLStoreService sqlStoreService;
-
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -57,7 +52,6 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         this.classLoader = classLoader;
     }
 
-
     private Environment getEnvironment() {
         return this.applicationContext.getEnvironment();
     }
@@ -66,21 +60,17 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     public void afterPropertiesSet() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         notNull(this.basePackage, "Property 'basePackage' is required");
         String dataSourceName = annotationAttributes.getString("dataSourceRef");
-        String readDataSourceName = annotationAttributes.getString("readDataSourceRef");
         String contextName = annotationAttributes.getString("contextRef");
         String xmlRootPath = annotationAttributes.getString("xmlRootPath");
         Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
         Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
 
-        DataSource write;
+        DataSource dataSource;
         if (dataSourceName.length() == 0) {
-            write = beanFactory.getBean(DataSource.class);
+            dataSource = beanFactory.getBean(DataSource.class);
         } else {
-            write = (DataSource) beanFactory.getBean(dataSourceName);
+            dataSource = (DataSource) beanFactory.getBean(dataSourceName);
         }
-        DataSource read = write;
-        if (readDataSourceName.length() > 0)
-            read = (DataSource) beanFactory.getBean(readDataSourceName);
 
         HiSqlContext hiSqlContext;
         if (contextName.length() == 0) {
@@ -97,7 +87,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         if (hiSqlContext.getNaming() == null) {
             hiSqlContext.setNaming(namingClass.getConstructor().newInstance());
         }
-        this.sqlStoreService = new SQLStoreService(hiSqlContext, write, read);
+        this.sqlStoreService = new SQLStoreService(hiSqlContext, dataSource);
     }
 
     @Override
@@ -142,7 +132,6 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         this.basePackage = Optional.ofNullable(this.basePackage).map(getEnvironment()::resolvePlaceholders).orElse(null);
     }
 
-
     @SuppressWarnings("SameParameterValue")
     private String updatePropertyValue(String propertyName, PropertyValues values) {
         PropertyValue property = values.getPropertyValue(propertyName);
@@ -164,6 +153,11 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
 
     public ApplicationContext getApplicationContext() {
         return applicationContext;
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     public String getBeanName() {

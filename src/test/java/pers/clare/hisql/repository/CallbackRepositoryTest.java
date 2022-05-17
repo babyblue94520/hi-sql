@@ -28,7 +28,7 @@ public class CallbackRepositoryTest {
     @Test
     void connection() {
         long value = 1L;
-        long result = callbackRepository.connection(1L, (connection, sql, parameters) -> {
+        var result = callbackRepository.connection(1L, (connection, sql, parameters) -> {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
             if (resultSet.next()) {
@@ -83,21 +83,6 @@ public class CallbackRepositoryTest {
             }
         });
         assertEquals(value, result);
-    }
-
-    @Test
-    void prepared3() {
-        String value = "1";
-        String result = callbackRepository.prepared3((preparedStatement) -> {
-            preparedStatement.setObject(1, value);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return String.valueOf(resultSet.getLong(1));
-            } else {
-                return String.valueOf(0);
-            }
-        });
-        assertEquals("1", result);
     }
 
     @Test

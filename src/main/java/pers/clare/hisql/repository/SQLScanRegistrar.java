@@ -16,6 +16,14 @@ import java.util.stream.Collectors;
 
 public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
 
+    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
+        return importingClassMetadata.getClassName() + "#" + SQLScanner.class.getSimpleName();
+    }
+
+    private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
+        return ClassUtils.getPackageName(importingClassMetadata.getClassName());
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -52,13 +60,5 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
         String beanName = generateBaseBeanName(annotationMetadata);
         registry.registerBeanDefinition(beanName, builder.getBeanDefinition());
-    }
-
-    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
-        return importingClassMetadata.getClassName() + "#" + SQLScanner.class.getSimpleName();
-    }
-
-    private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
-        return ClassUtils.getPackageName(importingClassMetadata.getClassName());
     }
 }

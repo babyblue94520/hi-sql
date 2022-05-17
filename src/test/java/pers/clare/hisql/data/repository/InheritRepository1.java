@@ -13,4 +13,6 @@ public interface InheritRepository1 extends CommonInheritRepository1<String, Com
 
     @HiSql("update user set name =1 where id=:id")
     int update(long id, String name);
+
+
 }

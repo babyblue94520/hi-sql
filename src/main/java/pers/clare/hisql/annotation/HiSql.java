@@ -12,6 +12,4 @@ public @interface HiSql {
 
     // Find sql from XML by name
     String name() default "";
-
-    boolean readonly() default false;
 }
