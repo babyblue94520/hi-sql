@@ -22,6 +22,10 @@ public class Page<T> {
         return new Page<>(page, size, records, total);
     }
 
+    public static <T> Page<T> empty() {
+        return new Page<>(0, 20, Collections.emptyList(), 0);
+    }
+
     public static <T> Page<T> empty(Pagination pagination) {
         return new Page<>(pagination.getPage(), pagination.getSize(), Collections.emptyList(), 0);
     }

@@ -1,5 +1,6 @@
 package pers.clare.hisql.repository;
 
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
@@ -14,6 +15,7 @@ public interface SQLRepository {
 
     <R> R query(String sql, Object[] args, ResultSetCallback<R> callback);
 
+    @NonNull
     int insert(String sql, Object... args);
 
     /**
@@ -22,5 +24,6 @@ public interface SQLRepository {
      */
     <T> T insert(Class<T> keyType, String sql, Object... args);
 
+    @NonNull
     int update(String sql, Object... args);
 }

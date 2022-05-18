@@ -30,6 +30,7 @@
 ### pom.xml
 
 ```xml
+
 <dependency>
     <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
@@ -48,9 +49,9 @@ public class HiSqlConfig {
 ### Use
 
 * **SQLCrudRepository**
-    
-    **Method**
-    
+
+  **Method**
+
     ```java
     public interface SQLCrudRepository<T> extends SQLRepository {
     
@@ -81,9 +82,9 @@ public class HiSqlConfig {
         int deleteAll();
     }
     ```
-    
-    **Simple**
-  
+
+  **Simple**
+
     ```Java
     @Repository
     public interface UserRepository extends SQLCrudRepository<User> {
@@ -123,14 +124,14 @@ public class HiSqlConfig {
     ```
 
 * **SQLRepository**
-    
+
     * **SQL expression**
-      
+
         * **{sql} indicates the sql to be replaced**
-        * **:value indicates parameter name**  
-    
-    **Repository**
-    
+        * **:value indicates parameter name**
+
+  **Repository**
+
     ```java
     @Repository
     public interface QueryRepository extends SQLRepository {
@@ -145,9 +146,9 @@ public class HiSqlConfig {
         List query(String and1, String and2, String value1, String value2);
     }
     ```
-    
-    **Service**
-    
+
+  **Service**
+
     ```java
     public class QueryService {
       public List query(String value1, String value2) {
@@ -161,9 +162,9 @@ public class HiSqlConfig {
       }
     }
     ```
-    
+
     * **Support return type**
-    
+
         * **Basic Type**
         * **Java Bean**
         * **Map**
@@ -172,8 +173,8 @@ public class HiSqlConfig {
         * **Page**
         * **Next**
 
-        **Interface**
-    
+      **Interface**
+
         ```java
         @Getter
         public class SimpleUser {
@@ -378,9 +379,9 @@ public class HiSqlConfig {
             }
         }
         ```
-        
-        **Advanced**
-    
+
+      **Advanced**
+
         * **bean parameter**
             ```java
             @Getter
@@ -393,7 +394,7 @@ public class HiSqlConfig {
                 private String name;
             }
             ```
-          
+
             ```java
             @Getter
             @Setter
@@ -405,7 +406,7 @@ public class HiSqlConfig {
                 private String name;
             }
             ```
-          
+
             ```java
             @Repository
             public class UserRepository {
@@ -420,9 +421,9 @@ public class HiSqlConfig {
                 List<User> sort(String andId, String andName, UserSortQuery query);
             }
             ```
-        
+
         * **in()**
-    
+
             ```java
             @Repository
             public interface UserQueryRepository extends SQLRepository {
@@ -442,11 +443,11 @@ public class HiSqlConfig {
 
     * **root path resources/hisql/**
     * **{class package}/Repository.XML**
-      
+
       ex: resources\hisql\pers\clare\demo\data\hiSql\UserQueryRepository.xml
-      
+
     * Get SQL by **Method Name** or **@Sql(name=...)**
-    
+
     ```xml
     <?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE SQL>
@@ -468,7 +469,7 @@ public class HiSqlConfig {
     ```
 
 * **Support @Transactional**
-  
+
     ```java
     import org.springframework.transaction.annotation.Propagation;@Repository
     public interface TransactionRepository extends SQLRepository {
@@ -490,7 +491,7 @@ public class HiSqlConfig {
     }
     ```
 
-    **Rollback example**
+  **Rollback example**
 
     ```java
     import org.springframework.transaction.annotation.Isolation;public class RollbackExample {
@@ -547,14 +548,13 @@ public class HiSqlConfig {
     }
     ```
 
-    ![](images/rollback.png)
-
+  ![](images/rollback.png)
 
 ### **Advanced**
 
 * **Change naming strategy**
 
-    **UpperCase**
+  **UpperCase**
     ```java
     @EnableHiSql(
         naming = UpperCaseNamingStrategy.class
@@ -562,8 +562,8 @@ public class HiSqlConfig {
     public class Demo2HiSqlConfig {
     }
     ```
-  
-    **Custom naming strategy**
+
+  **Custom naming strategy**
     ```java
     public class CustomNamingStrategy implements NamingStrategy{
     }
@@ -576,7 +576,7 @@ public class HiSqlConfig {
     ```
 
 * **Change PaginationMode**
-  
+
     ```java
     public class CustomPaginationMode implements PaginationMode{
     }

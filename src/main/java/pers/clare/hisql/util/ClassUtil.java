@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import org.springframework.lang.NonNull;
 import pers.clare.hisql.repository.SQLCrudRepository;
 
 import java.lang.reflect.ParameterizedType;
@@ -15,28 +16,45 @@ public class ClassUtil {
         return type.isPrimitive() || type.getName().startsWith("java.");
     }
 
-    public static Class<?> toClassType(Class<?> type) {
-        if (type == null) return null;
-        if (type.isPrimitive()) {
-            if (type == byte.class) {
+    /**
+     * @return Returns Object if it is a Generic type
+     */
+    @NonNull
+    public static Class<?> toClassType(Type type) {
+        if (type instanceof Class) {
+            return toClassType((Class<?>) type);
+        }
+        if (type instanceof ParameterizedType) {
+            Type result = ((ParameterizedType) type).getRawType();
+            if (result instanceof Class) {
+                return toClassType((Class<?>) result);
+            }
+        }
+        return Object.class;
+    }
+
+    @NonNull
+    public static Class<?> toClassType(@NonNull Class<?> clazz) {
+        if (clazz.isPrimitive()) {
+            if (clazz == byte.class) {
                 return Byte.class;
-            } else if (type == char.class) {
+            } else if (clazz == char.class) {
                 return Byte.class;
-            } else if (type == short.class) {
+            } else if (clazz == short.class) {
                 return Short.class;
-            } else if (type == int.class) {
+            } else if (clazz == int.class) {
                 return Integer.class;
-            } else if (type == long.class) {
+            } else if (clazz == long.class) {
                 return Long.class;
-            } else if (type == float.class) {
+            } else if (clazz == float.class) {
                 return Float.class;
-            } else if (type == double.class) {
+            } else if (clazz == double.class) {
                 return Double.class;
-            } else if (type == boolean.class) {
+            } else if (clazz == boolean.class) {
                 return Boolean.class;
             }
         }
-        return type;
+        return clazz;
     }
 
     public static Type[] findTypes(Class<?> clazz) {
