@@ -12,6 +12,7 @@ import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.support.SqlReplace;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -333,6 +334,22 @@ public class SQLRepositoryTest {
                 "and id=:id"
                 , id
         );
+        assertEquals(1, users.size());
+    }
+
+
+    @Test
+    void findAllBySqlReplace() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        Long id = null;
+        for (int i = 0; i < count; i++) {
+            id = customRepository.insert(account);
+        }
+
+        List<User> users = customRepository.findAll(SqlReplace.of(id, ""));
+        assertEquals(count, users.size());
+        users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
         assertEquals(1, users.size());
     }
 }

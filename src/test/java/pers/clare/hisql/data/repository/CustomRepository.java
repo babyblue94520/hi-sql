@@ -9,6 +9,7 @@ import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.repository.SQLRepository;
+import pers.clare.hisql.support.SqlReplace;
 
 import java.util.Collection;
 import java.util.List;
@@ -88,4 +89,7 @@ public interface CustomRepository extends SQLRepository {
 
     @HiSql("select * from user where 1=1 {idSql}")
     List<User> findAll(String idSql, Long id);
+
+    @HiSql("select * from user where 1=1 {id} and :id is not null")
+    List<User> findAll(SqlReplace id);
 }

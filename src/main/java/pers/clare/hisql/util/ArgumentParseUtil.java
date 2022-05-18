@@ -7,6 +7,7 @@ import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.support.SqlReplace;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -27,6 +28,9 @@ public class ArgumentParseUtil {
 
     @SuppressWarnings("unchecked")
     public static void buildArgumentGetter(ParseResult result, Class<?> clazz, Type type, String name, ArgumentHandler<?> handler) {
+        if (SqlReplace.class.isAssignableFrom(clazz)) {
+            result.getters.put(name, handler);
+        }
         if (clazz == Pagination.class) {
             result.pagination = (ArgumentHandler<Pagination>) handler;
         } else if (clazz == Sort.class) {

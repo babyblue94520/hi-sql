@@ -7,9 +7,11 @@ import pers.clare.hisql.query.SQLQuery;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.query.SQLQueryReplace;
 import pers.clare.hisql.query.SQLQueryReplaceBuilder;
+import pers.clare.hisql.support.SqlReplace;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -117,11 +119,16 @@ public class SQLQueryUtil {
             , Map<String, ArgumentHandler<?>> valueHandlers
     ) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
+        Map<String, Object> values = new HashMap<>();
         Object value;
         for (Map.Entry<String, ArgumentHandler<?>> entry : replaces.entrySet()) {
             value = entry.getValue().apply(arguments);
             if (value instanceof String) {
                 replace.replace(entry.getKey(), (String) value);
+            }
+            if (value instanceof SqlReplace) {
+                replace.replace(entry.getKey(), ((SqlReplace) value).getSql());
+                values.put(entry.getKey(), ((SqlReplace) value).getValue());
             } else {
                 throw new HiSqlException("%s must be String", entry.getKey());
             }
@@ -129,6 +136,9 @@ public class SQLQueryUtil {
         SQLQuery query = replace.buildQuery();
         for (Map.Entry<String, ArgumentHandler<?>> entry : valueHandlers.entrySet()) {
             query.value(entry.getKey(), entry.getValue().apply(arguments));
+        }
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            query.value(entry.getKey(), entry.getValue());
         }
         return query;
     }
