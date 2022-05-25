@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -17,6 +18,7 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Repository;
+import pers.clare.hisql.method.SQLProxyFactory;
 import pers.clare.hisql.service.SQLStoreService;
 
 import java.io.IOException;
@@ -122,12 +124,19 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
             String beanClassName = definition.getBeanClassName();
             log.debug("Creating SQLRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
             if (beanClassName == null) {
-                log.warn("beanClassName is null.");
+                log.error("beanClassName is null.");
             } else {
-                definition.getConstructorArgumentValues().addGenericArgumentValue(beanClassName);
-                definition.getConstructorArgumentValues().addGenericArgumentValue(this.sqlStoreService);
-                definition.setBeanClass(factoryBeanClass);
-                definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+                try {
+                    Class<?> clazz = this.classLoader.loadClass(beanClassName);
+                    ConstructorArgumentValues constructorArgumentValues = definition.getConstructorArgumentValues();
+                    constructorArgumentValues.addGenericArgumentValue(clazz);
+                    constructorArgumentValues.addGenericArgumentValue(SQLProxyFactory.build(clazz, sqlStoreService));
+
+                    definition.setBeanClass(factoryBeanClass);
+                    definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+                } catch (ClassNotFoundException e) {
+                    log.error(e);
+                }
             }
         }
     }

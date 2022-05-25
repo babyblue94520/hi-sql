@@ -30,8 +30,7 @@ public class ArgumentParseUtil {
     public static void buildArgumentGetter(ParseResult result, Class<?> clazz, Type type, String name, ArgumentHandler<?> handler) {
         if (SqlReplace.class.isAssignableFrom(clazz)) {
             result.getters.put(name, handler);
-        }
-        if (clazz == Pagination.class) {
+        } else if (clazz == Pagination.class) {
             result.pagination = (ArgumentHandler<Pagination>) handler;
         } else if (clazz == Sort.class) {
             result.sort = (ArgumentHandler<Sort>) handler;

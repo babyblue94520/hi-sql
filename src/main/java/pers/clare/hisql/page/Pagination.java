@@ -47,6 +47,12 @@ public class Pagination {
         this.sorts = sorts;
     }
 
+    public void setSorts(Sort sort) {
+        if (sort != null) {
+            this.sorts = sort.getSorts();
+        }
+    }
+
     public Pagination next() {
         return Pagination.of(page + 1, size, sorts);
     }

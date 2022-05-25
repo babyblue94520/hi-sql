@@ -64,4 +64,27 @@ public class SQLStoreUtil {
                 .append(wheres);
         return values.toString();
     }
+
+    public static String toDeleteSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
+        FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
+        StringBuilder sql = new StringBuilder("delete from " + sqlStore.getTableName() + " where ");
+        Object value;
+        for (FieldColumn fieldColumn : fieldColumns) {
+            if (fieldColumn == null) continue;
+            value = fieldColumn.getField().get(entity);
+            if (fieldColumn.isId()) {
+                if (value == null) {
+                    sql.append(fieldColumn.getColumnName())
+                            .append(" is null");
+                } else {
+                    sql.append(fieldColumn.getColumnName())
+                            .append('=');
+                    SQLQueryUtil.appendValue(sql, value);
+                }
+                sql.append(" and ");
+            }
+        }
+        sql.delete(sql.length() - 5, sql.length() - 1);
+        return sql.toString();
+    }
 }

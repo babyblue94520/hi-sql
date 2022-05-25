@@ -125,10 +125,9 @@ public class SQLQueryUtil {
             value = entry.getValue().apply(arguments);
             if (value instanceof String) {
                 replace.replace(entry.getKey(), (String) value);
-            }
-            if (value instanceof SqlReplace) {
-                replace.replace(entry.getKey(), ((SqlReplace) value).getSql());
-                values.put(entry.getKey(), ((SqlReplace) value).getValue());
+            } else if (value instanceof SqlReplace) {
+                replace.replace(entry.getKey(), ((SqlReplace<?>) value).getSql());
+                values.put(entry.getKey(), ((SqlReplace<?>) value).getValue());
             } else {
                 throw new HiSqlException("%s must be String", entry.getKey());
             }
