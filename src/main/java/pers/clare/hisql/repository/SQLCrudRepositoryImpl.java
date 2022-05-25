@@ -142,7 +142,18 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.updateAll(sqlStore, entities);
     }
 
+    @Override
     public int deleteAll() {
         return sqlService.update(sqlStore.getDeleteAll());
+    }
+
+    @Override
+    public int[] deleteAll(Collection<Entity> entities) {
+        return sqlService.deleteAll(sqlStore, entities);
+    }
+
+    @Override
+    public int[] deleteAll(Entity[] entities) {
+        return sqlService.deleteAll(sqlStore, entities);
     }
 }

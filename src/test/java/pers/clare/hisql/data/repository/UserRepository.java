@@ -6,5 +6,4 @@ import pers.clare.hisql.repository.SQLCrudRepository;
 
 @Repository
 public interface UserRepository extends SQLCrudRepository<User, Long> {
-
 }

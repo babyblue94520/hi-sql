@@ -1,10 +1,7 @@
 package pers.clare.hisql.repository;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.entity.User;
@@ -29,6 +26,11 @@ public class SQLCrudRepositoryTest {
 
     private final UserRepository userRepository;
 
+    @BeforeEach
+    void before() {
+        userRepository.deleteAll();
+    }
+
     User create() {
         User user = new User();
         String account = String.valueOf(System.currentTimeMillis());
@@ -42,7 +44,6 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void count() {
-        userRepository.deleteAll();
         assertEquals(0, userRepository.count());
         create();
         assertEquals(1, userRepository.count());
@@ -60,7 +61,6 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void findAll() {
-        userRepository.deleteAll();
         assertEquals(0, userRepository.findAll().size());
         create();
         assertEquals(1, userRepository.findAll().size());
@@ -74,7 +74,6 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void page() {
-        userRepository.deleteAll();
         int page = 0;
         int size = 5;
         Page<User> userPage = userRepository.page(Pagination.of(page, size));
@@ -99,7 +98,6 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void next() {
-        userRepository.deleteAll();
         int page = 0;
         int size = 5;
         Next<User> userNext = userRepository.next(Pagination.of(page, size));
@@ -257,7 +255,6 @@ public class SQLCrudRepositoryTest {
 
     @Test
     void deleteAll() {
-        userRepository.deleteAll();
         int count = 10;
         for (int i = 0; i < count; i++) {
             create();
@@ -265,6 +262,35 @@ public class SQLCrudRepositoryTest {
         assertEquals(count, userRepository.count());
         int result = userRepository.deleteAll();
         assertEquals(count, result);
+        assertEquals(0, userRepository.count());
+    }
+
+
+    @Test
+    void deleteAllCollection() {
+        int count = 10;
+        List<User> users = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            users.add(create());
+        }
+        assertEquals(count, userRepository.count());
+        for (int i : userRepository.deleteAll(users)) {
+            assertEquals(1, i);
+        }
+        assertEquals(0, userRepository.count());
+    }
+
+    @Test
+    void deleteAllArray() {
+        int count = 10;
+        User[] users = new User[count];
+        for (int i = 0; i < count; i++) {
+            users[i] = create();
+        }
+        assertEquals(count, userRepository.count());
+        for (int i : userRepository.deleteAll(users)) {
+            assertEquals(1, i);
+        }
         assertEquals(0, userRepository.count());
     }
 }

@@ -159,4 +159,55 @@ public class SQLStoreService extends SQLStorePageService {
             closeConnection(connection);
         }
     }
+
+
+    public <T> int[] deleteAll(
+            SQLCrudStore<T> sqlStore
+            , Collection<T> entities
+    ) {
+        if (entities == null || entities.size() == 0) return new int[0];
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            Statement statement = connection.createStatement();
+            int[] counts = new int[entities.size()];
+            int i = 0;
+            for (T entity : entities) {
+                counts[i++] = ConnectionUtil.update(statement, SQLStoreUtil.toDeleteSQL(sqlStore, entity));
+            }
+            return counts;
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            closeConnection(connection);
+        }
+    }
+
+    public <T> int[] deleteAll(
+            SQLCrudStore<T> sqlStore
+            , T[] entities
+    ) {
+        if (entities == null || entities.length == 0) return new int[0];
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            Statement statement = connection.createStatement();
+            int[] counts = new int[entities.length];
+            int i = 0;
+            for (T entity : entities) {
+                counts[i++] = ConnectionUtil.update(statement, SQLStoreUtil.toDeleteSQL(sqlStore, entity));
+            }
+            return counts;
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            closeConnection(connection);
+        }
+    }
 }

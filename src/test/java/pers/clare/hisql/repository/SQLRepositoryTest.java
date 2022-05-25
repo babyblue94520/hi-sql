@@ -351,5 +351,8 @@ public class SQLRepositoryTest {
         assertEquals(count, users.size());
         users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
         assertEquals(1, users.size());
+        id = null;
+        users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
+        assertEquals(0, users.size());
     }
 }

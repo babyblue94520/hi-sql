@@ -91,5 +91,5 @@ public interface CustomRepository extends SQLRepository {
     List<User> findAll(String idSql, Long id);
 
     @HiSql("select * from user where 1=1 {id} and :id is not null")
-    List<User> findAll(SqlReplace id);
+    List<User> findAll(SqlReplace<Object> id);
 }

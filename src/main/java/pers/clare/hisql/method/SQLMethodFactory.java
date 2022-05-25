@@ -22,9 +22,11 @@ import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.ArgumentParseUtil;
 import pers.clare.hisql.util.ClassUtil;
+import pers.clare.hisql.util.ExceptionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -37,31 +39,34 @@ public class SQLMethodFactory {
     }
 
     public static Map<Method, MethodInterceptor> create(
-            SQLStoreService sqlStoreService
-            , Class<?> repositoryInterface
+            Class<?> repositoryInterface
+            , SQLStoreService sqlStoreService
     ) {
         Map<Method, MethodInterceptor> methodInterceptors = new HashMap<>();
-        buildSqlInvoke(methodInterceptors, sqlStoreService, repositoryInterface);
+        buildSqlInvoke(repositoryInterface, sqlStoreService, methodInterceptors);
         return methodInterceptors;
     }
 
     private static void buildSqlInvoke(
-            Map<Method, MethodInterceptor> methodInterceptors
+            Class<?> clazz
             , SQLStoreService sqlStoreService
-            , Class<?> repositoryInterface
+            , Map<Method, MethodInterceptor> methodInterceptors
     ) {
-        if (repositoryInterface == null
-                || repositoryInterface == SQLRepository.class
-                || repositoryInterface == SQLCrudRepository.class
+        if (clazz == null
+                || clazz == SQLRepository.class
+                || clazz == SQLCrudRepository.class
         ) return;
-        Class<?>[] superInterfaces = repositoryInterface.getInterfaces();
+        Class<?>[] superInterfaces = clazz.getInterfaces();
         for (Class<?> superInterface : superInterfaces) {
-            buildSqlInvoke(methodInterceptors, sqlStoreService, superInterface);
+            buildSqlInvoke(superInterface, sqlStoreService, methodInterceptors);
         }
-        Method[] methods = repositoryInterface.getDeclaredMethods();
-        Map<String, String> commandMap = SQLInjector.getContents(sqlStoreService.getContext().getXmlRoot(), repositoryInterface);
+        Method[] methods = clazz.getDeclaredMethods();
+        Map<String, String> commandMap = SQLInjector.getContents(sqlStoreService.getContext().getXmlRoot(), clazz);
         for (Method method : methods) {
             if (methodInterceptors.containsKey(method)) continue;
+            int modifier = method.getModifiers();
+            if (Modifier.isStatic(modifier) || !Modifier.isPublic(modifier)) continue;
+
             HiSql hiSql = method.getAnnotation(HiSql.class);
             String command = null;
             if (hiSql != null) {
@@ -74,7 +79,7 @@ public class SQLMethodFactory {
                 command = commandMap.get(method.getName());
             }
             if (!StringUtils.hasLength(command)) {
-                throw new HiSqlException("%s.%s method must set XML or Sql.query", repositoryInterface.getName(), method.getName());
+                throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or Sql.query", clazz.getName(), method.getName())));
             }
             methodInterceptors.put(method, buildInvoke(sqlStoreService, method, command));
         }
@@ -405,4 +410,5 @@ public class SQLMethodFactory {
         }
         return Object.class;
     }
+
 }

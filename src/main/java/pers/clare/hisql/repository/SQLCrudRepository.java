@@ -55,6 +55,12 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
     int deleteAll();
 
     @NonNull
+    int[] deleteAll(@NonNull Collection<Entity> entities);
+
+    @NonNull
+    int[] deleteAll(@NonNull Entity[] entities);
+
+    @NonNull
     long countById(Key key);
 
     @NonNull
