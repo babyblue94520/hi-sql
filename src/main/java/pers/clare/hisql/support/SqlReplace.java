@@ -1,23 +1,35 @@
 package pers.clare.hisql.support;
 
-public interface SqlReplace {
-    Object getValue();
+import java.util.Collection;
 
-    String getSql();
-
-    static StringSqlReplace of(String value, String sql) {
+public interface SqlReplace<T> {
+    static SqlReplace<String> of(String value, String sql) {
         return new StringSqlReplace(value, sql);
     }
 
-    static StringSqlReplace of(String value, String sql, String emptySql) {
+    static SqlReplace<String> of(String value, String sql, String emptySql) {
         return new StringSqlReplace(value, sql, emptySql);
     }
 
-    static ObjectSqlReplace of(Object value, String sql) {
+    static SqlReplace<Collection<?>> of(Collection<?> value, String sql) {
+        return new CollectionSqlReplace(value, sql);
+    }
+
+    static SqlReplace<Collection<?>> of(Collection<?> value, String sql, String emptySql) {
+        return new CollectionSqlReplace(value, sql, emptySql);
+    }
+
+    static SqlReplace<Object> of(Object value, String sql) {
         return new ObjectSqlReplace(value, sql);
     }
 
-    static ObjectSqlReplace of(Object value, String sql, String emptySql) {
+    static SqlReplace<Object> of(Object value, String sql, String emptySql) {
         return new ObjectSqlReplace(value, sql, emptySql);
     }
+
+    T getValue();
+
+    String getSql();
+
+
 }

@@ -1,6 +1,6 @@
 package pers.clare.hisql.support;
 
-public class StringSqlReplace implements SqlReplace {
+public class StringSqlReplace implements SqlReplace<String> {
     private final String value;
     private final String sql;
     private final String emptySql;
@@ -18,7 +18,7 @@ public class StringSqlReplace implements SqlReplace {
     }
 
     @Override
-    public Object getValue() {
+    public String getValue() {
         return value;
     }
 
@@ -26,5 +26,4 @@ public class StringSqlReplace implements SqlReplace {
     public String getSql() {
         return value == null || value.length() == 0 ? emptySql : sql;
     }
-
 }
