@@ -28,7 +28,7 @@ public class SQLQueryReplace {
     }
 
     public SQLQueryBuilder buildQueryBuilder() {
-        return new SQLQueryBuilder(toString());
+        return SQLQueryBuilder.create(toString());
     }
 
     public SQLQuery buildQuery() {

@@ -27,7 +27,7 @@ public class SQLService extends SQLPageService {
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(sql, e);
         } finally {
             closeConnection(connection);
         }
@@ -50,7 +50,7 @@ public class SQLService extends SQLPageService {
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(sql, e);
         } finally {
             closeConnection(connection);
         }
@@ -62,7 +62,6 @@ public class SQLService extends SQLPageService {
             , Object... parameters
     ) {
         Connection connection = null;
-
         try {
             connection = getConnection();
             Statement statement = ConnectionUtil.update(connection, sql, parameters);
@@ -70,7 +69,7 @@ public class SQLService extends SQLPageService {
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(sql, e);
         } finally {
             closeConnection(connection);
         }

@@ -1,10 +1,10 @@
 package pers.clare.hisql.repository;
 
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Repository;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Repository;
 
 @SuppressWarnings("unused")
 @Repository

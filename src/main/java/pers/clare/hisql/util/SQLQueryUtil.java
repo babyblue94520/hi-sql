@@ -112,7 +112,7 @@ public class SQLQueryUtil {
     }
 
 
-    public static SQLQuery toSqlQuery(
+    public static SQLQuery to(
             SQLQueryReplaceBuilder sqlQueryReplaceBuilder
             , Object[] arguments
             , Map<String, ArgumentHandler<?>> replaces
@@ -142,7 +142,7 @@ public class SQLQueryUtil {
         return query;
     }
 
-    public static SQLQuery toSqlQuery(
+    public static SQLQuery to(
             SQLQueryBuilder sqlQueryBuilder
             , Object[] arguments
             , Map<String, ArgumentHandler<?>> valueHandlers

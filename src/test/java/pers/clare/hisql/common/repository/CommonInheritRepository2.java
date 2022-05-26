@@ -1,9 +1,9 @@
 package pers.clare.hisql.common.repository;
 
-import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.common.data.CommonUser;
 import pers.clare.hisql.function.ConnectionCallback;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CommonInheritRepository2<K> extends CommonInheritRepository1<String, CommonUser, K, Object> {

@@ -1,9 +1,5 @@
 package pers.clare.hisql.repository;
 
-import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.entity.CompositeKey;
 import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.data.repository.CompositeKeyRepository;
@@ -11,6 +7,10 @@ import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +42,6 @@ public class CompositeKeyRepositoryTest {
 
     @Test
     void count() {
-        compositeKeyRepository.deleteAll();
         assertEquals(0, compositeKeyRepository.count());
         create();
         assertEquals(1, compositeKeyRepository.count());
@@ -67,7 +66,6 @@ public class CompositeKeyRepositoryTest {
 
     @Test
     void findAll() {
-        compositeKeyRepository.deleteAll();
         assertEquals(0, compositeKeyRepository.findAll().size());
         create();
         assertEquals(1, compositeKeyRepository.findAll().size());
@@ -81,7 +79,6 @@ public class CompositeKeyRepositoryTest {
 
     @Test
     void page() {
-        compositeKeyRepository.deleteAll();
         int page = 0;
         int size = 5;
         Page<CompositeTable> dataPage = compositeKeyRepository.page(Pagination.of(page, size));
@@ -106,7 +103,6 @@ public class CompositeKeyRepositoryTest {
 
     @Test
     void next() {
-        compositeKeyRepository.deleteAll();
         int page = 0;
         int size = 5;
         Next<CompositeTable> dataNext = compositeKeyRepository.next(Pagination.of(page, size));
@@ -233,26 +229,25 @@ public class CompositeKeyRepositoryTest {
     @Test
     void updateAllArray() {
         int count = 10;
-        CompositeTable[] datas = new CompositeTable[count];
+        CompositeTable[] records = new CompositeTable[count];
         for (int i = 0; i < count; i++) {
-            datas[i] = create();
+            records[i] = create();
         }
         String updateTime = String.valueOf(System.currentTimeMillis());
-        for (CompositeTable data : datas) {
+        for (CompositeTable data : records) {
             data.setName(updateTime);
         }
 
-        for (int i : compositeKeyRepository.updateAll(datas)) {
+        for (int i : compositeKeyRepository.updateAll(records)) {
             assertEquals(1, i);
         }
-        for (CompositeTable data : datas) {
+        for (CompositeTable data : records) {
             assertEquals(updateTime, compositeKeyRepository.find(data).orElse(new CompositeTable()).getName());
         }
     }
 
     @Test
     void deleteAll() {
-        compositeKeyRepository.deleteAll();
         int count = 10;
         for (int i = 0; i < count; i++) {
             create();

@@ -245,7 +245,7 @@ public class SQLStoreFactory {
         tableName.getChars(0, tl, chars, index);
         index += tl;
         whereId.getChars(0, wl, chars, index);
-        return new SQLQueryBuilder(chars);
+        return SQLQueryBuilder.create(chars);
     }
 
     private static String buildSelect(String tableName, StringBuilder selectColumns) {
@@ -280,7 +280,7 @@ public class SQLStoreFactory {
         tableName.getChars(0, tl, chars, index);
         index += tl;
         whereId.getChars(0, wl, chars, index);
-        return new SQLQueryBuilder(chars);
+        return SQLQueryBuilder.create(chars);
     }
 
     private static String buildDeleteAll(String tableName) {
@@ -303,7 +303,7 @@ public class SQLStoreFactory {
         tableName.getChars(0, tl, chars, index);
         index += tl;
         whereId.getChars(0, wl, chars, index);
-        return new SQLQueryBuilder(chars);
+        return SQLQueryBuilder.create(chars);
     }
 
     private static FieldSetHandler buildSetHandler(Field field) {

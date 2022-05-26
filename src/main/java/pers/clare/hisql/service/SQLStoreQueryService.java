@@ -29,7 +29,7 @@ public abstract class SQLStoreQueryService extends SQLService {
             , Object[] parameters
             , StoreResultSetHandler<T, R> storeResultSetHandler
     ) {
-        sql = context.getPaginationMode().buildSortSQL(sort, sql);
+        sql = buildSortSQL(sort, sql);
         Connection connection = null;
         try {
             connection = getConnection();
@@ -37,7 +37,7 @@ public abstract class SQLStoreQueryService extends SQLService {
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(sql, e);
         } finally {
             closeConnection(connection);
         }
@@ -59,12 +59,30 @@ public abstract class SQLStoreQueryService extends SQLService {
         return queryHandler(sqlStore, sql, null, parameters, ResultSetUtil::toInstance);
     }
 
+    public <T> T find(
+            SQLStore<T> sqlStore
+            , String sql
+            , Sort sort
+            , Object... parameters
+    ) {
+        return queryHandler(sqlStore, sql, sort, parameters, ResultSetUtil::toInstance);
+    }
+
     public <T> Set<T> findSet(
             SQLStore<T> sqlStore
             , String sql
             , Object... parameters
     ) {
         return queryHandler(sqlStore, sql, null, parameters, ResultSetUtil::toSetInstance);
+    }
+
+    public <T> Set<T> findSet(
+            SQLStore<T> sqlStore
+            , String sql
+            , Sort sort
+            , Object... parameters
+    ) {
+        return queryHandler(sqlStore, sql, sort, parameters, ResultSetUtil::toSetInstance);
     }
 
     public <T> List<T> findAll(

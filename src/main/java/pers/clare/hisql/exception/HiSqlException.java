@@ -14,8 +14,8 @@ public class HiSqlException extends RuntimeException {
         super(message);
     }
 
-    public HiSqlException(String message, Throwable cause) {
-        super(message, cause);
+    public HiSqlException(String sql, Throwable cause) {
+        super(String.format("%s sql-> %s", cause.getMessage(), sql), cause);
 
         if (cause instanceof SQLException) {
             this.sqlException = (SQLException) cause;

@@ -1,9 +1,9 @@
 package pers.clare.hisql.data.repository;
 
-import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.repository.SQLRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;

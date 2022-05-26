@@ -21,6 +21,9 @@ public abstract class SQLPageService extends SQLNextService {
         super(context, dataSource);
     }
 
+    protected String buildTotalSQL(String sql) {
+        return context.getPaginationMode().buildTotalSQL(sql);
+    }
 
     public <T> Page<T> page(
             Class<T> clazz
@@ -54,16 +57,16 @@ public abstract class SQLPageService extends SQLNextService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
+            List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(executeSql, e);
         } finally {
             closeConnection(connection);
         }
@@ -102,16 +105,16 @@ public abstract class SQLPageService extends SQLNextService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(executeSql, e);
         } finally {
             closeConnection(connection);
         }
@@ -124,17 +127,19 @@ public abstract class SQLPageService extends SQLNextService {
             , String sql
             , Object[] parameters
     ) throws SQLException {
+        if (pagination == null) pagination = DefaultPagination;
         long total = list.size();
         int size = pagination.getSize();
         int page = pagination.getPage();
         if (total > 0 && total < size) {
             total += (long) size * page;
         } else {
-            ResultSet rs = ConnectionUtil.query(connection, context.getPaginationMode().buildTotalSQL(sql), parameters);
+            String totalSql = buildTotalSQL(sql);
+            ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
             if (rs.next()) {
                 total = rs.getLong(1);
             } else {
-                throw new HiSqlException("query total error");
+                throw new HiSqlException(String.format("query total error.(%s)", totalSql));
             }
         }
         return Page.of(page, size, list, total);

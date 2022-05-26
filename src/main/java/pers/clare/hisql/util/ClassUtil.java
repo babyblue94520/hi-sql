@@ -1,7 +1,7 @@
 package pers.clare.hisql.util;
 
-import org.springframework.lang.NonNull;
 import pers.clare.hisql.repository.SQLCrudRepository;
+import org.springframework.lang.NonNull;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

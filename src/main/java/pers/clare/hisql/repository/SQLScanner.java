@@ -1,5 +1,8 @@
 package pers.clare.hisql.repository;
 
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.service.SQLStoreService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
@@ -17,9 +20,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
-import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.page.PaginationMode;
-import pers.clare.hisql.service.SQLStoreService;
 
 import javax.sql.DataSource;
 import java.lang.reflect.InvocationTargetException;

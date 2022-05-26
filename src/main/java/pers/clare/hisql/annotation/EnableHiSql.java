@@ -1,14 +1,14 @@
 package pers.clare.hisql.annotation;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.core.annotation.AliasFor;
 import pers.clare.hisql.naming.LowerCaseNamingStrategy;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.MySQLPaginationMode;
 import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.repository.SQLRepositoryFactoryBean;
 import pers.clare.hisql.repository.SQLScanRegistrar;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.*;
 

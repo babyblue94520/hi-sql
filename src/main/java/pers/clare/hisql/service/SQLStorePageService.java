@@ -54,11 +54,11 @@ public abstract class SQLStorePageService extends SQLStoreNextService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, executeSql, parameters), sqlStore);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;

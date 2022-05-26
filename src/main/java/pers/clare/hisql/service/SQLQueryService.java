@@ -20,6 +20,10 @@ public abstract class SQLQueryService extends SQLBasicService {
         super(context, dataSource);
     }
 
+    protected String buildSortSQL(Sort sort, String sql) {
+        return context.getPaginationMode().buildSortSQL(sort, sql);
+    }
+
     public <T> Map<String, T> find(
             String sql
             , Class<T> returnType
@@ -131,16 +135,15 @@ public abstract class SQLQueryService extends SQLBasicService {
             , Object[] parameters
             , ResultSetHandler<T, R> resultSetHandler
     ) {
-        sql = context.getPaginationMode().buildSortSQL(sort, sql);
+        sql = buildSortSQL(sort, sql);
         Connection connection = null;
-
         try {
             connection = getConnection();
             return resultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), returnType);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(sql, e);
         } finally {
             closeConnection(connection);
         }

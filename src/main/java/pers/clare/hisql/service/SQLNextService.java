@@ -21,12 +21,22 @@ public abstract class SQLNextService extends SQLQueryService {
         super(context, dataSource);
     }
 
-    protected static Pagination toPagination(Sort sort) {
+    protected Pagination toPagination(Sort sort) {
         if (sort == null) {
             return DefaultPagination;
         } else {
             return Pagination.of(DefaultPagination.getPage(), DefaultPagination.getSize(), sort.getSorts());
         }
+    }
+
+    protected String buildPaginationSQL(Pagination pagination, String sql) {
+        if (pagination == null) pagination = DefaultPagination;
+        return context.getPaginationMode().buildPaginationSQL(pagination, sql);
+    }
+
+    protected <T> Next<T> toNext(Pagination pagination, List<T> list) {
+        if (pagination == null) pagination = DefaultPagination;
+        return Next.of(pagination.getPage(), pagination.getSize(), list);
     }
 
     public <T> Next<T> next(
@@ -61,16 +71,16 @@ public abstract class SQLNextService extends SQLQueryService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
-            return Next.of(pagination.getPage(), pagination.getSize(), list);
+            List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(executeSql, e);
         } finally {
             closeConnection(connection);
         }
@@ -82,7 +92,7 @@ public abstract class SQLNextService extends SQLQueryService {
             , Sort sort
             , Object... parameters
     ) {
-        sql = context.getPaginationMode().buildSortSQL(sort, sql);
+        sql = buildSortSQL(sort, sql);
         return doNextMap(clazz, sql, null, parameters);
     }
 
@@ -101,16 +111,16 @@ public abstract class SQLNextService extends SQLQueryService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), clazz);
-            return Next.of(pagination.getPage(), pagination.getSize(), list);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(executeSql, e);
         } finally {
             closeConnection(connection);
         }

@@ -62,16 +62,16 @@ public abstract class SQLStoreNextService extends SQLStoreQueryService {
             , Pagination pagination
             , Object... parameters
     ) {
-        if (pagination == null) pagination = DefaultPagination;
+        String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, context.getPaginationMode().buildPaginationSQL(pagination, sql), parameters), sqlStore);
-            return Next.of(pagination.getPage(), pagination.getSize(), list);
+            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, executeSql, parameters), sqlStore);
+            return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {
-            throw new HiSqlException(e);
+            throw new HiSqlException(executeSql, e);
         } finally {
             closeConnection(connection);
         }

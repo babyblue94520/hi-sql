@@ -1,8 +1,5 @@
 package pers.clare.hisql.method;
 
-import org.aopalliance.intercept.MethodInterceptor;
-import org.springframework.lang.NonNull;
-import org.springframework.util.StringUtils;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
@@ -24,6 +21,9 @@ import pers.clare.hisql.util.ArgumentParseUtil;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.ExceptionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.springframework.lang.NonNull;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -369,25 +369,24 @@ public class SQLMethodFactory {
     ) {
         List<BiConsumer<Object[], StringBuilder>> sqlProcessors = new ArrayList<>();
         char[] cs = command.toCharArray();
-        if (SQLQueryReplaceBuilder.findKeyCount(cs) > 0) {
-            SQLQueryReplaceBuilder sqlQueryReplaceBuilder = new SQLQueryReplaceBuilder(cs);
+        if (SQLQueryReplaceBuilder.hasKey(cs)) {
+            SQLQueryReplaceBuilder sqlQueryReplaceBuilder = SQLQueryReplaceBuilder.create(cs);
             Map<String, ArgumentHandler<?>> replaces = new HashMap<>();
             handlerMap.forEach((name, handler) -> {
-                if (sqlQueryReplaceBuilder.hasKey(name)) {
+                if (sqlQueryReplaceBuilder.isKey(name)) {
                     replaces.put(name, handler);
                 }
             });
 
             sqlProcessors.add((arguments, sql) -> {
                 sql.setLength(0);
-                sql.append(SQLQueryUtil.toSqlQuery(sqlQueryReplaceBuilder, arguments, replaces, handlerMap).toSQL());
+                sql.append(SQLQueryUtil.to(sqlQueryReplaceBuilder, arguments, replaces, handlerMap).toSQL());
             });
-
-        } else if (SQLQueryBuilder.findKeyCount(cs) > 0) {
-            SQLQueryBuilder sqlQueryBuilder = new SQLQueryBuilder(cs);
+        } else if (SQLQueryBuilder.hasKey(cs)) {
+            SQLQueryBuilder sqlQueryBuilder = SQLQueryBuilder.create(cs);
             sqlProcessors.add((arguments, sql) -> {
                 sql.setLength(0);
-                sql.append(SQLQueryUtil.toSqlQuery(sqlQueryBuilder, arguments, handlerMap).toSQL());
+                sql.append(SQLQueryUtil.to(sqlQueryBuilder, arguments, handlerMap).toSQL());
             });
         }
         return sqlProcessors;
