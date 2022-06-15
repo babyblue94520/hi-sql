@@ -24,12 +24,12 @@ public abstract class SQLQueryService extends SQLBasicService {
         return context.getPaginationMode().buildSortSQL(sort, sql);
     }
 
-    public <T> Map<String, T> find(
-            String sql
-            , Class<T> returnType
+    public <T> Map<String, T> findMap(
+            Class<T> returnType
+            , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::toMap);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::toMap);
     }
 
     public <T> Set<T> findSet(
@@ -37,15 +37,15 @@ public abstract class SQLQueryService extends SQLBasicService {
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::toSet);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::toSet);
     }
 
-    public <T> T findFirst(
+    public <T> T find(
             Class<T> returnType
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::to);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::to);
     }
 
 
@@ -54,7 +54,7 @@ public abstract class SQLQueryService extends SQLBasicService {
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::toMapSet);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::toMapSet);
     }
 
     public <T> List<Map<String, T>> findAllMap(
@@ -62,7 +62,7 @@ public abstract class SQLQueryService extends SQLBasicService {
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::toMapList);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::toMapList);
     }
 
     public <T> List<T> findAll(
@@ -70,16 +70,16 @@ public abstract class SQLQueryService extends SQLBasicService {
             , String sql
             , Object... parameters
     ) {
-        return queryHandler(sql, null, returnType, parameters, ResultSetUtil::toList);
+        return queryHandler(returnType, sql, null, parameters, ResultSetUtil::toList);
     }
 
-    public <T> Map<String, T> find(
-            String sql
+    public <T> Map<String, T> findMap(
+            Class<T> returnType
+            , String sql
             , Sort sort
-            , Class<T> returnType
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::toMap);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::toMap);
     }
 
     public <T> Set<T> findSet(
@@ -88,16 +88,16 @@ public abstract class SQLQueryService extends SQLBasicService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::toSet);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::toSet);
     }
 
-    public <T> T findFirst(
+    public <T> T find(
             Class<T> returnType
             , String sql
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::to);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::to);
     }
 
 
@@ -107,7 +107,7 @@ public abstract class SQLQueryService extends SQLBasicService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::toMapSet);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::toMapSet);
     }
 
     public <T> List<Map<String, T>> findAllMap(
@@ -116,7 +116,7 @@ public abstract class SQLQueryService extends SQLBasicService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::toMapList);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::toMapList);
     }
 
     public <T> List<T> findAll(
@@ -125,13 +125,13 @@ public abstract class SQLQueryService extends SQLBasicService {
             , Sort sort
             , Object... parameters
     ) {
-        return queryHandler(sql, sort, returnType, parameters, ResultSetUtil::toList);
+        return queryHandler(returnType, sql, sort, parameters, ResultSetUtil::toList);
     }
 
     protected <T, R> R queryHandler(
-            String sql
+            Class<T> returnType
+            , String sql
             , Sort sort
-            , Class<T> returnType
             , Object[] parameters
             , ResultSetHandler<T, R> resultSetHandler
     ) {

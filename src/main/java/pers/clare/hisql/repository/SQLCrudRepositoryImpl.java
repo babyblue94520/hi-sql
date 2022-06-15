@@ -34,13 +34,13 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
     }
 
     public long count() {
-        Long count = sqlService.findFirst(Long.class, sqlStore.getCount());
+        Long count = sqlService.find(Long.class, sqlStore.getCount());
         return count == null ? 0 : count;
     }
 
     public long count(Entity entity) {
         try {
-            Long count = sqlService.findFirst(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -58,7 +58,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
             , Key key
     ) {
         try {
-            Long count = sqlService.findFirst(Long.class, keySQLBuilder.apply(sqlStore.getCountById(), key));
+            Long count = sqlService.find(Long.class, keySQLBuilder.apply(sqlStore.getCountById(), key));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;

@@ -15,7 +15,7 @@ import java.util.Map;
 
 @SuppressWarnings("unused")
 public abstract class SQLNextService extends SQLQueryService {
-    protected static final Pagination DefaultPagination = Pagination.of(0, 20);
+    public static final Pagination DefaultPagination = Pagination.of(0, 20);
 
     public SQLNextService(HiSqlContext context, DataSource dataSource) {
         super(context, dataSource);
@@ -84,6 +84,14 @@ public abstract class SQLNextService extends SQLQueryService {
         } finally {
             closeConnection(connection);
         }
+    }
+
+    public <T> Next<Map<String, T>> nextMap(
+            Class<T> clazz
+            , String sql
+            , Object... parameters
+    ) {
+        return doNextMap(clazz, sql, null, parameters);
     }
 
     public <T> Next<Map<String, T>> nextMap(

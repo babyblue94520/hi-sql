@@ -1,5 +1,8 @@
 package pers.clare.hisql.method;
 
+import org.aopalliance.intercept.MethodInterceptor;
+import org.springframework.lang.NonNull;
+import org.springframework.util.StringUtils;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
@@ -21,9 +24,6 @@ import pers.clare.hisql.util.ArgumentParseUtil;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.ExceptionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.springframework.lang.NonNull;
-import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -195,14 +195,14 @@ public class SQLMethodFactory {
                     return buildList(type, context, sortHandler);
                 } else if (returnClass == Map.class) {
                     Class<?> valueClass = getValueClass(getValueType(type, 0), 1);
-                    return (service, sql, arguments) -> service.find(sql, applySort(sortHandler, arguments), valueClass, arguments);
+                    return (service, sql, arguments) -> service.findMap(valueClass, sql, applySort(sortHandler, arguments), arguments);
                 } else if (Page.class.isAssignableFrom(returnClass)) {
                     return buildPage(type, context, paginationHandler, sortHandler);
                 } else if (Next.class.isAssignableFrom(returnClass)) {
                     return buildNext(type, context, paginationHandler, sortHandler);
                 } else {
                     if (SQLStoreFactory.isIgnore(returnClass)) {
-                        return (service, sql, arguments) -> service.findFirst(returnClass, sql, applySort(sortHandler, arguments), arguments);
+                        return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
                     } else {
                         SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
                         return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
