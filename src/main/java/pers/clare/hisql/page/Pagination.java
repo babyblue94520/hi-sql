@@ -23,6 +23,10 @@ public class Pagination {
         return new Pagination(page, size, sorts);
     }
 
+    public static Pagination of(int page, int size, Sort sort) {
+        return new Pagination(page, size, sort.getSorts());
+    }
+
     public int getPage() {
         return page;
     }

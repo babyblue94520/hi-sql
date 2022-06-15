@@ -35,7 +35,11 @@ public interface PaginationMode {
         sql.append(" order by ");
         for (String sort : sorts) {
             if (sort == null || sort.length() == 0) continue;
-            sortTurnCamelCase(sql, sort);
+            if (Character.isUpperCase(sort.charAt(0))) {
+                sql.append(sort);
+            } else {
+                sortTurnCamelCase(sql, sort);
+            }
             sql.append(',');
         }
         sql.delete(sql.length() - 1, sql.length());
@@ -57,7 +61,7 @@ public interface PaginationMode {
         for (int i = start; i < l; i++) {
             c = cs[i];
             if (c == ' ') turn = false; // stop when blank
-            if (turn && c > 64 && c < 91) {
+            if (turn && Character.isUpperCase(c)) {
                 c = toLowerCase(c);
                 sb.append('_');
             }

@@ -11,7 +11,7 @@ public class UpperCaseNamingStrategy implements NamingStrategy {
         sb.append(Character.toUpperCase(c));
         for (int i = 1; i < l; i++) {
             c = cs[i];
-            if (c > 64 && c < 91) {
+            if (Character.isLowerCase(c)) {
                 c = Character.toUpperCase(c);
                 sb.append('_');
             }

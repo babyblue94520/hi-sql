@@ -11,7 +11,7 @@ public class LowerCaseNamingStrategy implements NamingStrategy {
         sb.append(Character.toLowerCase(c));
         for (int i = 1; i < l; i++) {
             c = cs[i];
-            if (c > 64 && c < 91) {
+            if (Character.isUpperCase(c)) {
                 c = Character.toLowerCase(c);
                 sb.append('_');
             }
