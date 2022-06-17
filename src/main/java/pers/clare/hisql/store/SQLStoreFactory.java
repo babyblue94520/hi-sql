@@ -118,7 +118,7 @@ public class SQLStoreFactory {
             field.setAccessible(true);
             column = field.getAnnotation(Column.class);
             fieldName = field.getName();
-            columnName = getColumnName(context, field, column).replaceAll("`", "");
+            columnName = getColumnName(context, field, column);
             name = columnName.replaceAll("`", "");
 
             fieldSetHandler = buildSetHandler(field);
