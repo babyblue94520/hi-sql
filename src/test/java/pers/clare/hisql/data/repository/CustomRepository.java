@@ -1,5 +1,6 @@
 package pers.clare.hisql.data.repository;
 
+import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.entity.UserSimple;
@@ -9,7 +10,6 @@ import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.support.SqlReplace;
-import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;

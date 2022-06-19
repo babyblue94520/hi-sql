@@ -13,7 +13,6 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("unused")
 public abstract class SQLNextService extends SQLQueryService {
     public static final Pagination DefaultPagination = Pagination.of(0, 20);
 

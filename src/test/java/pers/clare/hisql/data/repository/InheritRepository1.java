@@ -1,10 +1,10 @@
 package pers.clare.hisql.data.repository;
 
+import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.common.data.CommonUser;
 import pers.clare.hisql.common.repository.CommonInheritRepository1;
 import pers.clare.hisql.function.ConnectionCallback;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public interface InheritRepository1 extends CommonInheritRepository1<String, CommonUser, Long, Object> {

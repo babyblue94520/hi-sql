@@ -1,11 +1,11 @@
 package pers.clare.hisql.data.repository;
 
+import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.repository.SQLRepository;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CallbackRepository extends SQLRepository {

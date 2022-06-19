@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("unused")
 public abstract class SQLQueryService extends SQLBasicService {
 
     public SQLQueryService(HiSqlContext context, DataSource dataSource) {

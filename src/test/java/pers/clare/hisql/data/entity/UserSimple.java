@@ -1,16 +1,14 @@
 package pers.clare.hisql.data.entity;
 
 import lombok.Getter;
+import pers.clare.hisql.vo.IdName;
 
 import java.util.Objects;
 
 @Getter
-public class UserSimple {
-    private Long id;
+public class UserSimple extends IdName {
 
     private String account;
-
-    private String name;
 
     private String email;
 

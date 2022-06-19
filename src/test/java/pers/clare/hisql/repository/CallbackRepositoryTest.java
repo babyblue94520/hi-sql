@@ -1,7 +1,5 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.data.repository.CallbackRepository;
-import pers.clare.hisql.util.ConnectionUtil;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -9,6 +7,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pers.clare.hisql.data.repository.CallbackRepository;
+import pers.clare.hisql.util.ConnectionUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

@@ -15,7 +15,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("unused")
 public abstract class SQLPageService extends SQLNextService {
     public SQLPageService(HiSqlContext context, DataSource dataSource) {
         super(context, dataSource);

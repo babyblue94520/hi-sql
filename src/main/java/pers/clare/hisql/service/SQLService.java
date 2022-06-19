@@ -15,6 +15,9 @@ public class SQLService extends SQLPageService {
         super(context, dataSource);
     }
 
+    /**
+     * Return update count
+     */
     public int insert(
             String sql
             , Object... parameters
@@ -33,6 +36,9 @@ public class SQLService extends SQLPageService {
         }
     }
 
+    /**
+     * Return auto increment value
+     */
     public <T> T insert(
             Class<T> keyType
             , String sql

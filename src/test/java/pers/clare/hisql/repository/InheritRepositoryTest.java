@@ -1,8 +1,5 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.common.data.CommonUser;
-import pers.clare.hisql.data.repository.InheritRepository1;
-import pers.clare.hisql.data.repository.InheritRepository2;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -10,6 +7,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pers.clare.hisql.common.data.CommonUser;
+import pers.clare.hisql.data.repository.InheritRepository1;
+import pers.clare.hisql.data.repository.InheritRepository2;
 
 import java.sql.Statement;
 

@@ -1,10 +1,10 @@
 package pers.clare.hisql.data.repository;
 
+import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.data.entity.CompositeKey;
 import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.repository.SQLCrudRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;

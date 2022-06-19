@@ -1,9 +1,5 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.data.repository.BasicTypeRepository;
-import pers.clare.hisql.page.Next;
-import pers.clare.hisql.page.Page;
-import pers.clare.hisql.page.Pagination;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
@@ -11,6 +7,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pers.clare.hisql.data.repository.BasicTypeRepository;
+import pers.clare.hisql.page.Next;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.page.Pagination;
 
 import java.util.List;
 import java.util.Map;

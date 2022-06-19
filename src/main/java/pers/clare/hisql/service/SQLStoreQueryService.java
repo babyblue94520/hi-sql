@@ -17,7 +17,7 @@ import java.util.Set;
 
 
 public abstract class SQLStoreQueryService extends SQLService {
-    @SuppressWarnings("unused")
+
     public SQLStoreQueryService(HiSqlContext context, DataSource dataSource) {
         super(context, dataSource);
     }
