@@ -1,7 +1,7 @@
 package pers.clare.hisql.util;
 
-import pers.clare.hisql.repository.SQLCrudRepository;
 import org.springframework.lang.NonNull;
+import pers.clare.hisql.repository.SQLCrudRepository;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -16,9 +16,6 @@ public class ClassUtil {
         return type.isPrimitive() || type.getName().startsWith("java.");
     }
 
-    /**
-     * @return Returns Object if it is a Generic type
-     */
     @NonNull
     public static Class<?> toClassType(Type type) {
         if (type instanceof Class) {
