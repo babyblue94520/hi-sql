@@ -34,7 +34,7 @@
 <dependency>
     <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
-    <version>0.0.5-RELEASE</version>
+    <version>1.0.0-RELEASE</version>
 </dependency>
 ```
 
