@@ -7,7 +7,7 @@
 ## Requirement
 
 * Spring Framework 5+
-* Java 8+
+* Java 11+
 
 ## Default
 
@@ -25,12 +25,9 @@
 
 ## QuickStart
 
-[demo project](https://github.com/babyblue94520/hi-sql-demo)
-
 ### pom.xml
 
 ```xml
-
 <dependency>
     <groupId>io.github.babyblue94520</groupId>
     <artifactId>hi-sql</artifactId>
@@ -40,448 +37,188 @@
 
 ### Config
 
+[HiSqlConfig.java](src/test/java/pers/clare/hisql/data/HiSqlConfig.java)
 ```java
 @EnableHiSql
 public class HiSqlConfig {
+    
 }
 ```
 
 ### Use
 
+
 * **SQLCrudRepository**
 
-  **Method**
+    Create an interface for extents SQLCrudRepository.
 
-    ```java
-    public interface SQLCrudRepository<T> extends SQLRepository {
-    
-        long count();
-    
-        long count(T entity);
-    
-        long countById(Object... keys);
-    
-        List<T> findAll();
-    
-        Page<T> page(Pagination pagination);
-    
-        Next<T> next(Pagination pagination);
-    
-        T find(T entity);
-    
-        T findById(Object... keys);
-    
-        T insert(T entity);
-    
-        int update(T entity);
-    
-        int delete(T entity);
-    
-        int deleteById(Object... keys);
-    
-        int deleteAll();
-    }
-    ```
+    **Example**
 
-  **Simple**
+    * [User.java](src/test/java/pers/clare/hisql/data/entity/User.java)
 
-    ```Java
-    @Repository
-    public interface UserRepository extends SQLCrudRepository<User> {
-    
-    }
-  
-    @Getter
-    public class User {
-    
-        @Id
-        @GeneratedValue
-        private Long id;
-    
-        private String account;
-    
-        private String name;
-    
-        private String email;
-    
-        private Boolean locked;
-    
-        private Boolean enabled;
-    
-        @Column(name = "update_time")
-        private Long updateTime;
-    
-        @Column(name = "update_user")
-        private Long updateUser;
-    
-        @Column(name = "create_time", updatable = false)
-        private Long createTime;
-    
-        @Column(name = "create_user", updatable = false)
-        private Long createUser;
-    }
+    * [UserRepository.java](src/test/java/pers/clare/hisql/data/repository/UserRepository.java)
 
-    ```
+    * [SQLCrudRepositoryTest.java](src/test/java/pers/clare/hisql/repository/SQLCrudRepositoryTest.java)
+
 
 * **SQLRepository**
 
-    * **SQL expression**
+    **SQL expression**
 
-        * **{sql} indicates the sql to be replaced**
-        * **:value indicates parameter name**
+    * **"{sql}" indicates the sql to be replaced.**
+    * **":value" indicates parameter name.**
 
-  **Repository**
+    **Example**
 
-    ```java
-    @Repository
-    public interface QueryRepository extends SQLRepository {
-        @Sql(query = "select * from table where column1 = :value1 and column2 = :value2")
-        List query(String value1, String value2);
-
-        // where in
-        @Sql(query = "select * from table where column1 in :values1 and column2 in :values2")
-        List query2(String[] values1,Collection values2);
-
-        @Sql(query = "select * from table where 1=1 {and1} {and2}")
-        List query(String and1, String and2, String value1, String value2);
-    }
-    ```
-
-  **Service**
-
-    ```java
-    public class QueryService {
-      public List query(String value1, String value2) {
-          queryRepository.query(value1, value2);
-      }
-    
-      // where in
-      public  List query2(String[] values1, Collection values2) {
-          // values can't empty or null
-          queryRepository.query2(values1, values2);
-      }
-    }
-    ```
-
-    * **Support return type**
-
-        * **Basic Type**
-        * **Java Bean**
-        * **Map**
-        * **Set**
-        * **List**
-        * **Page**
-        * **Next**
-
-      **Interface**
+    * [CustomRepository.java](src/test/java/pers/clare/hisql/data/repository/CustomRepository.java)
 
         ```java
-        @Getter
-        public class SimpleUser {
-            private Long id;
-            private String name;
-        }
+        package pers.clare.hisql.data.repository;
+
+        import org.springframework.stereotype.Repository;
+        import pers.clare.hisql.annotation.HiSql;
+        import pers.clare.hisql.data.entity.User;
+        import pers.clare.hisql.data.entity.UserSimple;
+        import pers.clare.hisql.page.Next;
+        import pers.clare.hisql.page.Page;
+        import pers.clare.hisql.page.Pagination;
+        import pers.clare.hisql.page.Sort;
+        import pers.clare.hisql.repository.SQLRepository;
+        import pers.clare.hisql.support.SqlReplace;
+
+        import java.util.Collection;
+        import java.util.List;
+        import java.util.Map;
+        import java.util.Set;
 
         @Repository
-        public interface UserQueryRepository extends SQLRepository {
-            @Sql("select id from user")
-            Long findId();
-        
-            @Sql("select * from user")
-            User find();
-        
-            @Sql("select id,name from user limit 0,10")
-            List findAllSimpleMap();
-        
-            @Sql("select id,name from user limit 0,10")
-            List<SimpleUser> findAllSimple();
-        
-            @Sql("select id,name from user")
-            List<Map<String, Object>> findAllMap(Pagination pagination);
-        
-            @Sql("select id,name from user")
-            List<SimpleUser> findAll(Pagination pagination);
-        
-            @Sql("select id from user")
-            List<Long> findAllId(Pagination pagination);
-        
-            @Sql("select * from user")
-            List<User> findAllId(Sort sort);
-  
-            @Sql("select id,name from user limit 0,10")
-            Set findAllSimpleSetMap();
-        
-            @Sql("select id,name from user limit 0,10")
-            Set<Map<String, String>> findAllSimpleSetMapString();
-        
-            @Sql("select create_time from user")
-            Set<Long> findAllTime(Pagination pagination);
-        
-            @Sql("select * from user")
-            Page<Map> mapPage(Pagination pagination);
-        
-            @Sql("select * from user where create_time between :startTime and :endTime {andId}{andName}")
-            Page<User> page(
-                    String andId
-                    , String andName
-                    , Pagination pagination
-                    , Long startTime
-                    , Long endTime
-                    , Long id
-                    , String name
-            );
-        
-            @Sql("select id,name from user where name like ? limit ?,?")
-            List<SimpleUser> findAllSimple(String name, int page, int size);
-        
-            /**
-             * use method name to get hiSql from XML
-             */
-            List<Map<String, Object>> findAllMapXML(Pagination pagination);
-        
-            /**
-             * use name to get hiSql from XML
-             */
-            @Sql(name = "pageMapXML")
-            Page<User> pageMapXML(
-                    String andId
-                    , String andName
-                    , Pagination pagination
-                    , Long startTime
-                    , Long endTime
-                    , Long id
-                    , String name
-            );
-            
+        public interface CustomRepository extends SQLRepository {
+            @HiSql("insert into user (account)values(:account)")
+            Long insert(String account);
+
+            @HiSql("update user set name =:name where id=:id")
+            int update(long id, String name);
+
+            @HiSql("update user set name =:user.name where id=:user.id")
+            int update(User user);
+
+            @HiSql("delete from user where id=:user.id")
+            int delete(User user);
+
+            @HiSql("delete from user")
+            int delete();
+
+            @HiSql("select count(*) from user")
+            long count();
+
+            @HiSql("select * from user where account=:account")
+            User findByAccount(String account);
+
+            @HiSql("select * from user where id=:id")
+            User findById(Long id);
+
+            @HiSql("select * from user where id=:id")
+            UserSimple findSimpleById(Long id);
+
+            @HiSql("select * from user where id=:id")
+            Map<String, Object> findMapById(Long id);
+
+            @HiSql("select * from user where account=:account")
+            List<User> findAllByAccount(String account);
+
+            @HiSql("select * from user")
+            List<UserSimple> findAll();
+
+            @HiSql("select * from user")
+            Set<UserSimple> findAllSet();
+
+            @HiSql("select * from user")
+            Set<Map<String, Object>> findAllMapSet();
+
+            @HiSql("select * from user where account=:account")
+            Page<User> pageByAccount(String account);
+
+            @HiSql("select * from user where account=:account")
+            Page<User> pageByAccount(Pagination pagination, String account);
+
+            @HiSql("select * from user where account=:account")
+            Next<User> nextByAccount(String account);
+
+            @HiSql("select * from user where account=:account")
+            Next<User> nextByAccount(Pagination pagination, String account);
+
+            @HiSql("select * from user where account=:account")
+            List<User> findAllByAccount(Sort sort, String account);
+
+            @HiSql("select * from user where id in :ids and account=:account")
+            List<User> findAll(Long[] ids, String account);
+
+            @HiSql("select * from user where id in :ids and account=:account")
+            List<User> findAll(Collection<Long> ids, String account);
+
+            @HiSql("select * from user where (id,account) in :values")
+            List<User> findAll(Object[][] values);
+
+            @HiSql("select * from user where (id,account) in :values")
+            List<User> findAll(Collection<Object[]> values);
+
+            @HiSql("select * from user where 1=1 {idSql}")
+            List<User> findAll(String idSql, Long id);
+
+            @HiSql("select * from user where 1=1 {id} and :id is not null")
+            List<User> findAll(SqlReplace<Object> id);
         }
+
         ```
 
-      **Example**
+      
+    * [SQLRepositoryTest.java](src/test/java/pers/clare/hisql/repository/SQLRepositoryTest.java)
 
-        ```java
-        @RequestMapping("user/simple")
-        @RestController
-        public class UserQueryController {
-        
-            @Autowired
-            private UserQueryRepository userQueryRepository;
-        
-            @GetMapping("one/id")
-            public Long findId(
-            ) throws Exception {
-                return userQueryRepository.findId();
-            }
-        
-            @GetMapping("one")
-            public User find(
-            ) throws Exception {
-                return userQueryRepository.find();
-            }
-        
-            @GetMapping("map")
-            public Collection findAllSimpleMap(
-            ) throws Exception {
-                return userQueryRepository.findAllSimpleMap();
-            }
-        
-            @GetMapping("map/2")
-            public Collection findAllSimpleMap(
-                    Pagination pagination
-            ) throws Exception {
-                return userQueryRepository.findAllMap(pagination);
-            }
-        
-            @GetMapping
-            public Collection findAllSimple(
-            ) throws Exception {
-                return userQueryRepository.findAllSimple();
-            }
-        
-            @GetMapping("id")
-            public Collection findAllId(
-                    Pagination pagination
-            ) throws Exception {
-                return userQueryRepository.findAllId(pagination);
-            }
-        
-            @GetMapping("set")
-            public Collection findAllSimpleSetMap(
-            ) throws Exception {
-                return userQueryRepository.findAllSimpleSetMap();
-            }
-        
-            @GetMapping("time")
-            public Collection findAllSimpleSetMapString(
-                    Pagination pagination
-            ) throws Exception {
-                return userQueryRepository.findAllTime(pagination);
-            }
-        
-            @GetMapping("page/map")
-            public Page mapPage(
-                    Pagination pagination
-            ) throws Exception {
-                return userQueryRepository.mapPage(pagination);
-            }
-        
-            @GetMapping("page")
-            public Page<User> page(
-                    Pagination pagination
-                    , Long startTime
-                    , Long endTime
-                    , Long id
-                    , String name
-            ) throws Exception {
-                return userQueryRepository.page(
-                        id == null ? "" : "and id = :id"
-                        , StringUtils.isEmpty(name) ? "" : "and name like :name"
-                        , pagination
-                        , startTime
-                        , endTime
-                        , id
-                        , name
-                );
-            }
-        
-            @GetMapping("2")
-            public Collection findAllSimple(
-                    String name
-                    , int page
-                    , int size
-            ) throws Exception {
-                return userQueryRepository.findAllSimple(name, page, size);
-            }
-        
-            @GetMapping("xml")
-            public Collection findAllMapXML(
-                    Pagination pagination
-            ) throws Exception {
-                return userQueryRepository.findAllMapXML(pagination);
-            }
-        
-            @GetMapping("page/xml")
-            public Page<User> pageMapXML(
-                    Pagination pagination
-                    , Long startTime
-                    , Long endTime
-                    , Long id
-                    , String name
-            ) throws Exception {
-                return userQueryRepository.pageMapXML(
-                        id == null ? "" : "and id = :id"
-                        , StringUtils.isEmpty(name) ? "" : "and name like :name"
-                        , pagination
-                        , startTime
-                        , endTime
-                        , id
-                        , name
-                );
-            }
-        }
-        ```
 
-      **Advanced**
-
-        * **bean parameter**
-            ```java
-            @Getter
-            @Setter
-            public class UserPageQuery {
-                private Pagination pagination;
-                private Long startTime;
-                private Long endTime;
-                private Long id;
-                private String name;
-            }
-            ```
-
-            ```java
-            @Getter
-            @Setter
-            public class UserSortQuery {
-                private Sort sort;
-                private Long startTime;
-                private Long endTime;
-                private Long id;
-                private String name;
-            }
-            ```
-
-            ```java
-            @Repository
-            public class UserRepository {
-                @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-                Page<User> page(
-                    String andId
-                    , String andName
-                    , UserPageQuery query
-                );
-    
-                @Sql("select * from user where create_time between :query.startTime and :query.endTime {andId}{andName}")
-                List<User> sort(String andId, String andName, UserSortQuery query);
-            }
-            ```
-
-        * **in()**
-
-            ```java
-            @Repository
-            public interface UserQueryRepository extends SQLRepository {
-                @HiSql("select * from user where (id,name) in :idNames")
-                List<User> findAll(SimpleUser[] idNames);
-                
-                @HiSql("select * from user where (id,name) in :idNames")
-                List<User> findAll(List<SimpleUser> idNames);
-                
-                @HiSql("select * from user where (id,name) in :idNames")
-                List<User> findAll(Object[][] idNames);
-            }
-
-            ```
 
 * **Write SQL on XML**
 
     * **root path resources/hisql/**
     * **{class package}/Repository.XML**
 
-      ex: resources\hisql\pers\clare\demo\data\hiSql\UserQueryRepository.xml
+        ex: resources\hisql\pers\clare\demo\data\hiSql\UserQueryRepository.xml
 
-    * Get SQL by **Method Name** or **@Sql(name=...)**
+    * Get SQL by **Method Name** or **@HiSql(name=...)**
 
-    ```xml
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE SQL>
-    <SQL>
-        <findAllMapXML><![CDATA[
-            select id
-                ,name
-                ,create_time
-            from user
-        ]]></findAllMapXML>
-        <pageMapXML><![CDATA[
-            select *
-            from user
-            where create_time between :startTime and :endTime
-            {andId}
-            {andName}
-        ]]></pageMapXML>
-    </SQL>
-    ```
+        ```xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE SQL>
+        <SQL>
+            <findAllMapXML><![CDATA[
+                select id
+                    ,name
+                    ,create_time
+                from user
+            ]]></findAllMapXML>
+            <pageMapXML><![CDATA[
+                select *
+                from user
+                where create_time between :startTime and :endTime
+                {andId}
+                {andName}
+            ]]></pageMapXML>
+        </SQL>
+        ```
 
 * **Support @Transactional**
 
     ```java
     import org.springframework.transaction.annotation.Propagation;@Repository
     public interface TransactionRepository extends SQLRepository {
-    
+
         // mysql
-        @Sql("update user set name = if(@name:=name,:name,:name) where id=:id")
+        @HiSql("update user set name = if(@name:=name,:name,:name) where id=:id")
         int updateName(Long id, String name);
-    
-        @Sql("select @name")
+
+        @HiSql("select @name")
         String getOldName();
     }
-  
+
     public class Service{
         @Transactional(propagtion = Propagation.SUPPORTS)
         public String queryDefineValue(Long id, String name) {
@@ -491,7 +228,7 @@ public class HiSqlConfig {
     }
     ```
 
-  **Rollback example**
+    **Rollback example**
 
     ```java
     import org.springframework.transaction.annotation.Isolation;public class RollbackExample {
@@ -505,42 +242,42 @@ public class HiSqlConfig {
             sb.append(userRepository.findById(id)).append('\n');
             return sb.toString();
         }
-        
+    
         @Transactional(propagtion = Propagation.REQUIRED)
         public void updateException(StringBuilder sb, Long id, String name) {
-        
+    
             // first update username
             String result = queryDefineValue(id, name);
             sb.append(result).append('\n');
             sb.append("------some connection------").append('\n');
-            
+        
             // select user in same connection
             User user = userRepository.findById(id);
             sb.append(user).append('\n');
-        
+    
             // second update username
             result = queryDefineValue(id, name+2);
             sb.append(result).append('\n');
-        
+    
             // select uncommitted user in different connection
             sb.append("------uncommitted------").append('\n');
             user = proxy().findByIdUncommitted(id);
             sb.append(user).append('\n');
-        
+    
             // select committed user in different connection
             sb.append("------committed------").append('\n');
             user = proxy().findById(id);
             sb.append(user).append('\n');
-            
+        
             // rollback
             throw new RuntimeException("rollback");
         }
-        
+    
         @Transactional
         public User findById(Long id) {
             return userRepository.findById(id);
         }
-        
+    
         @Transactional(isolation = Isolation.READ_UNCOMMITTED)
         public User findByIdUncommitted(Long id) {
             return userRepository.findById(id);
@@ -548,7 +285,7 @@ public class HiSqlConfig {
     }
     ```
 
-  ![](images/rollback.png)
+    ![](images/rollback.png)
 
 ### **Advanced**
 
@@ -598,13 +335,16 @@ public class HiSqlConfig {
         private Pattern regex;
     }
     
-    public class HiSqlConfig {
+    @SpringBootApplication
+    public class ApplicationTest {
         static {
             // register Pattern converter
-            HiSqlContext.addResultSetValueConverter(Pattern.class, (value) -> {
+            HiSqlResultSetConverter.register(Pattern.class, (value) -> {
                 if (value == null) return null;
                 return Pattern.compile(String.valueOf(value));
             });
         }
     }
     ```
+
+## More Example in tests.
