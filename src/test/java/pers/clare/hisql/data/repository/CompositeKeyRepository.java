@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface CompositeKeyRepository extends SQLCrudRepository<CompositeTable, CompositeKey> {
 
-    @HiSql("insert into composite_table (account)values(:account)")
+    @HiSql(value = "insert into composite_table (account)values(:account)", returnIncrementKey = true)
     Long insert(String account);
 
     @HiSql("select * from composite_table where (id,account) in :keys")

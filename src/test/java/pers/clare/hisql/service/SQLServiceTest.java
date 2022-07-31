@@ -23,29 +23,21 @@ class SQLServiceTest {
     @BeforeAll
     void build() {
         service.update("create table test2 (id int auto_increment, name varchar(255),primary key(id))");
+        service.update("create table test3 (name varchar(255),primary key(name))");
     }
 
     @BeforeEach
     void truncate() {
         service.update("truncate table test2");
+        service.update("truncate table test3");
     }
 
     @Test
     void insert() {
-        int id = service.insert(Integer.class, "insert into test2 (name) values ('test2')");
-        assertEquals(1, id);
-        for (int i = 1; i < max; i++) {
-            id = service.insert(Integer.class, "insert into test2 (name) values (?)", i);
-            assertEquals(i + 1, id);
-        }
-        assertEquals(max, service.find(Integer.class, "select count(*) from test2"));
-
-        int count = service.insert("insert into test2 (name) values ('test2')");
+        int count = service.insert("insert into test3 (name) values ('test2')");
         assertEquals(1, count);
-        for (int i = 1; i < max; i++) {
-            count = service.insert("insert into test2 (name) values (?)", i);
-            assertEquals(1, count);
-        }
+        long count2 = service.insertLarge("insert into test3 (name) values ('test3')");
+        assertEquals(1L, count2);
     }
 
     @Test

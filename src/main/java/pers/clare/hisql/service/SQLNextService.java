@@ -74,7 +74,7 @@ public abstract class SQLNextService extends SQLQueryService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<T> list = ResultSetUtil.toList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;
@@ -122,7 +122,7 @@ public abstract class SQLNextService extends SQLQueryService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<Map<String, T>> list = ResultSetUtil.toMapList(ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;

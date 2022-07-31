@@ -3,7 +3,7 @@ package pers.clare.hisql.util;
 import pers.clare.hisql.function.FieldSetHandler;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.store.SQLStore;
-import pers.clare.hisql.support.HiSqlResultSetConverter;
+import pers.clare.hisql.support.ResultSetConverter;
 
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
@@ -27,40 +27,40 @@ public class ResultSetUtil {
         return names;
     }
 
-    public static <T> T to(ResultSet rs, Class<T> clazz) throws SQLException {
+    public static <T> T to(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> clazz) throws SQLException {
         if (rs.next()) {
-            return getValue(rs, 1, clazz);
+            return getValue(resultSetConverter, rs, 1, clazz);
         }
         return null;
     }
 
-    public static <T> Map<String, T> toMap(ResultSet rs, Class<T> valueClass) throws SQLException {
+    public static <T> Map<String, T> toMap(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> valueClass) throws SQLException {
         if (rs.next()) {
-            return toMap(rs, valueClass, getNames(rs));
+            return toMap(resultSetConverter, rs, valueClass, getNames(rs));
         }
         return null;
     }
 
-    public static <T> Set<T> toSet(ResultSet rs, Class<T> clazz) throws SQLException {
+    public static <T> Set<T> toSet(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> clazz) throws SQLException {
         Set<T> result = new HashSet<>();
         while (rs.next()) {
-            result.add(getValue(rs, 1, clazz));
+            result.add(getValue(resultSetConverter, rs, 1, clazz));
         }
         return result;
     }
 
-    public static <T> Set<Map<String, T>> toMapSet(ResultSet rs, Class<T> valueClass) throws SQLException {
-        return toMapCollection(rs, valueClass, new HashSet<>());
+    public static <T> Set<Map<String, T>> toMapSet(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> valueClass) throws SQLException {
+        return toMapCollection(resultSetConverter, rs, valueClass, new HashSet<>());
     }
 
-    public static <T> List<Map<String, T>> toMapList(ResultSet rs, Class<T> valueClass) throws SQLException {
-        return toMapCollection(rs, valueClass, new ArrayList<>());
+    public static <T> List<Map<String, T>> toMapList(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> valueClass) throws SQLException {
+        return toMapCollection(resultSetConverter, rs, valueClass, new ArrayList<>());
     }
 
-    public static <T> List<T> toList(ResultSet rs, Class<T> clazz) throws SQLException {
+    public static <T> List<T> toList(ResultSetConverter resultSetConverter, ResultSet rs, Class<T> clazz) throws SQLException {
         List<T> result = new ArrayList<>();
         while (rs.next()) {
-            result.add(getValue(rs, 1, clazz));
+            result.add(getValue(resultSetConverter, rs, 1, clazz));
         }
         return result;
     }
@@ -92,7 +92,12 @@ public class ResultSetUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Map<String, T> toMap(ResultSet rs, Class<T> valueClass, String[] names) throws SQLException {
+    private static <T> Map<String, T> toMap(
+            ResultSetConverter resultSetConverter
+            , ResultSet rs
+            , Class<T> valueClass
+            , String[] names
+    ) throws SQLException {
         Map<String, T> map = new HashMap<>(names.length);
         int i = 1;
         if (valueClass == Object.class) {
@@ -101,16 +106,21 @@ public class ResultSetUtil {
             }
         } else {
             for (String name : names) {
-                map.put(name, getValue(rs, i++, valueClass));
+                map.put(name, getValue(resultSetConverter, rs, i++, valueClass));
             }
         }
         return map;
     }
 
-    private static <T, C extends Collection<Map<String, T>>> C toMapCollection(ResultSet rs, Class<T> valueClass, C collection) throws SQLException {
+    private static <T, C extends Collection<Map<String, T>>> C toMapCollection(
+            ResultSetConverter resultSetConverter
+            , ResultSet rs
+            , Class<T> valueClass
+            , C collection
+    ) throws SQLException {
         String[] names = getNames(rs);
         while (rs.next()) {
-            collection.add(toMap(rs, valueClass, names));
+            collection.add(toMap(resultSetConverter, rs, valueClass, names));
         }
         return collection;
     }
@@ -135,8 +145,8 @@ public class ResultSetUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T getValue(ResultSet rs, int index, Class<T> clazz) throws SQLException {
-        ResultSetValueConverter<T> valueConverter = HiSqlResultSetConverter.get(clazz);
+    public static <T> T getValue(ResultSetConverter resultSetConverter, ResultSet rs, int index, Class<T> clazz) throws SQLException {
+        ResultSetValueConverter<T> valueConverter = resultSetConverter.get(clazz);
         if (valueConverter == null) {
             if (clazz == Object.class) {
                 return (T) rs.getObject(index);

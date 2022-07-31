@@ -138,7 +138,7 @@ public abstract class SQLQueryService extends SQLBasicService {
         Connection connection = null;
         try {
             connection = getConnection();
-            return resultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), returnType);
+            return resultSetHandler.apply(context.getResultSetConverter(), ConnectionUtil.query(connection, sql, parameters), returnType);
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {

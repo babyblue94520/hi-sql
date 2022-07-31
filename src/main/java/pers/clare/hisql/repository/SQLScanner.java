@@ -1,8 +1,5 @@
 package pers.clare.hisql.repository;
 
-import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.page.PaginationMode;
-import pers.clare.hisql.service.SQLStoreService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
@@ -20,6 +17,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.support.ResultSetConverter;
 
 import javax.sql.DataSource;
 import java.lang.reflect.InvocationTargetException;
@@ -64,6 +65,7 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         String xmlRootPath = annotationAttributes.getString("xmlRootPath");
         Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
         Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
+        Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
 
         DataSource dataSource;
         if (dataSourceName.length() == 0) {
@@ -86,6 +88,9 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         }
         if (hiSqlContext.getNaming() == null) {
             hiSqlContext.setNaming(namingClass.getConstructor().newInstance());
+        }
+        if (hiSqlContext.getResultSetConverter() == null) {
+            hiSqlContext.setResultSetConverter(resultSetConverter.getConstructor().newInstance());
         }
         this.sqlStoreService = new SQLStoreService(hiSqlContext, dataSource);
     }

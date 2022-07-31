@@ -1,13 +1,13 @@
 package pers.clare.hisql.method;
 
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import pers.clare.hisql.repository.SQLCrudRepository;
 import pers.clare.hisql.repository.SQLCrudRepositoryImpl;
 import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.repository.SQLRepositoryImpl;
 import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.service.SQLStoreService;
-import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 
 public class SQLProxyFactory {
 

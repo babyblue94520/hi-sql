@@ -1,10 +1,10 @@
 package pers.clare.hisql.repository;
 
+import org.springframework.lang.NonNull;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
-import org.springframework.lang.NonNull;
 
 import java.util.Collection;
 import java.util.List;

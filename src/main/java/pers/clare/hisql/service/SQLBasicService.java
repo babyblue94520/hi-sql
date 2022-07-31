@@ -1,12 +1,12 @@
 package pers.clare.hisql.service;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.util.ConnectionUtil;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;

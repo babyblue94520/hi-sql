@@ -15,10 +15,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Repository
 public interface CustomRepository extends SQLRepository {
-    @HiSql("insert into user (account)values(:account)")
+    @HiSql(value = "insert into user (account)values(:account)", returnIncrementKey = true)
     Long insert(String account);
 
     @HiSql("update user set name =:name where id=:id")
@@ -90,6 +91,8 @@ public interface CustomRepository extends SQLRepository {
     @HiSql("select * from user where 1=1 {idSql}")
     List<User> findAll(String idSql, Long id);
 
-    @HiSql("select * from user where 1=1 {id} and :id is not null")
     List<User> findAll(SqlReplace<Object> id);
+
+    @HiSql("select '[0-9]'")
+    Pattern findPattern();
 }

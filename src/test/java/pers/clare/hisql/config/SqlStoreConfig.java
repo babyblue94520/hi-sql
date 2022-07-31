@@ -6,6 +6,7 @@ import pers.clare.hisql.naming.LowerCaseNamingStrategy;
 import pers.clare.hisql.page.MySQLPaginationMode;
 import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.support.ResultSetConverter;
 
 import javax.sql.DataSource;
 
@@ -17,6 +18,7 @@ public class SqlStoreConfig {
         HiSqlContext hiSqlContext = new HiSqlContext();
         hiSqlContext.setPaginationMode(new MySQLPaginationMode());
         hiSqlContext.setNaming(new LowerCaseNamingStrategy());
+        hiSqlContext.setResultSetConverter(new ResultSetConverter());
         return new SQLStoreService(hiSqlContext, dataSource);
 
     }

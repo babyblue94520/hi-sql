@@ -12,4 +12,6 @@ public @interface HiSql {
 
     // Find sql from XML by name
     String name() default "";
+
+    boolean returnIncrementKey() default false;
 }

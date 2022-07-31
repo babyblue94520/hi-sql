@@ -2,6 +2,7 @@ package pers.clare.hisql.repository;
 
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.support.ResultSetConverter;
 
 @SuppressWarnings("unused")
 public class HiSqlContext {
@@ -11,6 +12,8 @@ public class HiSqlContext {
     private PaginationMode paginationMode;
 
     private NamingStrategy naming;
+
+    private ResultSetConverter resultSetConverter;
 
     public String getXmlRoot() {
         return xmlRoot;
@@ -36,5 +39,11 @@ public class HiSqlContext {
         this.naming = naming;
     }
 
+    public ResultSetConverter getResultSetConverter() {
+        return resultSetConverter;
+    }
 
+    public void setResultSetConverter(ResultSetConverter resultSetConverter) {
+        this.resultSetConverter = resultSetConverter;
+    }
 }

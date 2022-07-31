@@ -6,7 +6,7 @@ import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.repository.HiSqlContext;
-import pers.clare.hisql.support.HiSqlResultSetConverter;
+import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 
@@ -79,7 +79,7 @@ public class SQLStoreFactory {
         for (Field field : fields) {
             field.setAccessible(true);
             name = getColumnName(context, field, field.getAnnotation(Column.class)).replaceAll("`", "");
-            fieldSetHandler = buildSetHandler(field);
+            fieldSetHandler = buildSetHandler(context.getResultSetConverter(), field);
             fieldSetMap.put(field.getName(), fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -121,7 +121,7 @@ public class SQLStoreFactory {
             columnName = getColumnName(context, field, column);
             name = columnName.replaceAll("`", "");
 
-            fieldSetHandler = buildSetHandler(field);
+            fieldSetHandler = buildSetHandler(context.getResultSetConverter(), field);
             fieldSetMap.put(fieldName, fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -306,8 +306,8 @@ public class SQLStoreFactory {
         return SQLQueryBuilder.create(chars);
     }
 
-    private static FieldSetHandler buildSetHandler(Field field) {
-        ResultSetValueConverter<?> valueConverter = HiSqlResultSetConverter.get(field.getType());
+    private static FieldSetHandler buildSetHandler(ResultSetConverter resultSetConverter, Field field) {
+        ResultSetValueConverter<?> valueConverter = resultSetConverter.get(field.getType());
         if (valueConverter == null) {
             if (field.getType() == Object.class) {
                 return (target, rs, index) -> field.set(target, rs.getObject(index));

@@ -69,8 +69,10 @@ public class SQLMethodFactory {
 
             HiSql hiSql = method.getAnnotation(HiSql.class);
             String command = null;
+            boolean autoKey = false;
             if (hiSql != null) {
                 command = hiSql.value();
+                autoKey = hiSql.returnIncrementKey();
                 if (!StringUtils.hasLength(command)) {
                     command = commandMap.get(hiSql.name());
                 }
@@ -81,7 +83,7 @@ public class SQLMethodFactory {
             if (!StringUtils.hasLength(command)) {
                 throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or Sql.query", clazz.getName(), method.getName())));
             }
-            methodInterceptors.put(method, buildInvoke(sqlStoreService, method, command));
+            methodInterceptors.put(method, buildInvoke(sqlStoreService, method, command, autoKey));
         }
     }
 
@@ -89,6 +91,7 @@ public class SQLMethodFactory {
             SQLStoreService sqlStoreService
             , Method method
             , String command
+            , boolean autoKey
     ) {
         HiSqlContext context = sqlStoreService.getContext();
         int commandType = SQLQueryUtil.getCommandType(command);
@@ -118,13 +121,21 @@ public class SQLMethodFactory {
                 type = getValueType(type, 0);
             }
 
-            sqlInvoke = buildSqlInvoke(
-                    type
-                    , commandType
-                    , context
-                    , parseResult.getPagination()
-                    , parseResult.getSort()
-            );
+            switch (commandType) {
+                case CommandType.Select:
+                    sqlInvoke = buildSqlSelectInvoke(
+                            type
+                            , context
+                            , parseResult.getPagination()
+                            , parseResult.getSort()
+                    );
+                    break;
+                case CommandType.Insert:
+                    sqlInvoke = buildSqlInsertInvoke(type, autoKey);
+                    break;
+                default:
+                    sqlInvoke = buildSqlUpdateInvoke(type);
+            }
         }
 
         if (sqlInvoke == null) {
@@ -172,46 +183,73 @@ public class SQLMethodFactory {
         return null;
     }
 
+
     /**
      * build method interceptor by command type
      */
-    private static SqlInvoke buildSqlInvoke(
+    private static SqlInvoke buildSqlSelectInvoke(
             Type type
-            , int commandType
             , HiSqlContext context
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
         Class<?> returnClass = ClassUtil.toClassType(type);
-        switch (commandType) {
-            case CommandType.Select:
-                if (Collection.class.isAssignableFrom(returnClass)) {
-                    if (returnClass == Set.class) {
-                        return buildSet(type, context, sortHandler);
-                    } else {
-                        return buildList(type, context, sortHandler);
-                    }
-                } else if (returnClass.isArray()) {
-                    return buildList(type, context, sortHandler);
-                } else if (returnClass == Map.class) {
-                    Class<?> valueClass = getValueClass(getValueType(type, 0), 1);
-                    return (service, sql, arguments) -> service.findMap(valueClass, sql, applySort(sortHandler, arguments), arguments);
-                } else if (Page.class.isAssignableFrom(returnClass)) {
-                    return buildPage(type, context, paginationHandler, sortHandler);
-                } else if (Next.class.isAssignableFrom(returnClass)) {
-                    return buildNext(type, context, paginationHandler, sortHandler);
-                } else {
-                    if (SQLStoreFactory.isIgnore(returnClass)) {
-                        return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
-                    } else {
-                        SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
-                        return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
-                    }
-                }
-            case CommandType.Insert:
-                return (service, sql, arguments) -> service.insert(returnClass, sql, arguments);
-            default:
-                return SQLService::update;
+        if (Collection.class.isAssignableFrom(returnClass)) {
+            if (returnClass == Set.class) {
+                return buildSet(type, context, sortHandler);
+            } else {
+                return buildList(type, context, sortHandler);
+            }
+        } else if (returnClass.isArray()) {
+            return buildList(type, context, sortHandler);
+        } else if (returnClass == Map.class) {
+            Class<?> valueClass = getValueClass(getValueType(type, 0), 1);
+            return (service, sql, arguments) -> service.findMap(valueClass, sql, applySort(sortHandler, arguments), arguments);
+        } else if (Page.class.isAssignableFrom(returnClass)) {
+            return buildPage(type, context, paginationHandler, sortHandler);
+        } else if (Next.class.isAssignableFrom(returnClass)) {
+            return buildNext(type, context, paginationHandler, sortHandler);
+        } else {
+            if (SQLStoreFactory.isIgnore(returnClass)) {
+                return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
+            } else {
+                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
+            }
+        }
+    }
+
+    private static SqlInvoke buildSqlInsertInvoke(
+            Type type
+            , boolean autoKey
+    ) {
+        Class<?> returnClass = ClassUtil.toClassType(type);
+        if (autoKey) {
+            return (service, sql, arguments) -> service.insert(returnClass, sql, arguments);
+        } else {
+            if (returnClass == int.class || returnClass == Integer.class) {
+                return SQLService::insert;
+            } else if (returnClass == long.class || returnClass == Long.class) {
+                return SQLService::insertLarge;
+            } else {
+                throw new HiSqlException("Unsupported type : %s", returnClass);
+            }
+        }
+    }
+
+    /**
+     * build method interceptor by command type
+     */
+    private static SqlInvoke buildSqlUpdateInvoke(
+            Type type
+    ) {
+        Class<?> returnClass = ClassUtil.toClassType(type);
+        if (returnClass == int.class || returnClass == Integer.class) {
+            return SQLService::update;
+        } else if (returnClass == long.class || returnClass == Long.class) {
+            return SQLService::updateLarge;
+        } else {
+            throw new HiSqlException("Unsupported type : %s", returnClass);
         }
     }
 

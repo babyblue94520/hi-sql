@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SQL>
+<SQL>
+    <findAll><![CDATA[
+		select * from user where 1=1 {id} and :id is not null
+	]]></findAll>
+</SQL>
