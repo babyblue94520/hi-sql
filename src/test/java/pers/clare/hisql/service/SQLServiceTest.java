@@ -38,6 +38,21 @@ class SQLServiceTest {
         assertEquals(1, count);
         long count2 = service.insertLarge("insert into test3 (name) values ('test3')");
         assertEquals(1L, count2);
+
+        int id = service.insert(Integer.class, "insert into test2 (name) values ('test2')");
+        assertEquals(1, id);
+        for (int i = 1; i < max; i++) {
+            id = service.insert(Integer.class, "insert into test2 (name) values (?)", i);
+            assertEquals(i + 1, id);
+        }
+        assertEquals(max, service.find(Integer.class, "select count(*) from test2"));
+
+        int count3 = service.insert("insert into test2 (name) values ('test2')");
+        assertEquals(1, count3);
+        for (int i = 1; i < max; i++) {
+            count3 = service.insert("insert into test2 (name) values (?)", i);
+            assertEquals(1, count3);
+        }
     }
 
     @Test
