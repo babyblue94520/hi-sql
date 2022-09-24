@@ -231,6 +231,8 @@ public class SQLMethodFactory {
                 return SQLService::insert;
             } else if (returnClass == long.class || returnClass == Long.class) {
                 return SQLService::insertLarge;
+            } else if (returnClass == void.class) {
+                return SQLService::insert;
             } else {
                 throw new HiSqlException("Unsupported type : %s", returnClass);
             }
@@ -248,6 +250,8 @@ public class SQLMethodFactory {
             return SQLService::update;
         } else if (returnClass == long.class || returnClass == Long.class) {
             return SQLService::updateLarge;
+        } else if (returnClass == void.class) {
+            return SQLService::update;
         } else {
             throw new HiSqlException("Unsupported type : %s", returnClass);
         }

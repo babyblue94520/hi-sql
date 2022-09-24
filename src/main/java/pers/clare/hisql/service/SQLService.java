@@ -44,6 +44,7 @@ public class SQLService extends SQLPageService {
             Class<T> keyTypeArg = (Class<T>) args[0];
             Object[] parametersArg = (Object[]) args[1];
             Statement statement = ConnectionUtil.insert(connection, sqlArg, parametersArg);
+            if (keyTypeArg == void.class) return null;
             if (statement.getUpdateCount() == 0) return null;
             ResultSet rs = statement.getGeneratedKeys();
             return rs.next() ? rs.getObject(1, keyTypeArg) : null;

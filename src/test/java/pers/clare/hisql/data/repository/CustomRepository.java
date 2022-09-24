@@ -22,14 +22,26 @@ public interface CustomRepository extends SQLRepository {
     @HiSql(value = "insert into user (account)values(:account)", returnIncrementKey = true)
     Long insert(String account);
 
+    @HiSql(value = "insert into user (account)values(:account)", returnIncrementKey = true)
+    void insertVoid(String account);
+
     @HiSql("update user set name =:name where id=:id")
     int update(long id, String name);
+
+    @HiSql("update user set name =:name where id=:id")
+    void updateVoid(long id, String name);
 
     @HiSql("update user set name =:user.name where id=:user.id")
     int update(User user);
 
+    @HiSql("update user set name =:user.name where id=:user.id")
+    void updateVoid(User user);
+
     @HiSql("delete from user where id=:user.id")
     int delete(User user);
+
+    @HiSql("delete from user where id=:user.id")
+    void deleteVoid(User user);
 
     @HiSql("delete from user")
     int delete();

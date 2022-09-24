@@ -355,4 +355,20 @@ public class SQLRepositoryTest {
         users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
         assertEquals(0, users.size());
     }
+
+    @Test
+    void returnVoid() {
+        customRepository.insertVoid("test");
+        User user = customRepository.findByAccount("test");
+        assertNotNull(user);
+        customRepository.updateVoid(user.getId(), "test2");
+        user = customRepository.findById(user.getId());
+        assertEquals(user.getName(), "test2");
+        user.setName("test3");
+        customRepository.updateVoid(user);
+        user = customRepository.findById(user.getId());
+        assertEquals(user.getName(), "test3");
+        customRepository.deleteVoid(user);
+        assertNull(customRepository.findById(user.getId()));
+    }
 }
