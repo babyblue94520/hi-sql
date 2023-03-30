@@ -2,13 +2,18 @@ package pers.clare.hisql.util;
 
 import pers.clare.hisql.store.FieldColumn;
 import pers.clare.hisql.store.SQLCrudStore;
+import pers.clare.hisql.store.SQLData;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SQLStoreUtil {
 
-    public static String toInsertSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
+    public static SQLData toInsertSQLData(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
         FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
-        StringBuilder columns = new StringBuilder("insert into " + sqlStore.getTableName() + "(");
-        StringBuilder values = new StringBuilder("values(");
+        StringBuilder columnSql = new StringBuilder("insert into " + sqlStore.getTableName() + "(");
+        StringBuilder valueSql = new StringBuilder("values(");
+        List<Object> values = new ArrayList<>();
         Object value;
         for (FieldColumn fieldColumn : fieldColumns) {
             if (fieldColumn == null || !fieldColumn.isInsertable()) continue;
@@ -17,74 +22,58 @@ public class SQLStoreUtil {
                 if (fieldColumn.isAuto()) continue;
                 if (fieldColumn.isNotNullable()) continue;
             }
-            columns.append(fieldColumn.getColumnName())
+            columnSql.append(fieldColumn.getColumnName())
                     .append(',');
 
-            SQLQueryUtil.appendValue(values, value);
-            values.append(',');
+            valueSql.append('?')
+                    .append(',');
+            values.add(value);
         }
-        values.deleteCharAt(values.length() - 1).append(')');
-        columns.deleteCharAt(columns.length() - 1)
+        valueSql.deleteCharAt(valueSql.length() - 1).append(')');
+        columnSql.deleteCharAt(columnSql.length() - 1)
                 .append(')')
-                .append(values);
-        return columns.toString();
+                .append(valueSql);
+        return new SQLData(columnSql.toString(), values.toArray());
     }
 
 
-    public static String toUpdateSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
+    public static SQLData toUpdateSQLData(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
         FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
-        StringBuilder values = new StringBuilder("update " + sqlStore.getTableName() + " set ");
-        StringBuilder wheres = new StringBuilder(" where ");
-        Object value;
+        StringBuilder valueSql = new StringBuilder("update " + sqlStore.getTableName() + " set ");
+        StringBuilder whereSql = new StringBuilder(" where ");
+        List<Object> setValues = new ArrayList<>();
+        List<Object> whereValues = new ArrayList<>();
         for (FieldColumn fieldColumn : fieldColumns) {
             if (fieldColumn == null) continue;
-            value = fieldColumn.getField().get(entity);
+            Object value = fieldColumn.getField().get(entity);
             if (fieldColumn.isId()) {
-                if (value == null) {
-                    wheres.append(fieldColumn.getColumnName())
-                            .append(" is null");
-                } else {
-                    wheres.append(fieldColumn.getColumnName())
-                            .append('=');
-                    SQLQueryUtil.appendValue(wheres, value);
-                }
-                wheres.append(" and ");
+                whereSql.append(fieldColumn.getColumnName())
+                        .append('=')
+                        .append('?');
+                whereValues.add(value);
+                whereSql.append(" and ");
             } else {
                 if (!fieldColumn.isUpdatable()) continue;
                 if (value == null && fieldColumn.isNotNullable()) continue;
 
-                values.append(fieldColumn.getColumnName())
-                        .append('=');
-                SQLQueryUtil.appendValue(values, value);
-                values.append(',');
+                valueSql.append(fieldColumn.getColumnName())
+                        .append('=')
+                        .append('?')
+                        .append(',');
+                setValues.add(value);
             }
         }
-        wheres.delete(wheres.length() - 5, wheres.length() - 1);
-        values.deleteCharAt(values.length() - 1)
-                .append(wheres);
-        return values.toString();
-    }
-
-    public static String toDeleteSQL(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
-        FieldColumn[] fieldColumns = sqlStore.getFieldColumns();
-        StringBuilder sql = new StringBuilder("delete from " + sqlStore.getTableName() + " where ");
-        Object value;
-        for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
-            value = fieldColumn.getField().get(entity);
-            if (fieldColumn.isId()) {
-                if (value == null) {
-                    sql.append(fieldColumn.getColumnName())
-                            .append(" is null");
-                } else {
-                    sql.append(fieldColumn.getColumnName())
-                            .append('=');
-                    SQLQueryUtil.appendValue(sql, value);
-                }
-                sql.append(" and ");
-            }
+        whereSql.delete(whereSql.length() - 5, whereSql.length() - 1);
+        valueSql.deleteCharAt(valueSql.length() - 1)
+                .append(whereSql);
+        Object[] values = new Object[setValues.size() + whereValues.size()];
+        int i = 0;
+        for (Object value : setValues) {
+            values[i++] = value;
         }
-        sql.delete(sql.length() - 5, sql.length() - 1);
-        return sql.toString();
+        for (Object value : whereValues) {
+            values[i++] = value;
+        }
+        return new SQLData(valueSql.toString(), values);
     }
 }

@@ -3,6 +3,7 @@ package pers.clare.hisql.service;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ConnectionCallback;
+import pers.clare.hisql.function.ConnectionOnlyCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.repository.HiSqlContext;
@@ -32,6 +33,21 @@ public abstract class SQLBasicService {
         DataSourceUtils.releaseConnection(connection, dataSource);
     }
 
+    public <R> R connection(
+            ConnectionOnlyCallback<R> callback
+    ) {
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            return callback.apply(connection);
+        } catch (HiSqlException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new HiSqlException(e);
+        } finally {
+            closeConnection(connection);
+        }
+    }
 
     public <R> R connection(
             String sql
