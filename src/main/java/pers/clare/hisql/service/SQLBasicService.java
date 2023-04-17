@@ -6,23 +6,45 @@ import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.ConnectionOnlyCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ConnectionUtil;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 
 public abstract class SQLBasicService {
-    protected final HiSqlContext context;
-    protected final DataSource dataSource;
 
-    protected SQLBasicService(HiSqlContext context, DataSource dataSource) {
-        this.context = context;
-        this.dataSource = dataSource;
+    private DataSource dataSource;
+
+    private String xmlRoot;
+
+    private PaginationMode paginationMode;
+
+    private NamingStrategy naming;
+
+    private ResultSetConverter resultSetConverter;
+
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
-    public HiSqlContext getContext() {
-        return context;
+    public String getXmlRoot() {
+        return xmlRoot;
+    }
+
+    public PaginationMode getPaginationMode() {
+        return paginationMode;
+    }
+
+    public NamingStrategy getNaming() {
+        return naming;
+    }
+
+    public ResultSetConverter getResultSetConverter() {
+        return resultSetConverter;
     }
 
     public Connection getConnection() {

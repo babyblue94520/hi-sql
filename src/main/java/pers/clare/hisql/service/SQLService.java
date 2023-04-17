@@ -10,10 +10,6 @@ import java.sql.Statement;
 
 public class SQLService extends SQLPageService {
 
-    public SQLService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
-
     public int insert(
             String sql
             , Object... parameters

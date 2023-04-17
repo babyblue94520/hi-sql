@@ -18,10 +18,6 @@ import java.util.Set;
 
 public abstract class SQLStoreQueryService extends SQLService {
 
-    public SQLStoreQueryService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
-
     private <T, R> R queryHandler(
             SQLStore<T> sqlStore
             , String sql

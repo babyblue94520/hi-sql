@@ -36,6 +36,8 @@ public @interface EnableHiSql {
 
     String xmlRootPath() default "hisql"; // resources/hisql
 
+    String beanNamePrefix() default "";
+
     Class<? extends PaginationMode> paginationMode() default MySQLPaginationMode.class;
 
     Class<? extends NamingStrategy> naming() default LowerCaseNamingStrategy.class;

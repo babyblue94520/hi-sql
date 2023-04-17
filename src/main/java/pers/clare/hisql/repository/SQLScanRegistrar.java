@@ -8,16 +8,23 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import pers.clare.hisql.annotation.EnableHiSql;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.support.ResultSetConverter;
 
+import javax.sql.DataSource;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
 
-    private static String generateBaseBeanName(AnnotationMetadata importingClassMetadata) {
-        return importingClassMetadata.getClassName() + "#" + SQLScanner.class.getSimpleName();
+    private static String generateBaseBeanName(String prefix) {
+        return prefix + SQLScanner.class.getSimpleName();
     }
 
     private static String getDefaultBasePackage(AnnotationMetadata importingClassMetadata) {
@@ -41,6 +48,10 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             , AnnotationAttributes annotationAttributes
             , BeanDefinitionRegistry registry
     ) {
+        String prefix = annotationAttributes.getString("beanNamePrefix");
+        if (StringUtils.hasLength(prefix)) {
+            prefix = "HiSql#";
+        }
         BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(SQLScanner.class);
         builder.addPropertyValue("annotationAttributes", annotationAttributes);
 
@@ -58,7 +69,8 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             basePackages.add(getDefaultBasePackage(annotationMetadata));
         }
         builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
-        String beanName = generateBaseBeanName(annotationMetadata);
+        String beanName = generateBaseBeanName(prefix + SQLScanner.class.getSimpleName());
         registry.registerBeanDefinition(beanName, builder.getBeanDefinition());
     }
+
 }

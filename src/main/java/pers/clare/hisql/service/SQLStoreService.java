@@ -17,10 +17,6 @@ import java.util.Collection;
 
 
 public class SQLStoreService extends SQLStorePageService {
-    @SuppressWarnings("unused")
-    public SQLStoreService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     public <T> T insert(
             SQLCrudStore<T> sqlStore

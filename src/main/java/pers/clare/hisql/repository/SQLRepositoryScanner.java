@@ -7,6 +7,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
@@ -18,11 +19,16 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 import pers.clare.hisql.method.SQLProxyFactory;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.support.ResultSetConverter;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,18 +47,18 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     private final ClassLoader classLoader;
     private final AnnotationAttributes annotationAttributes;
-    private final SQLStoreService sqlStoreService;
+
+    private final BeanDefinitionRegistry registry;
 
     public SQLRepositoryScanner(
             BeanDefinitionRegistry registry
             , ClassLoader classLoader
             , AnnotationAttributes annotationAttributes
-            , SQLStoreService sqlStoreService
     ) {
         super(registry);
+        this.registry = registry;
         this.classLoader = classLoader;
         this.annotationAttributes = annotationAttributes;
-        this.sqlStoreService = sqlStoreService;
     }
 
     public void registerFilters() {
@@ -65,7 +71,11 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         if (beanDefinitions.isEmpty()) {
             log.warn("No SQLRepository was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
         } else {
-            processBeanDefinitions(beanDefinitions);
+            try {
+                processBeanDefinitions(beanDefinitions);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         return beanDefinitions;
     }
@@ -116,11 +126,12 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         return candidates;
     }
 
-    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
-        GenericBeanDefinition definition;
+    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+
+        String beanName = registerSQLStoreService();
+        GenericBeanDefinition definition = null;
         Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
-            definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
             log.debug("Creating SQLRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
             if (beanClassName == null) {
@@ -130,8 +141,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                     Class<?> clazz = this.classLoader.loadClass(beanClassName);
                     ConstructorArgumentValues constructorArgumentValues = definition.getConstructorArgumentValues();
                     constructorArgumentValues.addGenericArgumentValue(clazz);
-                    constructorArgumentValues.addGenericArgumentValue(SQLProxyFactory.build(clazz, sqlStoreService));
-
+                    constructorArgumentValues.addGenericArgumentValue(beanName);
                     definition.setBeanClass(factoryBeanClass);
                     definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
                 } catch (ClassNotFoundException e) {
@@ -139,6 +149,37 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                 }
             }
         }
+    }
+
+    private String registerSQLStoreService() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        String prefix = annotationAttributes.getString("beanNamePrefix");
+        if (StringUtils.hasLength(prefix)) {
+            prefix = "HiSql#";
+        }
+        String beanName = prefix + SQLStoreService.class.getSimpleName();
+        String dataSourceName = annotationAttributes.getString("dataSourceRef");
+        String xmlRootPath = annotationAttributes.getString("xmlRootPath");
+        Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
+        Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
+        Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
+
+        BeanDefinitionBuilder sqlStoreServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLStoreService.class);
+        if (dataSourceName.length() == 0) {
+            sqlStoreServiceBuilder.addAutowiredProperty("dataSource");
+        } else {
+            sqlStoreServiceBuilder.addPropertyReference("dataSource", dataSourceName);
+        }
+        sqlStoreServiceBuilder.addPropertyValue("xmlRoot", xmlRootPath);
+
+        sqlStoreServiceBuilder.addPropertyValue("paginationMode", paginationModeClass.getConstructor().newInstance());
+
+        sqlStoreServiceBuilder.addPropertyValue("naming", namingClass.getConstructor().newInstance());
+
+        sqlStoreServiceBuilder.addPropertyValue("resultSetConverter", resultSetConverter.getConstructor().newInstance());
+
+        registry.registerBeanDefinition(beanName, sqlStoreServiceBuilder.getBeanDefinition());
+        return beanName;
+
     }
 
     private static class InterfaceTypeFilter extends AssignableTypeFilter {

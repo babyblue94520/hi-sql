@@ -16,10 +16,6 @@ import java.util.List;
 
 
 public abstract class SQLStorePageService extends SQLStoreNextService {
-    @SuppressWarnings("unused")
-    public SQLStorePageService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     public <T> Page<T> page(
             SQLStore<T> sqlStore

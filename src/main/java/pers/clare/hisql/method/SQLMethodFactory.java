@@ -93,7 +93,6 @@ public class SQLMethodFactory {
             , String command
             , boolean autoKey
     ) {
-        HiSqlContext context = sqlStoreService.getContext();
         int commandType = SQLQueryUtil.getCommandType(command);
         ArgumentParseUtil.ParseResult parseResult = ArgumentParseUtil.build(method);
         List<BiConsumer<Object[], StringBuilder>> sqlProcessors = buildSqlProcessor(
@@ -125,7 +124,7 @@ public class SQLMethodFactory {
                 case CommandType.Select:
                     sqlInvoke = buildSqlSelectInvoke(
                             type
-                            , context
+                            , sqlStoreService
                             , parseResult.getPagination()
                             , parseResult.getSort()
                     );
@@ -189,19 +188,19 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildSqlSelectInvoke(
             Type type
-            , HiSqlContext context
+            , SQLStoreService sqlStoreService
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
         Class<?> returnClass = ClassUtil.toClassType(type);
         if (Collection.class.isAssignableFrom(returnClass)) {
             if (returnClass == Set.class) {
-                return buildSet(type, context, sortHandler);
+                return buildSet(type, sqlStoreService, sortHandler);
             } else {
-                return buildList(type, context, sortHandler);
+                return buildList(type, sqlStoreService, sortHandler);
             }
         } else if (returnClass.isArray()) {
-            return buildList(type, context, sortHandler);
+            return buildList(type, sqlStoreService, sortHandler);
         } else if (returnClass == Map.class) {
             Class<?> valueClass = getValueClass(getValueType(type, 0), 1);
             return (service, sql, arguments) -> service.findMap(valueClass, sql, applySort(sortHandler, arguments), arguments);
@@ -213,7 +212,7 @@ public class SQLMethodFactory {
             if (SQLStoreFactory.isIgnore(returnClass)) {
                 return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(sqlStoreService, returnClass, false);
                 return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
             }
         }

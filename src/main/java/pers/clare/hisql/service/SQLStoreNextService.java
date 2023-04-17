@@ -18,10 +18,6 @@ import java.util.List;
 @SuppressWarnings("unused")
 public abstract class SQLStoreNextService extends SQLStoreQueryService {
 
-    public SQLStoreNextService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
-
     public <T> Next<T> next(
             SQLStore<T> sqlStore
             , String sql
