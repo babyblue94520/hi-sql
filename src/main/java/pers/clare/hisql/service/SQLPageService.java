@@ -4,11 +4,9 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,12 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class SQLPageService extends SQLNextService {
-    public SQLPageService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     protected String buildTotalSQL(String sql) {
-        return context.getPaginationMode().buildTotalSQL(sql);
+        return getPaginationMode().buildTotalSQL(sql);
     }
 
     public <T> Page<T> page(
@@ -60,7 +55,7 @@ public abstract class SQLPageService extends SQLNextService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<T> list = ResultSetUtil.toList(getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;
@@ -108,7 +103,7 @@ public abstract class SQLPageService extends SQLNextService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<Map<String, T>> list = ResultSetUtil.toMapList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toPage(pagination, list, connection, sql, parameters);
         } catch (HiSqlException e) {
             throw e;

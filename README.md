@@ -26,15 +26,6 @@
 
 ## QuickStart
 
-### pom.xml
-
-```xml
-<dependency>
-    <groupId>io.github.babyblue94520</groupId>
-    <artifactId>hi-sql</artifactId>
-    <version>1.0.0-RELEASE</version>
-</dependency>
-```
 
 ### Config
 

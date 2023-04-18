@@ -1,14 +1,12 @@
 package pers.clare.hisql.service;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLData;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 import pers.clare.hisql.util.SQLStoreUtil;
 
-import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,10 +15,6 @@ import java.util.Collection;
 
 
 public class SQLStoreService extends SQLStorePageService {
-    @SuppressWarnings("unused")
-    public SQLStoreService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     public <T> T insert(
             SQLCrudStore<T> sqlStore

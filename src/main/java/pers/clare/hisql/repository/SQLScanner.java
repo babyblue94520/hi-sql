@@ -3,7 +3,10 @@ package pers.clare.hisql.repository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyResourceConfigurer;
@@ -17,20 +20,12 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
-import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.page.PaginationMode;
-import pers.clare.hisql.service.SQLStoreService;
-import pers.clare.hisql.support.ResultSetConverter;
 
-import javax.sql.DataSource;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.springframework.util.Assert.notNull;
-
 @SuppressWarnings("unused")
-public class SQLScanner implements BeanDefinitionRegistryPostProcessor, InitializingBean, ApplicationContextAware
+public class SQLScanner implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware
         , BeanNameAware, BeanFactoryAware, BeanClassLoaderAware {
 
     protected BeanFactory beanFactory;
@@ -38,10 +33,12 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
     private ClassLoader classLoader;
 
     private String beanName;
+
+    private String serviceName;
+
     private String basePackage;
     private boolean processPropertyPlaceHolders;
     private AnnotationAttributes annotationAttributes;
-    private SQLStoreService sqlStoreService;
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -57,54 +54,19 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
         return this.applicationContext.getEnvironment();
     }
 
-    @Override
-    public void afterPropertiesSet() throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        notNull(this.basePackage, "Property 'basePackage' is required");
-        String dataSourceName = annotationAttributes.getString("dataSourceRef");
-        String contextName = annotationAttributes.getString("contextRef");
-        String xmlRootPath = annotationAttributes.getString("xmlRootPath");
-        Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
-        Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
-        Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
-
-        DataSource dataSource;
-        if (dataSourceName.length() == 0) {
-            dataSource = beanFactory.getBean(DataSource.class);
-        } else {
-            dataSource = (DataSource) beanFactory.getBean(dataSourceName);
-        }
-
-        HiSqlContext hiSqlContext;
-        if (contextName.length() == 0) {
-            hiSqlContext = new HiSqlContext();
-        } else {
-            hiSqlContext = (HiSqlContext) beanFactory.getBean(contextName);
-        }
-        if (hiSqlContext.getXmlRoot() == null) {
-            hiSqlContext.setXmlRoot(xmlRootPath);
-        }
-        if (hiSqlContext.getPaginationMode() == null) {
-            hiSqlContext.setPaginationMode(paginationModeClass.getConstructor().newInstance());
-        }
-        if (hiSqlContext.getNaming() == null) {
-            hiSqlContext.setNaming(namingClass.getConstructor().newInstance());
-        }
-        if (hiSqlContext.getResultSetConverter() == null) {
-            hiSqlContext.setResultSetConverter(resultSetConverter.getConstructor().newInstance());
-        }
-        this.sqlStoreService = new SQLStoreService(hiSqlContext, dataSource);
-    }
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry) throws BeansException {
         if (this.processPropertyPlaceHolders) {
             processPropertyPlaceHolders();
         }
-        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry, classLoader, annotationAttributes, sqlStoreService);
+
+        SQLRepositoryScanner scanner = new SQLRepositoryScanner(beanDefinitionRegistry, classLoader, annotationAttributes, serviceName);
         scanner.setResourceLoader(this.applicationContext);
         scanner.registerFilters();
         scanner.scan(
-                StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
+                StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS)
+        );
     }
 
     @Override
@@ -196,5 +158,13 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Initiali
 
     public void setAnnotationAttributes(AnnotationAttributes annotationAttributes) {
         this.annotationAttributes = annotationAttributes;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 }

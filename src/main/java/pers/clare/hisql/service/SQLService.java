@@ -1,18 +1,12 @@
 package pers.clare.hisql.service;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.util.ConnectionUtil;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
 public class SQLService extends SQLPageService {
-
-    public SQLService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     public int insert(
             String sql

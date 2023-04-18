@@ -4,6 +4,7 @@ import pers.clare.hisql.annotation.EnableHiSql;
 
 @EnableHiSql(
         resultSetConverter = CustomResultSetConverter.class
+        , beanNamePrefix = "test"
 )
 public class HiSqlConfig {
 }

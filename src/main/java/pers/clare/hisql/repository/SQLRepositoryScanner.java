@@ -18,11 +18,10 @@ import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Repository;
-import pers.clare.hisql.method.SQLProxyFactory;
-import pers.clare.hisql.service.SQLStoreService;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,18 +40,19 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     private final ClassLoader classLoader;
     private final AnnotationAttributes annotationAttributes;
-    private final SQLStoreService sqlStoreService;
+
+    private final String serviceName;
 
     public SQLRepositoryScanner(
             BeanDefinitionRegistry registry
             , ClassLoader classLoader
             , AnnotationAttributes annotationAttributes
-            , SQLStoreService sqlStoreService
+            , String serviceName
     ) {
         super(registry);
         this.classLoader = classLoader;
         this.annotationAttributes = annotationAttributes;
-        this.sqlStoreService = sqlStoreService;
+        this.serviceName = serviceName;
     }
 
     public void registerFilters() {
@@ -65,7 +65,11 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         if (beanDefinitions.isEmpty()) {
             log.warn("No SQLRepository was found in '{}' package. Please check your configuration.", Arrays.toString(basePackages));
         } else {
-            processBeanDefinitions(beanDefinitions);
+            try {
+                processBeanDefinitions(beanDefinitions);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         return beanDefinitions;
     }
@@ -116,8 +120,9 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         return candidates;
     }
 
-    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
-        GenericBeanDefinition definition;
+    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+
+        GenericBeanDefinition definition = null;
         Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
@@ -130,8 +135,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                     Class<?> clazz = this.classLoader.loadClass(beanClassName);
                     ConstructorArgumentValues constructorArgumentValues = definition.getConstructorArgumentValues();
                     constructorArgumentValues.addGenericArgumentValue(clazz);
-                    constructorArgumentValues.addGenericArgumentValue(SQLProxyFactory.build(clazz, sqlStoreService));
-
+                    constructorArgumentValues.addGenericArgumentValue(serviceName);
                     definition.setBeanClass(factoryBeanClass);
                     definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
                 } catch (ClassNotFoundException e) {

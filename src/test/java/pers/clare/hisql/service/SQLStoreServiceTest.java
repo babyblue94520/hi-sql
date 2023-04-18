@@ -28,7 +28,7 @@ class SQLStoreServiceTest {
     @Autowired
     public SQLStoreServiceTest(SQLStoreService service) {
         this.service = service;
-        store = SQLStoreFactory.build(service.getContext(), TestTable.class, true);
+        store = SQLStoreFactory.build(service.getNaming(), service.getResultSetConverter(), TestTable.class, true);
     }
 
     @BeforeEach

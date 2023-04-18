@@ -6,23 +6,64 @@ import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.ConnectionOnlyCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
-import pers.clare.hisql.repository.HiSqlContext;
+import pers.clare.hisql.naming.NamingStrategy;
+import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ConnectionUtil;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 
 public abstract class SQLBasicService {
-    protected final HiSqlContext context;
-    protected final DataSource dataSource;
 
-    protected SQLBasicService(HiSqlContext context, DataSource dataSource) {
-        this.context = context;
+    private DataSource dataSource;
+
+    private String xmlRoot;
+
+    private PaginationMode paginationMode;
+
+    private NamingStrategy naming;
+
+    private ResultSetConverter resultSetConverter;
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
-    public HiSqlContext getContext() {
-        return context;
+    public String getXmlRoot() {
+        return xmlRoot;
+    }
+
+    public void setXmlRoot(String xmlRoot) {
+        this.xmlRoot = xmlRoot;
+    }
+
+    public PaginationMode getPaginationMode() {
+        return paginationMode;
+    }
+
+    public void setPaginationMode(PaginationMode paginationMode) {
+        this.paginationMode = paginationMode;
+    }
+
+    public NamingStrategy getNaming() {
+        return naming;
+    }
+
+    public void setNaming(NamingStrategy naming) {
+        this.naming = naming;
+    }
+
+    public ResultSetConverter getResultSetConverter() {
+        return resultSetConverter;
+    }
+
+    public void setResultSetConverter(ResultSetConverter resultSetConverter) {
+        this.resultSetConverter = resultSetConverter;
     }
 
     public Connection getConnection() {

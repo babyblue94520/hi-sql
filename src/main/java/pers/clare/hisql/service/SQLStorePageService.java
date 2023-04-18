@@ -4,22 +4,16 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.List;
 
 
 public abstract class SQLStorePageService extends SQLStoreNextService {
-    @SuppressWarnings("unused")
-    public SQLStorePageService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     public <T> Page<T> page(
             SQLStore<T> sqlStore

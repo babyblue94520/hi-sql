@@ -4,21 +4,15 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
 public abstract class SQLNextService extends SQLQueryService {
     public static final Pagination DefaultPagination = Pagination.of(0, 20);
-
-    public SQLNextService(HiSqlContext context, DataSource dataSource) {
-        super(context, dataSource);
-    }
 
     protected Pagination toPagination(Sort sort) {
         if (sort == null) {
@@ -30,7 +24,7 @@ public abstract class SQLNextService extends SQLQueryService {
 
     protected String buildPaginationSQL(Pagination pagination, String sql) {
         if (pagination == null) pagination = DefaultPagination;
-        return context.getPaginationMode().buildPaginationSQL(pagination, sql);
+        return getPaginationMode().buildPaginationSQL(pagination, sql);
     }
 
     protected <T> Next<T> toNext(Pagination pagination, List<T> list) {
@@ -74,7 +68,7 @@ public abstract class SQLNextService extends SQLQueryService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<T> list = ResultSetUtil.toList(getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;
@@ -122,7 +116,7 @@ public abstract class SQLNextService extends SQLQueryService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<Map<String, T>> list = ResultSetUtil.toMapList(context.getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
+            List<Map<String, T>> list = ResultSetUtil.toMapList(getResultSetConverter(), ConnectionUtil.query(connection, executeSql, parameters), clazz);
             return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;

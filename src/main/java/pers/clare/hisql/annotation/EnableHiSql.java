@@ -30,11 +30,22 @@ public @interface EnableHiSql {
 
     Class<?>[] basePackageClasses() default {};
 
+    /**
+     * DataSource bean name.
+     */
     String dataSourceRef() default "";
 
-    String contextRef() default "";
+    /**
+     * Xml files root path.
+     * <p>
+     * resources/hisql
+     */
+    String xmlRootPath() default "hisql";
 
-    String xmlRootPath() default "hisql"; // resources/hisql
+    /**
+     * SQLStoreService bean name prefix. Default package#SQLStoreService
+     */
+    String beanNamePrefix() default "";
 
     Class<? extends PaginationMode> paginationMode() default MySQLPaginationMode.class;
 

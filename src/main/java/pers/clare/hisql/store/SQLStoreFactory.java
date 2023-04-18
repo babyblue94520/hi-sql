@@ -4,8 +4,8 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.FieldSetHandler;
 import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
+import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.repository.HiSqlContext;
 import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
@@ -62,24 +62,32 @@ public class SQLStoreFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public static <R extends SQLStore<T>, T> R build(HiSqlContext context, Class<T> clazz, boolean crud) {
+    public static <R extends SQLStore<T>, T> R build(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz
+            , boolean crud
+    ) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
         if (crud && store instanceof SQLCrudStore) return (R) store;
-        store = crud ? buildCrud(context, clazz) : build(context, clazz);
+        store = crud ? buildCrud(naming, converter, clazz) : build(naming, converter, clazz);
         sqlStoreCacheMap.put(clazz, store);
         return (R) store;
     }
 
-    private static <T> SQLStore<T> build(HiSqlContext context, Class<T> clazz) {
+    private static <T> SQLStore<T> build(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz) {
         Collection<Field> fields = getAllField(clazz);
         Map<String, FieldSetHandler> fieldSetMap = new HashMap<>();
         String name;
         FieldSetHandler fieldSetHandler;
         for (Field field : fields) {
             field.setAccessible(true);
-            name = getColumnName(context, field, field.getAnnotation(Column.class)).replaceAll("`", "");
-            fieldSetHandler = buildSetHandler(context.getResultSetConverter(), field);
+            name = getColumnName(naming, field, field.getAnnotation(Column.class)).replaceAll("`", "");
+            fieldSetHandler = buildSetHandler(converter, field);
             fieldSetMap.put(field.getName(), fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -91,11 +99,15 @@ public class SQLStoreFactory {
         }
     }
 
-    private static <T> SQLCrudStore<T> buildCrud(HiSqlContext context, Class<T> clazz) {
+    private static <T> SQLCrudStore<T> buildCrud(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz
+    ) {
         String tableName;
         Table table = clazz.getAnnotation(Table.class);
         if (table == null) {
-            tableName = context.getNaming().turnCamelCase(clazz.getSimpleName());
+            tableName = naming.turnCamelCase(clazz.getSimpleName());
         } else {
             tableName = table.name();
         }
@@ -118,10 +130,10 @@ public class SQLStoreFactory {
             field.setAccessible(true);
             column = field.getAnnotation(Column.class);
             fieldName = field.getName();
-            columnName = getColumnName(context, field, column);
+            columnName = getColumnName(naming, field, column);
             name = columnName.replaceAll("`", "");
 
-            fieldSetHandler = buildSetHandler(context.getResultSetConverter(), field);
+            fieldSetHandler = buildSetHandler(converter, field);
             fieldSetMap.put(fieldName, fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -319,7 +331,7 @@ public class SQLStoreFactory {
         }
     }
 
-    private static String getColumnName(HiSqlContext context, Field field, Column column) {
-        return column == null || column.name().length() == 0 ? context.getNaming().turnCamelCase(field.getName()) : column.name();
+    private static String getColumnName(NamingStrategy namingStrategy, Field field, Column column) {
+        return column == null || column.name().length() == 0 ? namingStrategy.turnCamelCase(field.getName()) : column.name();
     }
 }

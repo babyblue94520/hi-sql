@@ -31,7 +31,7 @@ class SQLStoreNextServiceTest extends BasicTest {
     @Autowired
     public SQLStoreNextServiceTest(SQLStoreNextService service) {
         this.service = service;
-        store = SQLStoreFactory.build(service.getContext(), TestTable.class, true);
+        store = SQLStoreFactory.build(service.getNaming(), service.getResultSetConverter(), TestTable.class, true);
     }
 
     @Override
