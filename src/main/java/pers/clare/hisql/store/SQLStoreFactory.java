@@ -6,8 +6,6 @@ import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.repository.HiSqlContext;
-import pers.clare.hisql.service.SQLBasicService;
 import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
@@ -64,24 +62,32 @@ public class SQLStoreFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public static <R extends SQLStore<T>, T> R build(SQLBasicService service, Class<T> clazz, boolean crud) {
+    public static <R extends SQLStore<T>, T> R build(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz
+            , boolean crud
+    ) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
         if (crud && store instanceof SQLCrudStore) return (R) store;
-        store = crud ? buildCrud(service, clazz) : build(service, clazz);
+        store = crud ? buildCrud(naming, converter, clazz) : build(naming, converter, clazz);
         sqlStoreCacheMap.put(clazz, store);
         return (R) store;
     }
 
-    private static <T> SQLStore<T> build(SQLBasicService service, Class<T> clazz) {
+    private static <T> SQLStore<T> build(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz) {
         Collection<Field> fields = getAllField(clazz);
         Map<String, FieldSetHandler> fieldSetMap = new HashMap<>();
         String name;
         FieldSetHandler fieldSetHandler;
         for (Field field : fields) {
             field.setAccessible(true);
-            name = getColumnName(service.getNaming(), field, field.getAnnotation(Column.class)).replaceAll("`", "");
-            fieldSetHandler = buildSetHandler(service.getResultSetConverter(), field);
+            name = getColumnName(naming, field, field.getAnnotation(Column.class)).replaceAll("`", "");
+            fieldSetHandler = buildSetHandler(converter, field);
             fieldSetMap.put(field.getName(), fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
@@ -93,11 +99,15 @@ public class SQLStoreFactory {
         }
     }
 
-    private static <T> SQLCrudStore<T> buildCrud(SQLBasicService service, Class<T> clazz) {
+    private static <T> SQLCrudStore<T> buildCrud(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz
+    ) {
         String tableName;
         Table table = clazz.getAnnotation(Table.class);
         if (table == null) {
-            tableName = service.getNaming().turnCamelCase(clazz.getSimpleName());
+            tableName = naming.turnCamelCase(clazz.getSimpleName());
         } else {
             tableName = table.name();
         }
@@ -120,10 +130,10 @@ public class SQLStoreFactory {
             field.setAccessible(true);
             column = field.getAnnotation(Column.class);
             fieldName = field.getName();
-            columnName = getColumnName(service.getNaming(), field, column);
+            columnName = getColumnName(naming, field, column);
             name = columnName.replaceAll("`", "");
 
-            fieldSetHandler = buildSetHandler(service.getResultSetConverter(), field);
+            fieldSetHandler = buildSetHandler(converter, field);
             fieldSetMap.put(fieldName, fieldSetHandler);
             fieldSetMap.put(name, fieldSetHandler);
             fieldSetMap.put(name.toUpperCase(), fieldSetHandler);

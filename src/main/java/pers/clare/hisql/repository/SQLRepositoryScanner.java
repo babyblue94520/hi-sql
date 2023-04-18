@@ -132,6 +132,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         GenericBeanDefinition definition = null;
         Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
+            definition = (GenericBeanDefinition) holder.getBeanDefinition();
             String beanClassName = definition.getBeanClassName();
             log.debug("Creating SQLRepositoryFactoryBean with name '{}' and '{}' interface", holder.getBeanName(), beanClassName);
             if (beanClassName == null) {

@@ -7,6 +7,7 @@ import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.constant.CommandType;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.*;
+import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
@@ -20,6 +21,7 @@ import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.store.SQLStoreFactory;
+import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ArgumentParseUtil;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.ExceptionUtil;
@@ -61,7 +63,7 @@ public class SQLMethodFactory {
             buildSqlInvoke(superInterface, sqlStoreService, methodInterceptors);
         }
         Method[] methods = clazz.getDeclaredMethods();
-        Map<String, String> commandMap = SQLInjector.getContents(sqlStoreService.getContext().getXmlRoot(), clazz);
+        Map<String, String> commandMap = SQLInjector.getContents(sqlStoreService.getXmlRoot(), clazz);
         for (Method method : methods) {
             if (methodInterceptors.containsKey(method)) continue;
             int modifier = method.getModifiers();
@@ -124,7 +126,8 @@ public class SQLMethodFactory {
                 case CommandType.Select:
                     sqlInvoke = buildSqlSelectInvoke(
                             type
-                            , sqlStoreService
+                            , sqlStoreService.getNaming()
+                            , sqlStoreService.getResultSetConverter()
                             , parseResult.getPagination()
                             , parseResult.getSort()
                     );
@@ -188,31 +191,32 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildSqlSelectInvoke(
             Type type
-            , SQLStoreService sqlStoreService
+            , NamingStrategy naming
+            , ResultSetConverter converter
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
         Class<?> returnClass = ClassUtil.toClassType(type);
         if (Collection.class.isAssignableFrom(returnClass)) {
             if (returnClass == Set.class) {
-                return buildSet(type, sqlStoreService, sortHandler);
+                return buildSet(type, naming, converter, sortHandler);
             } else {
-                return buildList(type, sqlStoreService, sortHandler);
+                return buildList(type, naming, converter, sortHandler);
             }
         } else if (returnClass.isArray()) {
-            return buildList(type, sqlStoreService, sortHandler);
+            return buildList(type, naming, converter, sortHandler);
         } else if (returnClass == Map.class) {
             Class<?> valueClass = getValueClass(getValueType(type, 0), 1);
             return (service, sql, arguments) -> service.findMap(valueClass, sql, applySort(sortHandler, arguments), arguments);
         } else if (Page.class.isAssignableFrom(returnClass)) {
-            return buildPage(type, context, paginationHandler, sortHandler);
+            return buildPage(type, naming, converter, paginationHandler, sortHandler);
         } else if (Next.class.isAssignableFrom(returnClass)) {
-            return buildNext(type, context, paginationHandler, sortHandler);
+            return buildNext(type, naming, converter, paginationHandler, sortHandler);
         } else {
             if (SQLStoreFactory.isIgnore(returnClass)) {
                 return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(sqlStoreService, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
             }
         }
@@ -261,7 +265,8 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildSet(
             Type type
-            , HiSqlContext context
+            , NamingStrategy naming
+            , ResultSetConverter converter
             , ArgumentHandler<Sort> sortHandler
     ) {
         Class<?> returnClass = getValueClass(type, 0);
@@ -272,7 +277,7 @@ public class SQLMethodFactory {
             if (SQLStoreFactory.isIgnore(returnClass)) {
                 return (service, sql, arguments) -> service.findSet(returnClass, sql, applySort(sortHandler, arguments), arguments);
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 return (service, sql, arguments) -> service.findSet(sqlStore, sql, applySort(sortHandler, arguments), arguments);
             }
         }
@@ -283,7 +288,8 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildList(
             Type type
-            , HiSqlContext context
+            , NamingStrategy naming
+            , ResultSetConverter converter
             , ArgumentHandler<Sort> sortHandler
     ) {
         Class<?> returnClass = getValueClass(type, 0);
@@ -294,7 +300,7 @@ public class SQLMethodFactory {
             if (SQLStoreFactory.isIgnore(returnClass)) {
                 return (service, sql, arguments) -> service.findAll(returnClass, sql, applySort(sortHandler, arguments), arguments);
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 return (service, sql, arguments) -> service.findAll(sqlStore, sql, applySort(sortHandler, arguments), arguments);
             }
         }
@@ -305,7 +311,8 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildPage(
             Type type
-            , HiSqlContext context
+            , NamingStrategy naming
+            , ResultSetConverter converter
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
@@ -329,7 +336,7 @@ public class SQLMethodFactory {
                             service.page(returnClass, sql, applySort(sortHandler, arguments), arguments);
                 }
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 if (paginationHandler != null) {
                     return (service, sql, arguments) ->
                             service.page(sqlStore, sql, applyPagination(paginationHandler, arguments), arguments);
@@ -346,7 +353,8 @@ public class SQLMethodFactory {
      */
     private static SqlInvoke buildNext(
             Type type
-            , HiSqlContext context
+            , NamingStrategy naming
+            , ResultSetConverter converter
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
@@ -370,7 +378,7 @@ public class SQLMethodFactory {
                             -> service.next(returnClass, sql, applySort(sortHandler, arguments), arguments);
                 }
             } else {
-                SQLStore<?> sqlStore = SQLStoreFactory.build(context, returnClass, false);
+                SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 if (paginationHandler != null) {
                     return (service, sql, arguments)
                             -> service.next(sqlStore, sql, applyPagination(paginationHandler, arguments), arguments);

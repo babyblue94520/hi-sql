@@ -31,20 +31,40 @@ public abstract class SQLBasicService {
         return dataSource;
     }
 
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public String getXmlRoot() {
         return xmlRoot;
+    }
+
+    public void setXmlRoot(String xmlRoot) {
+        this.xmlRoot = xmlRoot;
     }
 
     public PaginationMode getPaginationMode() {
         return paginationMode;
     }
 
+    public void setPaginationMode(PaginationMode paginationMode) {
+        this.paginationMode = paginationMode;
+    }
+
     public NamingStrategy getNaming() {
         return naming;
     }
 
+    public void setNaming(NamingStrategy naming) {
+        this.naming = naming;
+    }
+
     public ResultSetConverter getResultSetConverter() {
         return resultSetConverter;
+    }
+
+    public void setResultSetConverter(ResultSetConverter resultSetConverter) {
+        this.resultSetConverter = resultSetConverter;
     }
 
     public Connection getConnection() {

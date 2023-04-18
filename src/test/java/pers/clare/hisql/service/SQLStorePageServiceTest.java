@@ -31,7 +31,7 @@ class SQLStorePageServiceTest extends BasicTest {
     @Autowired
     public SQLStorePageServiceTest(SQLStorePageService service) {
         this.service = service;
-        store = SQLStoreFactory.build(service.getContext(), TestTable.class, true);
+        store = SQLStoreFactory.build(service.getNaming(),service.getResultSetConverter(), TestTable.class, true);
     }
 
     @Override
