@@ -34,9 +34,7 @@ public class SQLService extends SQLPageService {
             , Object... parameters
     ) {
         if (keyType == null) throw new HiSqlException("GeneratedKey type can not null!");
-        return this.connection(sql, new Object[]{keyType, parameters}, (connection, sqlArg, args) -> {
-            Class<T> keyTypeArg = (Class<T>) args[0];
-            Object[] parametersArg = (Object[]) args[1];
+        return this.connection(keyType, sql, parameters, (connection, keyTypeArg, sqlArg, parametersArg) -> {
             Statement statement = ConnectionUtil.insert(connection, sqlArg, parametersArg);
             if (keyTypeArg == void.class) return null;
             if (statement.getUpdateCount() == 0) return null;

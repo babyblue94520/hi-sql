@@ -24,22 +24,22 @@ public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
     }
 
     @Override
-    public <R> R query(String sql, Object[] parameters, ResultSetCallback<R> resultSetCallback) {
+    public <R> R resultSet(String sql, Object[] parameters, ResultSetCallback<R> resultSetCallback) {
         return sqlService.query(sql, parameters, resultSetCallback);
     }
 
     @Override
-    public int insert(String sql, Object... args) {
+    public int executeInsert(String sql, Object... args) {
         return sqlService.insert(sql, args);
     }
 
     @Override
-    public <T> T insert(Class<T> keyType, String sql, Object... args) {
+    public <T> T executeInsert(Class<T> keyType, String sql, Object... args) {
         return sqlService.insert(keyType, sql, args);
     }
 
     @Override
-    public int update(String sql, Object... args) {
+    public int executeUpdate(String sql, Object... args) {
         return sqlService.update(sql, args);
     }
 }

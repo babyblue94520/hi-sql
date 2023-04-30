@@ -13,13 +13,13 @@ public interface SQLRepository {
 
     <R> R prepared(String sql, PreparedStatementCallback<R> callback);
 
-    <R> R query(String sql, Object[] args, ResultSetCallback<R> callback);
+    <R> R resultSet(String sql, Object[] args, ResultSetCallback<R> callback);
 
     @NonNull
-    int insert(String sql, Object... args);
+    int executeInsert(String sql, Object... args);
 
-    <T> T insert(Class<T> keyType, String sql, Object... args);
+    <T> T executeInsert(Class<T> keyType, String sql, Object... args);
 
     @NonNull
-    int update(String sql, Object... args);
+    int executeUpdate(String sql, Object... args);
 }
