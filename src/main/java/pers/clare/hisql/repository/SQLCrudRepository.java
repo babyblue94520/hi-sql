@@ -8,7 +8,6 @@ import pers.clare.hisql.page.Sort;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
 
@@ -66,8 +65,8 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
     @NonNull
     int deleteById(Key key);
 
-    Optional<Entity> find(Entity entity);
+    Entity find(Entity entity);
 
-    Optional<Entity> findById(Key key);
+    Entity findById(Key key);
 
 }

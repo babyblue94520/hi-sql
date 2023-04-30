@@ -36,7 +36,7 @@ public class SQLCrudRepositoryTest {
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
         userRepository.insert(user);
-        user = userRepository.findById(user.getId()).orElse(null);
+        user = userRepository.findById(user.getId());
         assertNotNull(user);
         assertEquals(account, user.getAccount());
         return user;
@@ -122,7 +122,7 @@ public class SQLCrudRepositoryTest {
     @Test
     void find() {
         User user = create();
-        User user2 = userRepository.find(user).orElse(null);
+        User user2 = userRepository.find(user);
         assertNotNull(user2);
         assertEquals(user.getId(), user2.getId());
         assertEquals(user.getAccount(), user2.getAccount());
@@ -131,7 +131,7 @@ public class SQLCrudRepositoryTest {
     @Test
     void findById() {
         User user = create();
-        User user2 = userRepository.findById(user.getId()).orElse(null);
+        User user2 = userRepository.findById(user.getId());
         assertNotNull(user2);
         assertEquals(user.getId(), user2.getId());
         assertEquals(user.getAccount(), user2.getAccount());
@@ -158,7 +158,7 @@ public class SQLCrudRepositoryTest {
         user.setName(name);
         int count = userRepository.update(user);
         assertEquals(1, count);
-        assertEquals(name, userRepository.findById(user.getId()).orElse(new User()).getName());
+        assertEquals(name, userRepository.findById(user.getId()).getName());
     }
 
     @Test
@@ -166,7 +166,7 @@ public class SQLCrudRepositoryTest {
         User user = create();
         int count = userRepository.delete(user);
         assertEquals(1, count);
-        assertNull(userRepository.find(user).orElse(null));
+        assertNull(userRepository.find(user));
     }
 
     @Test
@@ -174,7 +174,7 @@ public class SQLCrudRepositoryTest {
         User user = create();
         int count = userRepository.deleteById(user.getId());
         assertEquals(1, count);
-        assertNull(userRepository.findById(user.getId()).orElse(null));
+        assertNull(userRepository.findById(user.getId()));
     }
 
     @Test
@@ -188,7 +188,7 @@ public class SQLCrudRepositoryTest {
         }
         Collection<User> users2 = userRepository.insertAll(users);
         for (User user : users2) {
-            User user2 = userRepository.find(user).orElse(null);
+            User user2 = userRepository.find(user);
             assertNotNull(user2);
             assertEquals(user.getId(), user2.getId());
             assertEquals(user.getAccount(), user2.getAccount());
@@ -206,7 +206,7 @@ public class SQLCrudRepositoryTest {
         }
         users = userRepository.insertAll(users);
         for (User user : users) {
-            User user2 = userRepository.find(user).orElse(null);
+            User user2 = userRepository.find(user);
             assertNotNull(user2);
             assertEquals(user.getId(), user2.getId());
             assertEquals(user.getAccount(), user2.getAccount());
@@ -229,7 +229,7 @@ public class SQLCrudRepositoryTest {
             assertEquals(1, i);
         }
         for (User user : users) {
-            assertEquals(updateTime, userRepository.find(user).orElse(new User()).getUpdateTime());
+            assertEquals(updateTime, userRepository.find(user).getUpdateTime());
         }
     }
 
@@ -249,7 +249,7 @@ public class SQLCrudRepositoryTest {
             assertEquals(1, i);
         }
         for (User user : users) {
-            assertEquals(updateTime, userRepository.find(user).orElse(new User()).getUpdateTime());
+            assertEquals(updateTime, userRepository.find(user).getUpdateTime());
         }
     }
 

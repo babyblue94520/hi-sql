@@ -32,7 +32,7 @@ public class CompositeKeyRepositoryTest {
         String account = String.valueOf(System.currentTimeMillis());
         data.setAccount(account);
         compositeKeyRepository.insert(data);
-        return compositeKeyRepository.find(data).orElse(null);
+        return compositeKeyRepository.find(data);
     }
 
     @BeforeEach
@@ -127,7 +127,7 @@ public class CompositeKeyRepositoryTest {
     @Test
     void find() {
         CompositeTable data = create();
-        CompositeTable data2 = compositeKeyRepository.find(data).orElse(null);
+        CompositeTable data2 = compositeKeyRepository.find(data);
         assertNotNull(data2);
         assertEquals(data.getId(), data2.getId());
         assertEquals(data.getAccount(), data2.getAccount());
@@ -140,7 +140,7 @@ public class CompositeKeyRepositoryTest {
                 new CompositeKey()
                         .setId(data.getId())
                         .setAccount(data.getAccount())
-        ).orElse(null);
+        );
         assertNotNull(data2);
         assertEquals(data.getId(), data2.getId());
         assertEquals(data.getAccount(), data2.getAccount());
@@ -159,11 +159,13 @@ public class CompositeKeyRepositoryTest {
         data.setName(name);
         int count = compositeKeyRepository.update(data);
         assertEquals(1, count);
-        assertEquals(name, compositeKeyRepository.findById(
+        var entity = compositeKeyRepository.findById(
                 new CompositeKey()
                         .setId(data.getId())
                         .setAccount(data.getAccount())
-        ).orElse(new CompositeTable()).getName());
+        );
+        assertNotNull(entity);
+        assertEquals(name, entity.getName());
     }
 
     @Test
@@ -171,7 +173,7 @@ public class CompositeKeyRepositoryTest {
         CompositeTable data = create();
         int count = compositeKeyRepository.delete(data);
         assertEquals(1, count);
-        assertNull(compositeKeyRepository.find(data).orElse(null));
+        assertNull(compositeKeyRepository.find(data));
     }
 
     @Test
@@ -187,7 +189,7 @@ public class CompositeKeyRepositoryTest {
                 new CompositeKey()
                         .setId(data.getId())
                         .setAccount(data.getAccount())
-        ).orElse(null));
+        ));
     }
 
     @Test
@@ -201,7 +203,7 @@ public class CompositeKeyRepositoryTest {
         }
         Collection<CompositeTable> list2 = compositeKeyRepository.insertAll(list);
         for (CompositeTable data : list2) {
-            CompositeTable data2 = compositeKeyRepository.find(data).orElse(null);
+            CompositeTable data2 = compositeKeyRepository.find(data);
             assertNotNull(data2);
             assertEquals(data.getId(), data2.getId());
             assertEquals(data.getAccount(), data2.getAccount());
@@ -219,7 +221,7 @@ public class CompositeKeyRepositoryTest {
         }
         datas = compositeKeyRepository.insertAll(datas);
         for (CompositeTable data : datas) {
-            CompositeTable data2 = compositeKeyRepository.find(data).orElse(null);
+            CompositeTable data2 = compositeKeyRepository.find(data);
             assertNotNull(data2);
             assertEquals(data.getId(), data2.getId());
             assertEquals(data.getAccount(), data2.getAccount());
@@ -242,7 +244,9 @@ public class CompositeKeyRepositoryTest {
             assertEquals(1, i);
         }
         for (CompositeTable data : records) {
-            assertEquals(updateTime, compositeKeyRepository.find(data).orElse(new CompositeTable()).getName());
+            var entity = compositeKeyRepository.find(data);
+            assertNotNull(entity);
+            assertEquals(updateTime, entity.getName());
         }
     }
 

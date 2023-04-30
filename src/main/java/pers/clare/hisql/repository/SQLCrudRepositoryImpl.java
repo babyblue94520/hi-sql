@@ -15,7 +15,6 @@ import pers.clare.hisql.util.SQLQueryUtil;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity, Key> {
@@ -87,15 +86,15 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.findAll(sqlStore, sqlStore.getSelect());
     }
 
-    public Optional<Entity> findById(
+    public Entity findById(
             Key key
     ) {
-        return Optional.ofNullable(sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key)));
+        return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
     }
 
 
-    public Optional<Entity> find(Entity entity) {
-        return Optional.ofNullable(sqlService.find(sqlStore, entity));
+    public Entity find(Entity entity) {
+        return sqlService.find(sqlStore, entity);
     }
 
     public Entity insert(

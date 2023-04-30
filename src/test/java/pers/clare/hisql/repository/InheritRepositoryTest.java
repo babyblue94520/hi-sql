@@ -32,7 +32,7 @@ public class InheritRepositoryTest {
         String account = String.valueOf(System.currentTimeMillis());
         user.setAccount(account);
         inheritRepository1.insert(user);
-        user = inheritRepository1.findById(user.getId()).orElse(null);
+        user = inheritRepository1.findById(user.getId());
         assertNotNull(user);
         assertEquals(account, user.getAccount());
         return user;
@@ -44,7 +44,7 @@ public class InheritRepositoryTest {
         CommonUser result = inheritRepository1.update(user.getId(), "Test", (connection, sql, parameters) -> {
             Statement statement = connection.createStatement();
             if (statement.executeUpdate(sql) > 0) {
-                return inheritRepository1.findById(user.getId()).orElse(null);
+                return inheritRepository1.findById(user.getId());
             } else {
                 return null;
             }
@@ -56,7 +56,7 @@ public class InheritRepositoryTest {
     void update() {
         CommonUser user = buildUser();
         inheritRepository1.update(user.getId(), "Test");
-        user = inheritRepository1.findById(user.getId()).orElse(new CommonUser());
+        user = inheritRepository1.findById(user.getId());
         assertEquals("1", user.getName());
     }
 
@@ -64,7 +64,7 @@ public class InheritRepositoryTest {
     void update2() {
         CommonUser user = buildUser();
         inheritRepository2.update(user.getId(), "Test");
-        user = inheritRepository2.findById(user.getId()).orElse(new CommonUser());
+        user = inheritRepository2.findById(user.getId());
         assertEquals("1", user.getName());
     }
 }
