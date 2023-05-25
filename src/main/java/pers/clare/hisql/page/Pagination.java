@@ -4,6 +4,11 @@ package pers.clare.hisql.page;
 public class Pagination {
     private int page;
     private int size;
+
+    /**
+     * If total > 0, no more select count(*) will be executed.
+     */
+    private long total;
     private String[] sorts;
 
     public Pagination() {
@@ -13,6 +18,13 @@ public class Pagination {
         this.page = page;
         this.size = size;
         this.sorts = sorts;
+    }
+
+    public Pagination(int page, int size, String[] sorts, long total) {
+        this.page = page;
+        this.size = size;
+        this.sorts = sorts;
+        this.total = total;
     }
 
     public static Pagination of(int page, int size) {
@@ -25,6 +37,18 @@ public class Pagination {
 
     public static Pagination of(int page, int size, Sort sort) {
         return new Pagination(page, size, sort.getSorts());
+    }
+
+    public static Pagination of(int page, int size, String[] sorts, long total) {
+        return new Pagination(page, size, sorts, total);
+    }
+
+    public static Pagination of(int page, int size, long total) {
+        return new Pagination(page, size, null, total);
+    }
+
+    public static Pagination of(int page, int size, Sort sort, long total) {
+        return new Pagination(page, size, sort.getSorts(), total);
     }
 
     public int getPage() {
@@ -57,7 +81,15 @@ public class Pagination {
         }
     }
 
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
+    }
+
     public Pagination next() {
-        return Pagination.of(page + 1, size, sorts);
+        return Pagination.of(page + 1, size, sorts, total);
     }
 }

@@ -1,6 +1,7 @@
 package pers.clare.hisql.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
+@Log4j2
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
@@ -146,5 +148,19 @@ class SQLPageServiceTest extends BasicTest {
             result = service.pageMap(Long.class, sql, Pagination.of(page, result.getSize(), sort), total);
         }
         assertEquals(total, count);
+    }
+
+
+    @Test
+    void pageFast() {
+        String sql = findAll;
+        long startTime = System.currentTimeMillis();
+        Page<Long> result1 = service.page(Long.class, sql, Pagination.of(0, 20));
+        long duration1 = System.currentTimeMillis() - startTime;
+        startTime = System.currentTimeMillis();
+        Page<Long> result2 = service.page(Long.class, sql, Pagination.of(0, 20, max));
+        long duration2 = System.currentTimeMillis() - startTime;
+        log.info(duration1 + " : " + duration2);
+        assertEquals(result1.getTotal(), result2.getTotal());
     }
 }

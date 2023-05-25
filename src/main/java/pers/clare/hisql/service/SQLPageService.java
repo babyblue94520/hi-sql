@@ -122,20 +122,26 @@ public abstract class SQLPageService extends SQLNextService {
             , Object[] parameters
     ) throws SQLException {
         if (pagination == null) pagination = DefaultPagination;
-        long total = list.size();
         int size = pagination.getSize();
         int page = pagination.getPage();
-        if (total > 0 && total < size) {
-            total += (long) size * page;
-        } else {
-            String totalSql = buildTotalSQL(sql);
-            ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
-            if (rs.next()) {
-                total = rs.getLong(1);
+        int listSize = list.size();
+        long total = (long) size * page + listSize;
+        if (listSize == 0 || listSize >= size) {
+            if (total < pagination.getTotal()) {
+                // if total > 0, then skip count(*).
+                total = pagination.getTotal();
             } else {
-                throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+                String totalSql = buildTotalSQL(sql);
+                ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
+                if (rs.next()) {
+                    total = rs.getLong(1);
+                } else {
+                    throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+                }
             }
         }
+
         return Page.of(page, size, list, total);
     }
+
 }
