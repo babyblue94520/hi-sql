@@ -11,11 +11,11 @@ public interface SqlReplace<T> {
         return new StringSqlReplace(value, sql, emptySql);
     }
 
-    static SqlReplace<Collection<?>> of(Collection<?> value, String sql) {
+    static <T> SqlReplace<Collection<T>> of(Collection<T> value, String sql) {
         return new CollectionSqlReplace(value, sql);
     }
 
-    static SqlReplace<Collection<?>> of(Collection<?> value, String sql, String emptySql) {
+    static <T> SqlReplace<Collection<T>> of(Collection<T> value, String sql, String emptySql) {
         return new CollectionSqlReplace(value, sql, emptySql);
     }
 

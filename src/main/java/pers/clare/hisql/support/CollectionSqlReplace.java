@@ -2,25 +2,25 @@ package pers.clare.hisql.support;
 
 import java.util.Collection;
 
-public class CollectionSqlReplace implements SqlReplace<Collection<?>> {
-    private final Collection<?> value;
+public class CollectionSqlReplace<T> implements SqlReplace<Collection<T>> {
+    private final Collection<T> value;
     private final String sql;
     private final String emptySql;
 
-    CollectionSqlReplace(Collection<?> value, String sql, String emptySql) {
+    CollectionSqlReplace(Collection<T> value, String sql, String emptySql) {
         this.value = value;
         this.sql = sql;
         this.emptySql = emptySql;
     }
 
-    CollectionSqlReplace(Collection<?> value, String sql) {
+    CollectionSqlReplace(Collection<T> value, String sql) {
         this.value = value;
         this.sql = sql;
         this.emptySql = null;
     }
 
     @Override
-    public Collection<?> getValue() {
+    public Collection<T> getValue() {
         return value;
     }
 
