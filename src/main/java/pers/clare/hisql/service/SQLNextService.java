@@ -14,6 +14,10 @@ import java.util.Map;
 public abstract class SQLNextService extends SQLQueryService {
     public static final Pagination DefaultPagination = Pagination.of(0, 20);
 
+    public Pagination getPagination(Pagination pagination) {
+        return pagination == null ? DefaultPagination : pagination;
+    }
+
     protected Pagination toPagination(Sort sort) {
         if (sort == null) {
             return DefaultPagination;
@@ -23,12 +27,10 @@ public abstract class SQLNextService extends SQLQueryService {
     }
 
     protected String buildPaginationSQL(Pagination pagination, String sql) {
-        if (pagination == null) pagination = DefaultPagination;
         return getPaginationMode().buildPaginationSQL(pagination, sql);
     }
 
     protected <T> Next<T> toNext(Pagination pagination, List<T> list) {
-        if (pagination == null) pagination = DefaultPagination;
         return Next.of(pagination.getPage(), pagination.getSize(), list);
     }
 
@@ -64,6 +66,8 @@ public abstract class SQLNextService extends SQLQueryService {
             , Pagination pagination
             , Object... parameters
     ) {
+        pagination = getPagination(pagination);
+        if (pagination.getSize() == 0) return Next.empty(pagination);
         String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
@@ -112,6 +116,8 @@ public abstract class SQLNextService extends SQLQueryService {
             , Pagination pagination
             , Object... parameters
     ) {
+        pagination = getPagination(pagination);
+        if (pagination.getSize() == 0) return Next.empty(pagination);
         String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {

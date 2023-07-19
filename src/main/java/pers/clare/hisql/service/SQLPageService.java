@@ -8,16 +8,11 @@ import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.ResultSetUtil;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 public abstract class SQLPageService extends SQLNextService {
-
-    protected String buildTotalSQL(String sql) {
-        return getPaginationMode().buildTotalSQL(sql);
-    }
 
     public <T> Page<T> page(
             Class<T> clazz
@@ -51,6 +46,8 @@ public abstract class SQLPageService extends SQLNextService {
             , Pagination pagination
             , Object... parameters
     ) {
+        pagination = getPagination(pagination);
+        if (pagination.getSize() == 0) return Page.empty(pagination);
         String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
@@ -99,6 +96,8 @@ public abstract class SQLPageService extends SQLNextService {
             , Pagination pagination
             , Object... parameters
     ) {
+        pagination = getPagination(pagination);
+        if (pagination.getSize() == 0) return Page.empty(pagination);
         String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
@@ -126,17 +125,18 @@ public abstract class SQLPageService extends SQLNextService {
         int page = pagination.getPage();
         int listSize = list.size();
         long total = (long) size * page + listSize;
-        if (listSize == 0 || listSize >= size) {
-            if (total < pagination.getTotal()) {
-                // if total > 0, then skip count(*).
-                total = pagination.getTotal();
-            } else {
-                String totalSql = buildTotalSQL(sql);
-                ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
-                if (rs.next()) {
-                    total = rs.getLong(1);
+        if (total > 0) {
+            if (listSize == 0 || listSize >= size) {
+                long prevTotal = pagination.getTotal();
+                if (total < prevTotal) {
+                    // if total > 0, then skip count(*).
+                    total = prevTotal;
                 } else {
-                    throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+                    if (pagination.isVirtualTotal()) {
+                        total = getPaginationMode().getVirtualTotal(pagination, connection, sql, parameters);
+                    } else {
+                        total = getPaginationMode().getTotal(pagination, connection, sql, parameters);
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package pers.clare.hisql.page;
 
+import java.util.Collections;
 import java.util.List;
 
 
@@ -17,6 +18,10 @@ public class Next<T> {
 
     public static <T> Next<T> of(int page, int size, List<T> records) {
         return new Next<>(page, size, records);
+    }
+
+    public static <T> Next<T> empty(Pagination pagination) {
+        return new Next<>(pagination.getPage(), pagination.getSize(), Collections.emptyList());
     }
 
     public int getPage() {

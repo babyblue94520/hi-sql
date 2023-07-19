@@ -1,6 +1,11 @@
 package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.util.ConnectionUtil;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public interface PaginationMode {
 
@@ -79,5 +84,29 @@ public interface PaginationMode {
             throw new HiSqlException("Not a legal character ';'");
         }
         return c;
+    }
+
+    default long getTotal(
+            Pagination pagination
+            , Connection connection
+            , String sql
+            , Object[] parameters
+    ) throws SQLException {
+        String totalSql = buildTotalSQL(sql);
+        ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
+        if (rs.next()) {
+            return rs.getLong(1);
+        } else {
+            throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+        }
+    }
+
+    default long getVirtualTotal(
+            Pagination pagination
+            , Connection connection
+            , String sql
+            , Object[] parameters
+    ) throws SQLException {
+        return getTotal(pagination, connection, sql, parameters);
     }
 }

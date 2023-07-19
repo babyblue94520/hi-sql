@@ -11,13 +11,13 @@ public class Pagination {
     private long total;
     private String[] sorts;
 
+    private boolean virtualTotal;
+
     public Pagination() {
     }
 
     public Pagination(int page, int size, String[] sorts) {
-        this.page = page;
-        this.size = size;
-        this.sorts = sorts;
+        this(page, size, sorts, 0);
     }
 
     public Pagination(int page, int size, String[] sorts, long total) {
@@ -87,6 +87,14 @@ public class Pagination {
 
     public void setTotal(long total) {
         this.total = total;
+    }
+
+    public boolean isVirtualTotal() {
+        return virtualTotal;
+    }
+
+    public void setVirtualTotal(boolean virtualTotal) {
+        this.virtualTotal = virtualTotal;
     }
 
     public Pagination next() {

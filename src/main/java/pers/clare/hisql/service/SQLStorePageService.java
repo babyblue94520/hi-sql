@@ -48,6 +48,8 @@ public abstract class SQLStorePageService extends SQLStoreNextService {
             , Pagination pagination
             , Object... parameters
     ) {
+        pagination = getPagination(pagination);
+        if (pagination.getSize() == 0) return Page.empty(pagination);
         String executeSql = buildPaginationSQL(pagination, sql);
         Connection connection = null;
         try {
