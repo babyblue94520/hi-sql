@@ -37,7 +37,7 @@ public class HiSqlConfig {
 }
 ```
 
-### Use
+### Usage
 
 
 * **SQLCrudRepository**
@@ -277,13 +277,73 @@ public class HiSqlConfig {
     }
     ```
 
-    ![](images/rollback.png)
+  ![](images/rollback.png)
 
-### **Advanced**
+## **Virtual Total**
 
-* **Change naming strategy**
+"select count(*)" syntax is very slow, use virtual total instead of real count.
 
-  **UpperCase**
+### Implement
+
+* MySQL
+
+        Replace the actual count (*) with the explain result "rows".
+
+        ```java
+        @Override
+        public long getVirtualTotal(
+                Pagination pagination
+                , Connection connection
+                , String sql
+                , Object[] parameters
+        ) throws SQLException {
+            String totalSql = "explain select count(*) from(" + sql + ")t";
+            ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
+            if (rs.next()) {
+                return rs.getLong("rows");
+            } else {
+                throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+            }
+        }
+        ```
+
+### Usage
+
+    ```java
+    pagination.setVirtualTotal(true);
+    ```
+
+### Customize
+
+* __CustomMySQLPaginationMode__
+
+        ```java
+        public class CustomMySQLPaginationMode extends MySQLPaginationMode {
+
+            @Override
+            public long getVirtualTotal(
+                    Pagination pagination
+                    , Connection connection
+                    , String sql
+                    , Object[] parameters
+            ) throws SQLException {
+                // TODO
+            }
+        }
+
+        @EnableHiSql(
+            paginationMode = CustomMySQLPaginationMode.class
+        )
+        public class Demo2HiSqlConfig {
+        }
+        ```
+
+## **Advanced**
+
+### Change naming strategy
+
+* **UpperCase**
+
     ```java
     @EnableHiSql(
         naming = UpperCaseNamingStrategy.class
@@ -292,11 +352,12 @@ public class HiSqlConfig {
     }
     ```
 
-  **Custom naming strategy**
+* **Custom naming strategy**
+
     ```java
     public class CustomNamingStrategy implements NamingStrategy{
     }
-  
+
     @EnableHiSql(
         naming = CustomNamingStrategy.class
     )
@@ -304,7 +365,7 @@ public class HiSqlConfig {
     }
     ```
 
-* **Change PaginationMode**
+### Change PaginationMode
 
     ```java
     public class CustomPaginationMode implements PaginationMode{
@@ -317,7 +378,7 @@ public class HiSqlConfig {
     }
     ```
 
-* **Custom ResultSet Value Converter**
+### Custom ResultSet Value Converter
 
     ```java
     @Getter
@@ -338,5 +399,18 @@ public class HiSqlConfig {
         }
     }
     ```
+
+### Optimize pagination performance
+
+Reuse last total, avoid re-executing "select count(*)".
+
+```java
+Pagination pagination=Pagination.of(0,20);
+        Page page=repository.page(pagination);
+
+        pagination=Pagination.of(page.getPage()+1,20,page.getTotal());
+        repository.page(pagination);
+
+```
 
 ## More Example in tests.
