@@ -11,6 +11,7 @@ import pers.clare.hisql.annotation.EnableHiSql;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.support.CommandTypeParser;
 import pers.clare.hisql.support.ResultSetConverter;
 
 import java.lang.reflect.InvocationTargetException;
@@ -87,6 +88,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
         Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
         Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
+        Class<? extends CommandTypeParser> commandTypeParser = annotationAttributes.getClass("commandTypeParser");
 
         BeanDefinitionBuilder sqlStoreServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLStoreService.class);
         if (dataSourceName.length() == 0) {
@@ -101,6 +103,8 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         sqlStoreServiceBuilder.addPropertyValue("naming", namingClass.getConstructor().newInstance());
 
         sqlStoreServiceBuilder.addPropertyValue("resultSetConverter", resultSetConverter.getConstructor().newInstance());
+
+        sqlStoreServiceBuilder.addPropertyValue("commandTypeParser", commandTypeParser.getConstructor().newInstance());
 
         StringBuilder beanName = new StringBuilder(annotationAttributes.getString("beanNamePrefix"));
         if (beanName.length() == 0) {

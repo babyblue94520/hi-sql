@@ -32,11 +32,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
 
 
 public class SQLMethodFactory {
-    private static final Pattern SPACE_PATTERN = Pattern.compile("[ \t\r\n]+");
 
     private SQLMethodFactory() {
     }
@@ -83,7 +81,7 @@ public class SQLMethodFactory {
             if (!StringUtils.hasLength(command)) {
                 command = commandMap.get(method.getName());
             }
-            command = SPACE_PATTERN.matcher(command).replaceAll(" ").trim();
+            command = clearCommand(command);
 
             if (!StringUtils.hasLength(command)) {
                 throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or Sql.query", clazz.getName(), method.getName())));
@@ -98,13 +96,13 @@ public class SQLMethodFactory {
             , String command
             , boolean autoKey
     ) {
-        int commandType = SQLQueryUtil.getCommandType(command);
         ArgumentParseUtil.ParseResult parseResult = ArgumentParseUtil.build(method);
         List<BiConsumer<Object[], StringBuilder>> sqlProcessors = buildSqlProcessor(
                 command
                 , parseResult.getGetters()
         );
 
+        int commandType = sqlStoreService.getCommandTypeParser().parse(command);
         boolean optional = false;
         SqlInvoke sqlInvoke;
         if (parseResult.hasCallback()) {
@@ -126,7 +124,7 @@ public class SQLMethodFactory {
             }
 
             switch (commandType) {
-                case CommandType.Select:
+                case CommandType.Query:
                     sqlInvoke = buildSqlSelectInvoke(
                             type
                             , sqlStoreService.getNaming()
@@ -177,7 +175,7 @@ public class SQLMethodFactory {
 
         if (resultSetCallback != null) {
             switch (commandType) {
-                case CommandType.Select:
+                case CommandType.Query:
                     return (service, sql, arguments) -> service.query(sql, arguments, resultSetCallback.apply(arguments));
                 case CommandType.Insert:
                     return SQLService::insert;
@@ -460,6 +458,41 @@ public class SQLMethodFactory {
             return ((ParameterizedType) type).getActualTypeArguments()[index];
         }
         return Object.class;
+    }
+
+    private static String clearCommand(String command) {
+        char[] cs = command.toCharArray();
+        char c;
+        int count = 0;
+        char[] temp = new char[cs.length];
+        boolean pause = false;
+        boolean space = false;
+        for (int i = 0; i < cs.length; i++) {
+            c = cs[i];
+            switch (c) {
+                case '\t':
+                case '\n':
+                case '\r':
+                case ' ':
+                    if (!pause) {
+                        space = count > 0;
+                        break;
+                    }
+                default:
+                    if (space) {
+                        temp[count++] = ' ';
+                        space = false;
+                    }
+                    temp[count++] = c;
+                    if (c == '\'') {
+                        pause = !pause;
+                    } else if (c == '\\' && cs[i + 1] == '\'') {
+                        temp[count++] = '\'';
+                        i++;
+                    }
+            }
+        }
+        return new String(temp, 0, count);
     }
 
 }

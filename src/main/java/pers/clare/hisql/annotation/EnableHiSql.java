@@ -9,6 +9,7 @@ import pers.clare.hisql.page.MySQLPaginationMode;
 import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.repository.SQLRepositoryFactoryBean;
 import pers.clare.hisql.repository.SQLScanRegistrar;
+import pers.clare.hisql.support.CommandTypeParser;
 import pers.clare.hisql.support.ResultSetConverter;
 
 import java.lang.annotation.*;
@@ -53,5 +54,8 @@ public @interface EnableHiSql {
 
     Class<? extends ResultSetConverter> resultSetConverter() default ResultSetConverter.class;
 
+    Class<? extends CommandTypeParser> commandTypeParser() default CommandTypeParser.class;
+
     Class<? extends SQLRepositoryFactoryBean> factoryBean() default SQLRepositoryFactoryBean.class;
+
 }

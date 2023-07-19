@@ -5,6 +5,7 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.*;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.PaginationMode;
+import pers.clare.hisql.support.CommandTypeParser;
 import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ConnectionUtil;
 
@@ -22,6 +23,8 @@ public abstract class SQLBasicService {
     private NamingStrategy naming;
 
     private ResultSetConverter resultSetConverter;
+
+    private CommandTypeParser commandTypeParser;
 
     public DataSource getDataSource() {
         return dataSource;
@@ -61,6 +64,14 @@ public abstract class SQLBasicService {
 
     public void setResultSetConverter(ResultSetConverter resultSetConverter) {
         this.resultSetConverter = resultSetConverter;
+    }
+
+    public CommandTypeParser getCommandTypeParser() {
+        return commandTypeParser;
+    }
+
+    public void setCommandTypeParser(CommandTypeParser commandTypeParser) {
+        this.commandTypeParser = commandTypeParser;
     }
 
     public Connection getConnection() {
