@@ -32,9 +32,11 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 
 public class SQLMethodFactory {
+    private static final Pattern SPACE_PATTERN = Pattern.compile("[ \t\r\n]+");
 
     private SQLMethodFactory() {
     }
@@ -81,6 +83,8 @@ public class SQLMethodFactory {
             if (!StringUtils.hasLength(command)) {
                 command = commandMap.get(method.getName());
             }
+            command = SPACE_PATTERN.matcher(command).replaceAll(" ").trim();
+
             if (!StringUtils.hasLength(command)) {
                 throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or Sql.query", clazz.getName(), method.getName())));
             }

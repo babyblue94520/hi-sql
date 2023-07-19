@@ -13,12 +13,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class SQLInjector {
     private static final Logger log = LogManager.getLogger();
 
-    private static final Pattern SPACE_PATTERN = Pattern.compile("(\\s|\t|\r|\n)+");
     private static final DocumentBuilder documentBuilder;
 
     static {
@@ -47,7 +45,7 @@ public class SQLInjector {
                 if (Node.ELEMENT_NODE != node.getNodeType()) continue;
                 content = node.getTextContent();
                 if (!StringUtils.hasLength(content)) continue;
-                map.put(node.getNodeName(), SPACE_PATTERN.matcher(content).replaceAll(" ").trim());
+                map.put(node.getNodeName(), content);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
