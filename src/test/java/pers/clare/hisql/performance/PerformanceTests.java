@@ -172,7 +172,11 @@ public class PerformanceTests {
         for (Future<Void> future : executorService.invokeAll(tasks)) {
             future.get();
         }
-        log.info(System.currentTimeMillis() - t);
+        long ms = System.currentTimeMillis() - t;
+        if (ms == 0) {
+            ms = 1;
+        }
+        log.info("time: {} , tps: {}", ms, max * 1000 / ms);
         executorService.shutdown();
     }
 

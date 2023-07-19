@@ -1,6 +1,7 @@
 spring:
-  datasource:
-    initialization-mode: ALWAYS
+  sql:
+    init:
+      mode: always
   h2:
     console:
       enabled: true
