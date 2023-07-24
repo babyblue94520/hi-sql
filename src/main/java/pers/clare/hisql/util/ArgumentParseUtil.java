@@ -9,7 +9,10 @@ import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.SqlReplace;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 
@@ -77,9 +80,8 @@ public class ArgumentParseUtil {
     private static void buildCustomTypeGetter(ParseResult result, Class<?> clazz, String name, ArgumentHandler<?> argumentHandler) {
         String fieldName;
         ArgumentHandler<?> handler;
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (notGetMethod(method)) continue;
-            fieldName = toFieldName(method.getName());
+        for (Method method : ClassUtil.getOrderGetMethods(clazz)) {
+            fieldName = ClassUtil.methodToFieldName(method.getName());
             handler = (arguments) -> {
                 try {
                     return method.invoke(argumentHandler.apply(arguments));
@@ -125,8 +127,7 @@ public class ArgumentParseUtil {
 
     private static List<Function<Object, Object>> getFieldHandlers(Class<?> clazz) {
         List<Function<Object, Object>> valueHandlers = new ArrayList<>();
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (notGetMethod(method)) continue;
+        for (Method method : ClassUtil.getOrderGetMethods(clazz)) {
             valueHandlers.add((target) -> {
                 try {
                     return method.invoke(target);
@@ -144,24 +145,6 @@ public class ArgumentParseUtil {
             values[j] = functions.get(j).apply(target);
         }
         return values;
-    }
-
-    private static boolean notGetMethod(Method method) {
-        return !method.getName().startsWith("get")
-                || method.getParameters().length > 0
-                || Modifier.isStatic(method.getModifiers())
-                || Modifier.isPrivate(method.getModifiers());
-    }
-
-    private static String toFieldName(String name) {
-        if (name.startsWith("get") && name.length() > 3) {
-            char[] cs = new char[name.length() - 3];
-            name.getChars(3, name.length(), cs, 0);
-            cs[0] = Character.toLowerCase(cs[0]);
-            return new String(cs);
-        } else {
-            return name;
-        }
     }
 
     public static class ParseResult {

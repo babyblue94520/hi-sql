@@ -61,7 +61,7 @@ public class SQLMethodFactory {
         for (Class<?> superInterface : superInterfaces) {
             buildSqlInvoke(superInterface, sqlStoreService, methodInterceptors);
         }
-        Method[] methods = clazz.getDeclaredMethods();
+        Method[] methods = ClassUtil.getDeclaredMethods(clazz);
         Map<String, String> commandMap = SQLInjector.getContents(sqlStoreService.getXmlRoot(), clazz);
         for (Method method : methods) {
             if (methodInterceptors.containsKey(method)) continue;

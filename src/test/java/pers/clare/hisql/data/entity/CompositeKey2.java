@@ -13,21 +13,21 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class CompositeKey implements Serializable {
+public class CompositeKey2 implements Serializable {
 
-    @Order(1)
+    @Order(2)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Order(2)
+    @Order(1)
     @Id
     private String account;
 
-    public CompositeKey() {
+    public CompositeKey2() {
     }
 
-    public CompositeKey(Long id, String account) {
+    public CompositeKey2(Long id, String account) {
         this.id = id;
         this.account = account;
     }

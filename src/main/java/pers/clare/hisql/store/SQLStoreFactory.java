@@ -32,18 +32,18 @@ public class SQLStoreFactory {
 
     public static boolean isIgnore(Class<?> clazz) {
         return clazz == null
-                || clazz.isPrimitive()
-                || clazz.getName().startsWith("java.")
-                || clazz.isArray()
-                || Collection.class.isAssignableFrom(clazz)
-                || clazz.isEnum()
-                || clazz.isInterface()
+               || clazz.isPrimitive()
+               || clazz.getName().startsWith("java.")
+               || clazz.isArray()
+               || Collection.class.isAssignableFrom(clazz)
+               || clazz.isEnum()
+               || clazz.isInterface()
                 ;
     }
 
     public static <T> KeySQLBuilder<T> buildKey(Class<T> keyClass, SQLCrudStore<?> sqlStore) {
         if (ClassUtil.isBasicType(keyClass)
-                || keyClass.isArray()
+            || keyClass.isArray()
         ) {
             return (builder, key) -> SQLQueryUtil.setValue(builder, sqlStore.getKeyFields(), new Object[]{key});
         } else {
@@ -195,17 +195,17 @@ public class SQLStoreFactory {
     private static void putAllField(Class<?> clazz, Map<String, Integer> orderMap, List<Field> result) {
         if (isIgnore(clazz)) return;
         putAllField(clazz.getSuperclass(), orderMap, result);
-        putAllField(clazz.getDeclaredFields(), orderMap, result);
+        putAllField(ClassUtil.getOrderFields(clazz), orderMap, result);
     }
 
-    private static void putAllField(Field[] fields, Map<String, Integer> orderMap, List<Field> result) {
+    private static void putAllField(Collection<Field> fields, Map<String, Integer> orderMap, List<Field> result) {
         int modifier;
         String name;
         Integer index;
         for (Field field : fields) {
             modifier = field.getModifiers();
             if (Modifier.isStatic(modifier)
-                    || Modifier.isFinal(modifier)
+                || Modifier.isFinal(modifier)
             ) continue;
 
             boolean transientField = field.getAnnotation(Transient.class) != null;

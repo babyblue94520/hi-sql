@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.entity.CompositeKey;
+import pers.clare.hisql.data.entity.CompositeKey2;
 import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.data.repository.CompositeKeyRepository;
 import pers.clare.hisql.page.Next;
@@ -272,12 +273,17 @@ public class CompositeKeyRepositoryTest {
         }
 
         CompositeKey[] values = new CompositeKey[count];
+        CompositeKey2[] values2 = new CompositeKey2[count];
         for (int i = 0; i < count; i++, total++) {
             String account = String.valueOf(System.currentTimeMillis());
-            values[i] = new CompositeKey(compositeKeyRepository.insert(account), account);
+            CompositeKey key = new CompositeKey(compositeKeyRepository.insert(account), account);
+            values[i] = key;
+            values2[i] = new CompositeKey2(key.getId(), key.getAccount());
         }
         assertEquals(total, compositeKeyRepository.count());
         List<CompositeTable> users = compositeKeyRepository.findAll(values);
+        assertEquals(count, users.size());
+        users = compositeKeyRepository.findAll2(values2);
         assertEquals(count, users.size());
     }
 
@@ -291,12 +297,17 @@ public class CompositeKeyRepositoryTest {
         }
 
         List<CompositeKey> values = new ArrayList<>();
+        List<CompositeKey2> values2 = new ArrayList<>();
         for (int i = 0; i < count; i++, total++) {
             String account = String.valueOf(System.currentTimeMillis());
-            values.add(new CompositeKey(compositeKeyRepository.insert(account), account));
+            CompositeKey key = new CompositeKey(compositeKeyRepository.insert(account), account);
+            values.add(key);
+            values2.add(new CompositeKey2(key.getId(), key.getAccount()));
         }
         assertEquals(total, compositeKeyRepository.count());
         List<CompositeTable> users = compositeKeyRepository.findAll(values);
+        assertEquals(count, users.size());
+        users = compositeKeyRepository.findAll2(values2);
         assertEquals(count, users.size());
     }
 }
