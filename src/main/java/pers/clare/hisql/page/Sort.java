@@ -9,7 +9,7 @@ public class Sort {
     public Sort() {
     }
 
-    public Sort(String[] sorts) {
+    public Sort(String... sorts) {
         this.sorts = sorts;
     }
 

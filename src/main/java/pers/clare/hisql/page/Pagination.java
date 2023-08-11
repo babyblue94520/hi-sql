@@ -71,7 +71,7 @@ public class Pagination {
         return sorts;
     }
 
-    public void setSorts(String[] sorts) {
+    public void setSorts(String... sorts) {
         this.sorts = sorts;
     }
 
