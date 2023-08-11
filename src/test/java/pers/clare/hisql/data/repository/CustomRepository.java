@@ -34,13 +34,13 @@ public interface CustomRepository extends SQLRepository {
     @HiSql("update user set name =:user.name where id=:user.id")
     int update(User user);
 
-    @HiSql("update user set name =:user.name where id=:user.id")
+    @HiSql("update user set name =:name where id=:id")
     void updateVoid(User user);
 
     @HiSql("delete from user where id=:user.id")
     int delete(User user);
 
-    @HiSql("delete from user where id=:user.id")
+    @HiSql("delete from user where id=:id")
     void deleteVoid(User user);
 
     @HiSql("delete from user")

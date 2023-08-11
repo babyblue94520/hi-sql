@@ -89,6 +89,7 @@ public class ArgumentParseUtil {
                     throw new HiSqlException(e);
                 }
             };
+            buildArgumentGetter(result, method.getReturnType(), method.getGenericReturnType(), fieldName, handler);
             buildArgumentGetter(result, method.getReturnType(), method.getGenericReturnType(), name + '.' + fieldName, handler);
         }
         Class<?> superClazz = clazz.getSuperclass();
