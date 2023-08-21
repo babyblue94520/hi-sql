@@ -37,11 +37,12 @@ public class ConnectionUtil {
         log.debug(sql);
         if (parameters == null || parameters.length == 0) {
             Statement statement = conn.createStatement();
-            insert(statement, sql);
+            statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
             return statement;
         } else {
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            insert(ps, parameters);
+            setUpdateValue(ps, parameters);
+            ps.executeUpdate();
             return ps;
         }
     }
@@ -54,46 +55,14 @@ public class ConnectionUtil {
         log.debug(sql);
         if (parameters == null || parameters.length == 0) {
             Statement statement = conn.createStatement();
-            update(statement, sql);
+            statement.executeUpdate(sql);
             return statement;
         } else {
             PreparedStatement ps = conn.prepareStatement(sql);
-            update(ps, parameters);
+            setUpdateValue(ps, parameters);
+            ps.executeUpdate();
             return ps;
         }
-    }
-
-    public static int insert(
-            Statement statement
-            , String sql
-    ) throws SQLException {
-        log.debug(sql);
-        return statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
-    }
-
-    public static int insert(
-            PreparedStatement ps
-            , Object... parameters
-    ) throws SQLException {
-        setUpdateValue(ps, parameters);
-        return ps.executeUpdate();
-    }
-
-
-    public static int update(
-            Statement statement
-            , String sql
-    ) throws SQLException {
-        log.debug(sql);
-        return statement.executeUpdate(sql);
-    }
-
-    public static int update(
-            PreparedStatement ps
-            , Object... parameters
-    ) throws SQLException {
-        setUpdateValue(ps, parameters);
-        return ps.executeUpdate();
     }
 
     public static void setQueryValue(
@@ -104,10 +73,10 @@ public class ConnectionUtil {
         if (parameters == null || parameters.length == 0 || ps.getParameterMetaData().getParameterCount() == 0) return;
         for (Object value : parameters) {
             if (value instanceof Pagination
-                    || value instanceof Sort
-                    || value instanceof ConnectionCallback
-                    || value instanceof PreparedStatementCallback
-                    || value instanceof ResultSetCallback
+                || value instanceof Sort
+                || value instanceof ConnectionCallback
+                || value instanceof PreparedStatementCallback
+                || value instanceof ResultSetCallback
             ) continue;
             ps.setObject(index++, value);
         }
@@ -121,8 +90,8 @@ public class ConnectionUtil {
         if (parameters == null || parameters.length == 0 || ps.getParameterMetaData().getParameterCount() == 0) return;
         for (Object value : parameters) {
             if (value instanceof ConnectionCallback
-                    || value instanceof PreparedStatementCallback
-                    || value instanceof ResultSetCallback
+                || value instanceof PreparedStatementCallback
+                || value instanceof ResultSetCallback
             ) continue;
             if (value instanceof InputStream) {
                 ps.setBinaryStream(index++, (InputStream) value);
