@@ -54,8 +54,8 @@ public class SQLMethodFactory {
             , Map<Method, MethodInterceptor> methodInterceptors
     ) {
         if (clazz == null
-                || clazz == SQLRepository.class
-                || clazz == SQLCrudRepository.class
+            || clazz == SQLRepository.class
+            || clazz == SQLCrudRepository.class
         ) return;
         Class<?>[] superInterfaces = clazz.getInterfaces();
         for (Class<?> superInterface : superInterfaces) {
@@ -227,18 +227,21 @@ public class SQLMethodFactory {
             Type type
             , boolean autoKey
     ) {
-        Class<?> returnClass = ClassUtil.toClassType(type);
+        Class<?> keyClass = ClassUtil.toClassType(type);
         if (autoKey) {
-            return (service, sql, arguments) -> service.insert(returnClass, sql, arguments);
+            return (service, sql, arguments) -> service.insert(keyClass, sql, arguments);
         } else {
-            if (returnClass == int.class || returnClass == Integer.class) {
+            if (keyClass == int.class
+                || keyClass == Integer.class
+                || keyClass == void.class
+            ) {
                 return SQLService::insert;
-            } else if (returnClass == long.class || returnClass == Long.class) {
+            } else if (keyClass == long.class
+                       || keyClass == Long.class
+            ) {
                 return SQLService::insertLarge;
-            } else if (returnClass == void.class) {
-                return SQLService::insert;
             } else {
-                throw new HiSqlException("Unsupported type : %s", returnClass);
+                throw new HiSqlException("Unsupported type : %s", keyClass);
             }
         }
     }
@@ -250,12 +253,15 @@ public class SQLMethodFactory {
             Type type
     ) {
         Class<?> returnClass = ClassUtil.toClassType(type);
-        if (returnClass == int.class || returnClass == Integer.class) {
+        if (returnClass == int.class
+            || returnClass == Integer.class
+            || returnClass == void.class
+        ) {
             return SQLService::update;
-        } else if (returnClass == long.class || returnClass == Long.class) {
+        } else if (returnClass == long.class
+                   || returnClass == Long.class
+        ) {
             return SQLService::updateLarge;
-        } else if (returnClass == void.class) {
-            return SQLService::update;
         } else {
             throw new HiSqlException("Unsupported type : %s", returnClass);
         }

@@ -21,7 +21,6 @@ import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -120,9 +119,9 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         return candidates;
     }
 
-    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    private void processBeanDefinitions(Set<BeanDefinitionHolder> beanDefinitions) {
 
-        GenericBeanDefinition definition = null;
+        GenericBeanDefinition definition;
         Class<? extends SQLRepositoryFactoryBean> factoryBeanClass = annotationAttributes.getClass("factoryBean");
         for (BeanDefinitionHolder holder : beanDefinitions) {
             definition = (GenericBeanDefinition) holder.getBeanDefinition();
