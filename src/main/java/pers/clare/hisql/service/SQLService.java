@@ -13,7 +13,7 @@ public class SQLService extends SQLPageService {
             , Object... parameters
     ) {
         return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.insert(connection, sqlArg, parametersArg);
+            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
             return statement.getUpdateCount();
         });
     }
@@ -23,7 +23,7 @@ public class SQLService extends SQLPageService {
             , Object... parameters
     ) {
         return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.insert(connection, sqlArg, parametersArg);
+            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
             return statement.getLargeUpdateCount();
         });
     }
