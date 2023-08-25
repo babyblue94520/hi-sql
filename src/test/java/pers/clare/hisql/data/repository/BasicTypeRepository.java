@@ -25,6 +25,18 @@ public interface BasicTypeRepository extends SQLRepository {
     @HiSql("select :value")
     boolean findBoolean(int value);
 
+    @HiSql("select :value where false")
+    int notFoundInt(int value);
+
+    @HiSql("select :value where false")
+    long notFoundLong(int value);
+
+    @HiSql("select :value where false")
+    float notFoundFloat(int value);
+
+    @HiSql("select :value where false")
+    boolean notFoundBoolean(int value);
+
     @HiSql("select :value")
     Integer findInteger(int value);
 

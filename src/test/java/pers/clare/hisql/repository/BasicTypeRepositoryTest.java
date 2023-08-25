@@ -35,6 +35,9 @@ public class BasicTypeRepositoryTest {
         int value = 1;
         int result = basicTypeRepository.findInt(value);
         assertEquals(value, result);
+        result = basicTypeRepository.notFoundInt(value);
+        assertEquals(0, result);
+
     }
 
     @Test
@@ -42,6 +45,8 @@ public class BasicTypeRepositoryTest {
         int value = 1;
         long result = basicTypeRepository.findLong(value);
         assertEquals(value, result);
+        result = basicTypeRepository.notFoundLong(value);
+        assertEquals(0, result);
     }
 
     @Test
@@ -49,6 +54,8 @@ public class BasicTypeRepositoryTest {
         int value = 1;
         float result = basicTypeRepository.findFloat(value);
         assertEquals(value, result);
+        result = basicTypeRepository.notFoundFloat(value);
+        assertEquals(0, result);
     }
 
     @Test
@@ -56,6 +63,8 @@ public class BasicTypeRepositoryTest {
         int value = 1;
         boolean result = basicTypeRepository.findBoolean(value);
         assertTrue(result);
+        result = basicTypeRepository.notFoundBoolean(value);
+        assertEquals(false, result);
     }
 
     @Test

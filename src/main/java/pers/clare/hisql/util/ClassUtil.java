@@ -109,7 +109,7 @@ public class ClassUtil {
     @NonNull
     public static Class<?> toClassType(Type type) {
         if (type instanceof Class) {
-            return toClassType((Class<?>) type);
+            return (Class<?>) type;
         }
         if (type instanceof ParameterizedType) {
             Type result = ((ParameterizedType) type).getRawType();

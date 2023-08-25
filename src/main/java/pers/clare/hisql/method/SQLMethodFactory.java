@@ -35,6 +35,15 @@ import java.util.function.BiConsumer;
 
 
 public class SQLMethodFactory {
+    private static Map<Class<?>, Object> primitiveTypeNullDefaultMap = new HashMap<>();
+
+    static {
+        primitiveTypeNullDefaultMap.put(int.class, 0);
+        primitiveTypeNullDefaultMap.put(long.class, 0L);
+        primitiveTypeNullDefaultMap.put(float.class, 0f);
+        primitiveTypeNullDefaultMap.put(double.class, 0d);
+        primitiveTypeNullDefaultMap.put(boolean.class, false);
+    }
 
     private SQLMethodFactory() {
     }
@@ -214,8 +223,15 @@ public class SQLMethodFactory {
         } else if (Next.class.isAssignableFrom(returnClass)) {
             return buildNext(type, naming, converter, paginationHandler, sortHandler);
         } else {
-            if (SQLStoreFactory.isIgnore(returnClass)) {
-                return (service, sql, arguments) -> service.find(returnClass, sql, applySort(sortHandler, arguments), arguments);
+            if (returnClass.isPrimitive()) {
+                final Class<?> objectClass = ClassUtil.toClassType(returnClass);
+                return (service, sql, arguments) -> {
+                    Object result = service.find(objectClass, sql, applySort(sortHandler, arguments), arguments);
+                    return Objects.requireNonNullElse(result, primitiveTypeNullDefaultMap.get(returnClass));
+                };
+            } else if (SQLStoreFactory.isIgnore(returnClass)) {
+                final Class<?> objectClass = ClassUtil.toClassType(returnClass);
+                return (service, sql, arguments) -> service.find(objectClass, sql, applySort(sortHandler, arguments), arguments);
             } else {
                 SQLStore<?> sqlStore = SQLStoreFactory.build(naming, converter, returnClass, false);
                 return (service, sql, arguments) -> service.find(sqlStore, sql, applySort(sortHandler, arguments), arguments);
