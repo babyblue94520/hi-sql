@@ -1,21 +1,21 @@
 package pers.clare.hisql.performance;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.JdbcTemplate;
+import pers.clare.h2.H2Application;
 import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.repository.UserRepository;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.performance.jpa.UserJpaRepository;
+import pers.clare.hisql.util.PerformanceUtil;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,18 +24,30 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @Log4j2
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@SpringBootTest(args = "--logging.level.pers.clare=info")
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@SpringBootTest(args = {"--logging.level.pers.clare=info", "--spring.profiles.active=h2remote"})
 public class PerformanceTests {
 
-    private final UserJpaRepository userJpaRepository;
+    static {
+        SpringApplication.run(H2Application.class
+                , "--spring.profiles.active=h2server"
+                , "--h2.port=3390"
+        );
+    }
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserJpaRepository userJpaRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private final int thread = Runtime.getRuntime().availableProcessors();
-    private final int max = 100000;
 
     private final int pageSize = 100;
+
+    private final long time = 5000;
 
     User createUser() {
         long time = System.currentTimeMillis();
@@ -52,133 +64,96 @@ public class PerformanceTests {
                 .setCreateUser(0L);
     }
 
+    @BeforeEach
+    void beforeEach() throws Exception {
+        if (userRepository.count() == 0) {
+            hisql_insert();
+        }
+    }
+
     @Test
     @Order(1)
-    void jpa_insert() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                userJpaRepository.save(createUser());
-            }
-            count.decrementAndGet();
-            return null;
+    void jpa_insert() throws Exception {
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            userJpaRepository.save(createUser());
         });
     }
 
     @Test
     @Order(2)
-    void jpa_select() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
+    void jpa_select() throws Exception {
         org.springframework.data.domain.Page<User> page = userJpaRepository.findAll(PageRequest.of(0, pageSize));
         assertEquals(page.getContent().size(), pageSize);
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                User user = page.getContent().get(count.get() % pageSize);
-                assertNotNull(userJpaRepository.findById(user.getId()));
-            }
-            count.decrementAndGet();
-            return null;
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = page.getContent().get((int) (index % pageSize));
+            assertNotNull(userJpaRepository.findById(user.getId()));
         });
     }
 
 
     @Test
-    @Order(3)
-    void jpa_update() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
+    @Order(4)
+    void jpa_update() throws Exception {
         org.springframework.data.domain.Page<User> page = userJpaRepository.findAll(PageRequest.of(0, pageSize));
         List<User> users = page.getContent();
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                User user = users.get(count.get() % pageSize);
-                user.setUpdateTime(System.currentTimeMillis());
-                userJpaRepository.save(user);
-            }
-            count.decrementAndGet();
-            return null;
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = users.get((int) (index % pageSize));
+            user.setUpdateTime(System.currentTimeMillis());
+            userJpaRepository.save(user);
         });
     }
 
 
     @Test
     @Order(1)
-    void hisql_insert() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                userRepository.insert(createUser());
-            }
-            count.decrementAndGet();
-            return null;
+    void hisql_insert() throws Exception {
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            userRepository.insert(createUser());
         });
     }
 
     @Test
     @Order(2)
-    void hisql_select() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
+    void hisql_select() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         assertEquals(page.getRecords().size(), pageSize);
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                User user = page.getRecords().get(count.get() % pageSize);
-                assertNotNull(userRepository.findById(user.getId()));
-            }
-            count.decrementAndGet();
-            return null;
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = page.getRecords().get((int) (index % pageSize));
+            assertNotNull(userRepository.findById(user.getId()));
         });
     }
 
     @Test
     @Order(3)
-    void hisql_update() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
+    void hisql_update() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         List<User> users = page.getRecords();
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                User user = users.get(count.get() % pageSize);
-                user.setUpdateTime(System.currentTimeMillis());
-                userRepository.update(user);
-            }
-            count.decrementAndGet();
-            return null;
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = users.get((int) (index % pageSize));
+            user.setUpdateTime(System.currentTimeMillis());
+            userRepository.update(user);
         });
     }
 
     @Test
     @Order(3)
-    void hisql_update2() throws ExecutionException, InterruptedException {
-        AtomicInteger count = new AtomicInteger();
+    void hisql_update2() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         List<User> users = page.getRecords();
-        performance(thread, () -> {
-            while (count.incrementAndGet() <= max) {
-                User user = users.get(count.get() % pageSize);
-                userRepository.update(user.getId(), System.currentTimeMillis());
-            }
-            count.decrementAndGet();
-            return null;
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = users.get((int) (index % pageSize));
+            userRepository.update(user.getId(), System.currentTimeMillis());
         });
     }
 
-    private void performance(int thread, Callable<Void> callable) throws InterruptedException, ExecutionException {
-        long t = System.currentTimeMillis();
-        ExecutorService executorService = Executors.newFixedThreadPool(thread);
-        List<Callable<Void>> tasks = new ArrayList<>();
-        for (int i = 0; i < thread; i++) {
-            tasks.add(callable);
-        }
-        for (Future<Void> future : executorService.invokeAll(tasks)) {
-            future.get();
-        }
-        long ms = System.currentTimeMillis() - t;
-        if (ms == 0) {
-            ms = 1;
-        }
-        log.info("time: {} , tps: {}", ms, max * 1000 / ms);
-        executorService.shutdown();
+    @Test
+    @Order(4)
+    void jdbc_update() throws Exception {
+        Page<User> page = userRepository.page(Pagination.of(0, pageSize));
+        List<User> users = page.getRecords();
+        PerformanceUtil.byTime(thread, time, (index) -> {
+            User user = users.get((int) (index % pageSize));
+            jdbcTemplate.update("update user set update_time = ? where id=?", System.currentTimeMillis(), user.getId());
+        });
     }
-
-
 }

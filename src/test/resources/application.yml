@@ -1,13 +1,11 @@
 spring:
   profiles:
-    include:
-      - h2
-    #      - mysql
-    active: dev
+    active: h2
   jpa:
     generate-ddl: true
     hibernate:
       ddl-auto: create
+#    show-sql: true
 management:
   endpoints:
     web:
@@ -38,3 +36,4 @@ management:
 logging:
   level:
     pers.clare: debug
+
