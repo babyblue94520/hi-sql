@@ -26,7 +26,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         super(sqlService);
         Type[] types = ClassUtil.findTypes(repositoryClass);
         Class<Entity> entityClass = (Class<Entity>) types[0];
-        sqlStore = SQLStoreFactory.build(sqlService.getNaming(), sqlService.getResultSetConverter(), entityClass, true);
+        sqlStore = SQLStoreFactory.buildCrud(sqlService.getNaming(), sqlService.getResultSetConverter(), entityClass);
 
         Class<Key> keyClass = (Class<Key>) types[1];
         keySQLBuilder = SQLStoreFactory.buildKey(keyClass, sqlStore);

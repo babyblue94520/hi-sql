@@ -20,15 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SQLStoreFactory {
 
     static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
-
-    public static <T> SQLStore<T> find(Class<T> clazz) {
-        @SuppressWarnings("unchecked")
-        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
-        if (store == null) {
-            throw new HiSqlException("%s have not build SQLStore", clazz.getName());
-        }
-        return store;
-    }
+    static final Map<ResultSetConverter, Map<Class<?>, Map<String, FieldSetHandler>>> converterFieldSetMap = new ConcurrentHashMap<>();
 
     public static boolean isIgnore(Class<?> clazz) {
         return clazz == null
@@ -62,44 +54,43 @@ public class SQLStoreFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public static <R extends SQLStore<T>, T> R build(
+    public static <T> SQLStore<T> build(
             NamingStrategy naming
             , ResultSetConverter converter
             , Class<T> clazz
-            , boolean crud
     ) {
         if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
-        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
-        if (crud && store instanceof SQLCrudStore) return (R) store;
-        store = crud ? buildCrud(naming, converter, clazz) : build(naming, converter, clazz);
-        sqlStoreCacheMap.put(clazz, store);
-        return (R) store;
+        return (SQLStore<T>) sqlStoreCacheMap.computeIfAbsent(clazz, (key) -> doBuild(naming, converter, clazz));
     }
 
-    private static <T> SQLStore<T> build(
+
+    @SuppressWarnings("unchecked")
+    public static <T> SQLCrudStore<T> buildCrud(
             NamingStrategy naming
             , ResultSetConverter converter
-            , Class<T> clazz) {
-        Collection<Field> fields = getAllField(clazz);
-        Map<String, FieldSetHandler> fieldSetMap = new HashMap<>();
-        String name;
-        FieldSetHandler fieldSetHandler;
-        for (Field field : fields) {
-            field.setAccessible(true);
-            name = getColumnName(naming, field, field.getAnnotation(Column.class)).replaceAll("`", "");
-            fieldSetHandler = buildSetHandler(converter, field);
-            fieldSetMap.put(field.getName(), fieldSetHandler);
-            fieldSetMap.put(name, fieldSetHandler);
-            fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
-        }
+            , Class<T> clazz
+    ) {
+        if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLCrudStore", clazz));
+        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
+        if (store instanceof SQLCrudStore) return (SQLCrudStore<T>) store;
+        store = doBuildCrud(naming, converter, clazz);
+        sqlStoreCacheMap.put(clazz, store);
+        return (SQLCrudStore<T>) store;
+    }
+
+    private static <T> SQLStore<T> doBuild(
+            NamingStrategy naming
+            , ResultSetConverter converter
+            , Class<T> clazz
+    ) {
         try {
-            return new SQLStore<>(clazz.getConstructor(), fieldSetMap);
+            return new SQLStore<>(clazz.getConstructor(), buildFieldSetters(naming, clazz, converter));
         } catch (NoSuchMethodException e) {
             throw new HiSqlException(e.getMessage());
         }
     }
 
-    private static <T> SQLCrudStore<T> buildCrud(
+    private static <T> SQLCrudStore<T> doBuildCrud(
             NamingStrategy naming
             , ResultSetConverter converter
             , Class<T> clazz
@@ -111,35 +102,22 @@ public class SQLStoreFactory {
         } else {
             tableName = table.name();
         }
-        StringBuilder selectColumns = new StringBuilder();
-        StringBuilder whereId = new StringBuilder(" where ");
         Collection<Field> fields = getAllField(clazz);
         int length = fields.size();
         int keyCount = 0;
         int fieldColumnCount = 0;
-        Map<String, FieldSetHandler> fieldSetMap = new HashMap<>(length * 3);
         Field[] keyFields = new Field[length];
         FieldColumn[] fieldColumns = new FieldColumn[length];
-        Column column;
-        String columnName, fieldName, name;
-        boolean id, auto;
+        StringBuilder selectColumns = new StringBuilder();
+        StringBuilder whereId = new StringBuilder(" where ");
         Field autoKey = null;
-        FieldSetHandler fieldSetHandler;
         boolean nullable, insertable, updatable;
         for (Field field : fields) {
-            field.setAccessible(true);
-            column = field.getAnnotation(Column.class);
-            fieldName = field.getName();
-            columnName = getColumnName(naming, field, column);
-            name = columnName.replaceAll("`", "");
+            Column column = field.getAnnotation(Column.class);
+            String columnName = getColumnName(naming, field, column);
 
-            fieldSetHandler = buildSetHandler(converter, field);
-            fieldSetMap.put(fieldName, fieldSetHandler);
-            fieldSetMap.put(name, fieldSetHandler);
-            fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
-
-            id = field.getAnnotation(Id.class) != null;
-            auto = field.getAnnotation(GeneratedValue.class) != null;
+            boolean id = field.getAnnotation(Id.class) != null;
+            boolean auto = field.getAnnotation(GeneratedValue.class) != null;
 
             if (auto) autoKey = field;
             if (column == null) {
@@ -156,21 +134,21 @@ public class SQLStoreFactory {
                 whereId.append(columnName)
                         .append('=')
                         .append(':')
-                        .append(fieldName)
+                        .append(field.getName())
                         .append(" and ");
             }
             selectColumns.append(columnName).append(',');
-
         }
         Field[] temp = keyFields;
         keyFields = new Field[keyCount];
         System.arraycopy(temp, 0, keyFields, 0, keyCount);
-
         selectColumns.delete(selectColumns.length() - 1, selectColumns.length());
         whereId.delete(whereId.length() - 5, whereId.length());
 
         try {
-            return new SQLCrudStore<>(clazz.getConstructor(), fieldSetMap, tableName, fieldColumns, autoKey, keyFields
+            return new SQLCrudStore<>(clazz.getConstructor()
+                    , buildFieldSetters(naming, clazz, converter)
+                    , tableName, fieldColumns, autoKey, keyFields
                     , buildCount(tableName)
                     , buildCountById(tableName, whereId)
                     , buildSelect(tableName, selectColumns)
@@ -209,7 +187,7 @@ public class SQLStoreFactory {
             ) continue;
 
             boolean transientField = field.getAnnotation(Transient.class) != null;
-
+            field.setAccessible(true);
             name = field.getName();
             index = orderMap.get(name);
             if (index == null) {
@@ -316,6 +294,22 @@ public class SQLStoreFactory {
         index += tl;
         whereId.getChars(0, wl, chars, index);
         return SQLQueryBuilder.create(chars);
+    }
+
+    private static Map<String, FieldSetHandler> buildFieldSetters(NamingStrategy naming, Class<?> clazz, ResultSetConverter converter) {
+        return converterFieldSetMap.computeIfAbsent(converter, (c) -> new ConcurrentHashMap<>()).computeIfAbsent(clazz, (key) -> {
+            Collection<Field> fields = getAllField(clazz);
+            Map<String, FieldSetHandler> fieldSetMap = new ConcurrentHashMap<>();
+            for (Field field : fields) {
+                Column column = field.getAnnotation(Column.class);
+                String name = getColumnName(naming, field, column).replaceAll("`", "");
+                FieldSetHandler fieldSetHandler = buildSetHandler(converter, field);
+                fieldSetMap.put(field.getName(), fieldSetHandler);
+                fieldSetMap.put(name, fieldSetHandler);
+                fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
+            }
+            return fieldSetMap;
+        });
     }
 
     private static FieldSetHandler buildSetHandler(ResultSetConverter resultSetConverter, Field field) {
