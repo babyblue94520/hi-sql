@@ -1,17 +1,17 @@
 package pers.clare.hisql.store;
 
 
-import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.function.FieldSetter;
 
 import java.lang.reflect.Constructor;
 import java.util.Map;
 
 public class SQLStore<T> {
     private final Constructor<T> constructor;
-    private final Map<String, FieldSetHandler> fieldSetMap;
+    private final Map<String, FieldSetter> fieldSetMap;
 
     public SQLStore(Constructor<T> constructor
-            , Map<String, FieldSetHandler> fieldSetMap
+            , Map<String, FieldSetter> fieldSetMap
     ) {
         this.constructor = constructor;
         this.fieldSetMap = fieldSetMap;
@@ -21,7 +21,7 @@ public class SQLStore<T> {
         return constructor;
     }
 
-    public Map<String, FieldSetHandler> getFieldSetMap() {
+    public Map<String, FieldSetter> getFieldSetMap() {
         return fieldSetMap;
     }
 }

@@ -1,7 +1,7 @@
 package pers.clare.hisql.store;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.naming.NamingStrategy;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SQLStoreFactory {
 
     static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
-    static final Map<ResultSetConverter, Map<Class<?>, Map<String, FieldSetHandler>>> converterFieldSetMap = new ConcurrentHashMap<>();
+    static final Map<ResultSetConverter, Map<Class<?>, Map<String, FieldSetter>>> converterFieldSetMap = new ConcurrentHashMap<>();
 
     public static boolean isIgnore(Class<?> clazz) {
         return clazz == null
@@ -296,23 +296,23 @@ public class SQLStoreFactory {
         return SQLQueryBuilder.create(chars);
     }
 
-    private static Map<String, FieldSetHandler> buildFieldSetters(NamingStrategy naming, Class<?> clazz, ResultSetConverter converter) {
+    private static Map<String, FieldSetter> buildFieldSetters(NamingStrategy naming, Class<?> clazz, ResultSetConverter converter) {
         return converterFieldSetMap.computeIfAbsent(converter, (c) -> new ConcurrentHashMap<>()).computeIfAbsent(clazz, (key) -> {
             Collection<Field> fields = getAllField(clazz);
-            Map<String, FieldSetHandler> fieldSetMap = new ConcurrentHashMap<>();
+            Map<String, FieldSetter> fieldSetMap = new ConcurrentHashMap<>();
             for (Field field : fields) {
                 Column column = field.getAnnotation(Column.class);
                 String name = getColumnName(naming, field, column).replaceAll("`", "");
-                FieldSetHandler fieldSetHandler = buildSetHandler(converter, field);
-                fieldSetMap.put(field.getName(), fieldSetHandler);
-                fieldSetMap.put(name, fieldSetHandler);
-                fieldSetMap.put(name.toUpperCase(), fieldSetHandler);
+                FieldSetter fieldSetter = buildFieldSetter(converter, field);
+                fieldSetMap.put(field.getName(), fieldSetter);
+                fieldSetMap.put(name, fieldSetter);
+                fieldSetMap.put(name.toUpperCase(), fieldSetter);
             }
             return fieldSetMap;
         });
     }
 
-    private static FieldSetHandler buildSetHandler(ResultSetConverter resultSetConverter, Field field) {
+    private static FieldSetter buildFieldSetter(ResultSetConverter resultSetConverter, Field field) {
         ResultSetValueConverter<?> valueConverter = resultSetConverter.get(field.getType());
         if (valueConverter == null) {
             if (field.getType() == Object.class) {

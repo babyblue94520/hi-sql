@@ -1,7 +1,7 @@
 package pers.clare.hisql.store;
 
 
-import pers.clare.hisql.function.FieldSetHandler;
+import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 
 import java.lang.reflect.Constructor;
@@ -22,7 +22,7 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public SQLCrudStore(
             Constructor<T> constructor
-            , Map<String, FieldSetHandler> fieldSetMap
+            , Map<String, FieldSetter> fieldSetMap
             , String tableName
             , FieldColumn[] fieldColumns
             , Field autoKey
