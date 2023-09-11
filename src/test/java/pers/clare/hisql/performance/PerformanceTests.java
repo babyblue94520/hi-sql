@@ -74,7 +74,7 @@ public class PerformanceTests {
     @Test
     @Order(1)
     void jpa_insert() throws Exception {
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("jpa_insert", thread, time, (index) -> {
             userJpaRepository.save(createUser());
         });
     }
@@ -84,7 +84,7 @@ public class PerformanceTests {
     void jpa_select() throws Exception {
         org.springframework.data.domain.Page<User> page = userJpaRepository.findAll(PageRequest.of(0, pageSize));
         assertEquals(page.getContent().size(), pageSize);
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("jpa_select", thread, time, (index) -> {
             User user = page.getContent().get((int) (index % pageSize));
             assertNotNull(userJpaRepository.findById(user.getId()));
         });
@@ -96,7 +96,7 @@ public class PerformanceTests {
     void jpa_update() throws Exception {
         org.springframework.data.domain.Page<User> page = userJpaRepository.findAll(PageRequest.of(0, pageSize));
         List<User> users = page.getContent();
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("jpa_update", thread, time, (index) -> {
             User user = users.get((int) (index % pageSize));
             user.setUpdateTime(System.currentTimeMillis());
             userJpaRepository.save(user);
@@ -107,7 +107,7 @@ public class PerformanceTests {
     @Test
     @Order(1)
     void hisql_insert() throws Exception {
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("hisql_insert", thread, time, (index) -> {
             userRepository.insert(createUser());
         });
     }
@@ -117,7 +117,7 @@ public class PerformanceTests {
     void hisql_select() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         assertEquals(page.getRecords().size(), pageSize);
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("hisql_select", thread, time, (index) -> {
             User user = page.getRecords().get((int) (index % pageSize));
             assertNotNull(userRepository.findById(user.getId()));
         });
@@ -128,7 +128,7 @@ public class PerformanceTests {
     void hisql_update() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         List<User> users = page.getRecords();
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("hisql_update", thread, time, (index) -> {
             User user = users.get((int) (index % pageSize));
             user.setUpdateTime(System.currentTimeMillis());
             userRepository.update(user);
@@ -140,7 +140,7 @@ public class PerformanceTests {
     void hisql_update2() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         List<User> users = page.getRecords();
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("hisql_update2", thread, time, (index) -> {
             User user = users.get((int) (index % pageSize));
             userRepository.update(user.getId(), System.currentTimeMillis());
         });
@@ -151,7 +151,7 @@ public class PerformanceTests {
     void jdbc_update() throws Exception {
         Page<User> page = userRepository.page(Pagination.of(0, pageSize));
         List<User> users = page.getRecords();
-        PerformanceUtil.byTime(thread, time, (index) -> {
+        PerformanceUtil.byTime("jdbc_update", thread, time, (index) -> {
             User user = users.get((int) (index % pageSize));
             jdbcTemplate.update("update user set update_time = ? where id=?", System.currentTimeMillis(), user.getId());
         });

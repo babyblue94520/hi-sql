@@ -49,20 +49,26 @@ public interface CustomRepository extends SQLRepository {
     @HiSql("select count(*) from user")
     long count();
 
-    @HiSql("select * from user where account=:account")
+    @HiSql("from user where account=:account")
     User findByAccount(String account);
 
     @HiSql("select * from user where id=:id")
     User findById(Long id);
 
-    @HiSql("select * from user where id=:id")
+    @HiSql("from user where id=:id")
     UserSimple findSimpleById(Long id);
 
     @HiSql("select * from user where id=:id")
     Map<String, Object> findMapById(Long id);
 
+    @HiSql("from user where id=:id")
+    Map<String, Object> findMapById2(Long id);
+
     @HiSql("select * from user where account=:account")
     List<User> findAllByAccount(String account);
+
+    @HiSql(" from user where account=:account")
+    List<User> findAllByAccount2(String account);
 
     @HiSql("select * from user")
     List<UserSimple> findAll();

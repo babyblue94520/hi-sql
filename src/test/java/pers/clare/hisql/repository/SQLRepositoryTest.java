@@ -89,8 +89,13 @@ public class SQLRepositoryTest {
         for (int i = 0; i < 5; i++) {
             customRepository.insert(account);
         }
+
         List<User> users = customRepository.findAllByAccount(account);
         assertEquals(5, users.size());
+
+        users = customRepository.findAllByAccount2(account);
+        assertEquals(5, users.size());
+
         assertNotNull(customRepository.findByAccount(account));
     }
 
@@ -109,6 +114,12 @@ public class SQLRepositoryTest {
     void findMapById() {
         User user = build();
         Map<String, Object> map = customRepository.findMapById(user.getId());
+        assertNotNull(map);
+        assertEquals(map.get("ID"), user.getId());
+        assertEquals(map.get("ACCOUNT"), user.getAccount());
+        assertEquals(map.get("NAME"), user.getName());
+        assertEquals(map.get("EMAIL"), user.getEmail());
+        map = customRepository.findMapById2(user.getId());
         assertNotNull(map);
         assertEquals(map.get("ID"), user.getId());
         assertEquals(map.get("ACCOUNT"), user.getAccount());

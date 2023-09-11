@@ -10,59 +10,59 @@ import java.util.function.Function;
 
 public class PerformanceUtil {
 
-    public static double byCount(long max, Consumer<Long> consumer) throws Exception {
-        return byCount(Runtime.getRuntime().availableProcessors(), max, consumer);
+    public static double byCount(String tag, long max, Consumer<Long> consumer) throws Exception {
+        return byCount(tag, Runtime.getRuntime().availableProcessors(), max, consumer);
     }
 
-    public static double byCount(int thread, long max, Consumer<Long> consumer) throws Exception {
-        return byCondition(thread, (count) -> count <= max, consumer);
+    public static double byCount(String tag, int thread, long max, Consumer<Long> consumer) throws Exception {
+        return byCondition(tag, thread, (count) -> count <= max, consumer);
     }
 
-    public static double byTime(long ms, Consumer<Long> consumer) throws Exception {
-        return byTime(Runtime.getRuntime().availableProcessors(), ms, consumer);
+    public static double byTime(String tag, long ms, Consumer<Long> consumer) throws Exception {
+        return byTime(tag, Runtime.getRuntime().availableProcessors(), ms, consumer);
     }
 
-    public static double byTime(int thread, long ms, Consumer<Long> consumer) throws Exception {
+    public static double byTime(String tag, int thread, long ms, Consumer<Long> consumer) throws Exception {
         long endTime = System.currentTimeMillis() + ms;
-        return byCondition(thread, (count) -> System.currentTimeMillis() < endTime, consumer);
+        return byCondition(tag, thread, (count) -> System.currentTimeMillis() < endTime, consumer);
     }
 
-    public static double byCondition(Function<Long, Boolean> condition, Consumer<Long> consumer) throws Exception {
-        return byCondition(Runtime.getRuntime().availableProcessors(), condition, consumer);
+    public static double byCondition(String tag, Function<Long, Boolean> condition, Consumer<Long> consumer) throws Exception {
+        return byCondition(tag, Runtime.getRuntime().availableProcessors(), condition, consumer);
     }
 
-    public static double byCondition(int thread, Function<Long, Boolean> condition, Consumer<Long> consumer) throws Exception {
-        return byCondition(thread, condition, (index) -> {
+    public static double byCondition(String tag, int thread, Function<Long, Boolean> condition, Consumer<Long> consumer) throws Exception {
+        return byCondition(tag, thread, condition, (index) -> {
             consumer.accept(index);
             return CompletableFuture.completedFuture(null);
         });
     }
 
-    public static double byCount(long max, Function<Long, Future<Void>> consumer) throws Exception {
-        return byCount(Runtime.getRuntime().availableProcessors(), max, consumer);
+    public static double byCount(String tag, long max, Function<Long, Future<Void>> consumer) throws Exception {
+        return byCount(tag, Runtime.getRuntime().availableProcessors(), max, consumer);
     }
 
-    public static double byCount(int thread, long max, Function<Long, Future<Void>> consumer) throws Exception {
-        return byCondition(thread, (count) -> count <= max, consumer);
+    public static double byCount(String tag, int thread, long max, Function<Long, Future<Void>> consumer) throws Exception {
+        return byCondition(tag, thread, (count) -> count <= max, consumer);
     }
 
-    public static double byTime(long ms, Function<Long, Future<Void>> consumer) throws Exception {
-        return byTime(Runtime.getRuntime().availableProcessors(), ms, consumer);
+    public static double byTime(String tag, long ms, Function<Long, Future<Void>> consumer) throws Exception {
+        return byTime(tag, Runtime.getRuntime().availableProcessors(), ms, consumer);
     }
 
-    public static double byTime(int thread, long ms, Function<Long, Future<Void>> consumer) throws Exception {
+    public static double byTime(String tag, int thread, long ms, Function<Long, Future<Void>> consumer) throws Exception {
         long endTime = System.currentTimeMillis() + ms;
-        return byCondition(thread, (count) -> System.currentTimeMillis() < endTime, consumer);
+        return byCondition(tag, thread, (count) -> System.currentTimeMillis() < endTime, consumer);
     }
 
-    public static double byCondition(Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {
-        return byCondition(Runtime.getRuntime().availableProcessors(), condition, consumer);
+    public static double byCondition(String tag, Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {
+        return byCondition(tag, Runtime.getRuntime().availableProcessors(), condition, consumer);
     }
 
-    public static double byCondition(int thread, Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {
+    public static double byCondition(String tag, int thread, Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {
         AtomicLong counter = new AtomicLong();
         long startTime = System.currentTimeMillis();
-        ScheduledFuture<?> printFuture = printFuture(counter, startTime, thread);
+        ScheduledFuture<?> printFuture = printFuture(tag, counter, startTime, thread);
         Runnable shutdown = performance(thread, () -> {
             long index;
             while (condition.apply((index = counter.incrementAndGet()))) {
@@ -78,7 +78,7 @@ public class PerformanceUtil {
 
         shutdown.run();
         printFuture.cancel(true);
-        return println(counter, startTime, thread);
+        return println(tag, counter, startTime, thread);
     }
 
     public static Runnable performance(int thread, Callable<Void> callable) throws InterruptedException, ExecutionException {
@@ -93,26 +93,26 @@ public class PerformanceUtil {
         return executor::shutdown;
     }
 
-    private static ScheduledFuture<?> printFuture(AtomicLong counter, long startTime, int thread) {
+    private static ScheduledFuture<?> printFuture(String tag, AtomicLong counter, long startTime, int thread) {
         return Executors.newScheduledThreadPool(1)
-                .scheduleAtFixedRate(() -> print(counter, startTime, thread), 0, 1, TimeUnit.SECONDS);
+                .scheduleAtFixedRate(() -> print(tag, counter, startTime, thread), 0, 1, TimeUnit.SECONDS);
     }
 
-    private static double print(AtomicLong counter, long startTime, int thread) {
+    private static double print(String tag, AtomicLong counter, long startTime, int thread) {
         long count = counter.get();
         long time = System.currentTimeMillis() - startTime;
         double per = per(count, time);
-        System.out.printf("concurrency: %d, count: %d, took time(ms): %d, %d/s, time(ms):  %f\r"
-                , thread, count, time, rps(count, time), per);
+        System.out.printf("%s concurrency: %d, count: %d, took time(ms): %d, %d/s, time(ms):  %f\r"
+                , tag, thread, count, time, rps(count, time), per);
         return per;
     }
 
-    private static double println(AtomicLong counter, long startTime, int thread) {
+    private static double println(String tag, AtomicLong counter, long startTime, int thread) {
         long count = counter.get();
         long time = System.currentTimeMillis() - startTime;
         double per = per(count, time);
-        System.out.printf("concurrency: %d, count: %d, took time(ms): %d, %d/s, time(ms):  %f\n"
-                , thread, count, time, rps(count, time), per);
+        System.out.printf("%s concurrency: %d, count: %d, took time(ms): %d, %d/s, time(ms):  %f\n"
+                , tag, thread, count, time, rps(count, time), per);
         return per;
     }
 

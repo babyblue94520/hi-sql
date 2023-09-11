@@ -8,12 +8,12 @@ import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
+import pers.clare.hisql.util.FieldColumnFactory;
 import pers.clare.hisql.util.SQLQueryUtil;
 
-import javax.persistence.*;
+import javax.persistence.Table;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
@@ -21,17 +21,6 @@ public class SQLStoreFactory {
 
     static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
     static final Map<ResultSetConverter, Map<Class<?>, Map<String, FieldSetter>>> converterFieldSetMap = new ConcurrentHashMap<>();
-
-    public static boolean isIgnore(Class<?> clazz) {
-        return clazz == null
-               || clazz.isPrimitive()
-               || clazz.getName().startsWith("java.")
-               || clazz.isArray()
-               || Collection.class.isAssignableFrom(clazz)
-               || clazz.isEnum()
-               || clazz.isInterface()
-                ;
-    }
 
     public static <T> KeySQLBuilder<T> buildKey(Class<T> keyClass, SQLCrudStore<?> sqlStore) {
         if (ClassUtil.isBasicType(keyClass)
@@ -59,7 +48,7 @@ public class SQLStoreFactory {
             , ResultSetConverter converter
             , Class<T> clazz
     ) {
-        if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
+        if (FieldColumnFactory.isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
         return (SQLStore<T>) sqlStoreCacheMap.computeIfAbsent(clazz, (key) -> doBuild(naming, converter, clazz));
     }
 
@@ -70,7 +59,7 @@ public class SQLStoreFactory {
             , ResultSetConverter converter
             , Class<T> clazz
     ) {
-        if (isIgnore(clazz)) throw new Error(String.format("%s can not build SQLCrudStore", clazz));
+        if (FieldColumnFactory.isIgnore(clazz)) throw new Error(String.format("%s can not build SQLCrudStore", clazz));
         SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
         if (store instanceof SQLCrudStore) return (SQLCrudStore<T>) store;
         store = doBuildCrud(naming, converter, clazz);
@@ -102,39 +91,26 @@ public class SQLStoreFactory {
         } else {
             tableName = table.name();
         }
-        Collection<Field> fields = getAllField(clazz);
-        int length = fields.size();
+        FieldColumn[] fieldColumns = FieldColumnFactory.get(naming, clazz);
+        int length = fieldColumns.length;
         int keyCount = 0;
         int fieldColumnCount = 0;
         Field[] keyFields = new Field[length];
-        FieldColumn[] fieldColumns = new FieldColumn[length];
         StringBuilder selectColumns = new StringBuilder();
         StringBuilder whereId = new StringBuilder(" where ");
         Field autoKey = null;
         boolean nullable, insertable, updatable;
-        for (Field field : fields) {
-            Column column = field.getAnnotation(Column.class);
-            String columnName = getColumnName(naming, field, column);
+        for (FieldColumn column : fieldColumns) {
+            String columnName = column.getColumnName();
 
-            boolean id = field.getAnnotation(Id.class) != null;
-            boolean auto = field.getAnnotation(GeneratedValue.class) != null;
+            if (column.isAuto()) autoKey = column.getField();
 
-            if (auto) autoKey = field;
-            if (column == null) {
-                nullable = insertable = updatable = true;
-            } else {
-                nullable = column.nullable();
-                insertable = column.insertable();
-                updatable = column.updatable();
-            }
-            fieldColumns[fieldColumnCount++] = new FieldColumn(field, id, auto, !nullable, insertable, updatable, columnName);
-
-            if (id) {
-                keyFields[keyCount++] = field;
+            if (column.isId()) {
+                keyFields[keyCount++] = column.getField();
                 whereId.append(columnName)
                         .append('=')
                         .append(':')
-                        .append(field.getName())
+                        .append(column.getField().getName())
                         .append(" and ");
             }
             selectColumns.append(columnName).append(',');
@@ -161,59 +137,6 @@ public class SQLStoreFactory {
         }
     }
 
-    private static Collection<Field> getAllField(Class<?> clazz) {
-        Map<String, Integer> orderMap = new HashMap<>();
-        List<Field> result = new ArrayList<>();
-        if (!isIgnore(clazz)) {
-            putAllField(clazz, orderMap, result);
-        }
-        return result;
-    }
-
-    private static void putAllField(Class<?> clazz, Map<String, Integer> orderMap, List<Field> result) {
-        if (isIgnore(clazz)) return;
-        putAllField(clazz.getSuperclass(), orderMap, result);
-        putAllField(ClassUtil.getOrderFields(clazz), orderMap, result);
-    }
-
-    private static void putAllField(Collection<Field> fields, Map<String, Integer> orderMap, List<Field> result) {
-        int modifier;
-        String name;
-        Integer index;
-        for (Field field : fields) {
-            modifier = field.getModifiers();
-            if (Modifier.isStatic(modifier)
-                || Modifier.isFinal(modifier)
-            ) continue;
-
-            boolean transientField = field.getAnnotation(Transient.class) != null;
-            field.setAccessible(true);
-            name = field.getName();
-            index = orderMap.get(name);
-            if (index == null) {
-                if (transientField) return;
-                orderMap.put(name, result.size());
-                result.add(field);
-            } else {
-                if (transientField) {
-                    result.remove((int) index);
-                    Iterator<Map.Entry<String, Integer>> iterator = orderMap.entrySet().iterator();
-                    while (iterator.hasNext()) {
-                        Map.Entry<String, Integer> entry = iterator.next();
-                        Integer value = entry.getValue();
-                        if (Objects.equals(value, index)) {
-                            iterator.remove();
-                        } else if (value > index) {
-                            entry.setValue(value - 1);
-                        }
-                    }
-                    orderMap.remove(name);
-                } else {
-                    result.set(index, field);
-                }
-            }
-        }
-    }
 
     private static String buildCount(String tableName) {
         int tl = tableName.length();
@@ -298,11 +221,11 @@ public class SQLStoreFactory {
 
     private static Map<String, FieldSetter> buildFieldSetters(NamingStrategy naming, Class<?> clazz, ResultSetConverter converter) {
         return converterFieldSetMap.computeIfAbsent(converter, (c) -> new ConcurrentHashMap<>()).computeIfAbsent(clazz, (key) -> {
-            Collection<Field> fields = getAllField(clazz);
+            FieldColumn[] fields = FieldColumnFactory.get(naming, clazz);
             Map<String, FieldSetter> fieldSetMap = new ConcurrentHashMap<>();
-            for (Field field : fields) {
-                Column column = field.getAnnotation(Column.class);
-                String name = getColumnName(naming, field, column).replaceAll("`", "");
+            for (FieldColumn fieldColumn : fields) {
+                Field field = fieldColumn.getField();
+                String name = fieldColumn.getColumnName().replaceAll("`", "");
                 FieldSetter fieldSetter = buildFieldSetter(converter, field);
                 fieldSetMap.put(field.getName(), fieldSetter);
                 fieldSetMap.put(name, fieldSetter);
@@ -325,7 +248,5 @@ public class SQLStoreFactory {
         }
     }
 
-    private static String getColumnName(NamingStrategy namingStrategy, Field field, Column column) {
-        return column == null || column.name().length() == 0 ? namingStrategy.turnCamelCase(field.getName()) : column.name();
-    }
+
 }

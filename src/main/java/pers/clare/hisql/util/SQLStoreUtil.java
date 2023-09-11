@@ -1,9 +1,12 @@
 package pers.clare.hisql.util;
 
+import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.store.FieldColumn;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLData;
 
+import javax.persistence.Column;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,5 +78,10 @@ public class SQLStoreUtil {
             values[i++] = value;
         }
         return new SQLData(valueSql.toString(), values);
+    }
+
+
+    public static String getColumnName(NamingStrategy namingStrategy, Field field, Column column) {
+        return column == null || column.name().length() == 0 ? namingStrategy.turnCamelCase(field.getName()) : column.name();
     }
 }

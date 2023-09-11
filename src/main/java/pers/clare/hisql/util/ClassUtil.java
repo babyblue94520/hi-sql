@@ -19,12 +19,19 @@ public class ClassUtil {
     private static final ConcurrentMap<Class<?>, List<Method>> classOrderMethodsMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<Class<?>, List<Field>> classOrderFieldsMap = new ConcurrentHashMap<>();
 
+
     public static Method[] getDeclaredMethods(Class<?> clazz) {
         return classDeclaredMethodsMap.computeIfAbsent(clazz, Class::getDeclaredMethods);
     }
 
     public static Field[] getDeclaredFields(Class<?> clazz) {
-        return classDeclaredFieldsMap.computeIfAbsent(clazz, Class::getDeclaredFields);
+        return classDeclaredFieldsMap.computeIfAbsent(clazz, (c) -> {
+            Field[] fields = c.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+            }
+            return fields;
+        });
     }
 
     public static Map<String, Field> getNameFieldMap(Class<?> clazz) {
@@ -189,6 +196,25 @@ public class ClassUtil {
                 }
             }
         }
+    }
+
+
+    @NonNull
+    public static Class<?> getValueClass(Type type, int index) {
+        Type result = getValueType(type, index);
+        if (result instanceof ParameterizedType) {
+            return ClassUtil.toClassType(((ParameterizedType) result).getRawType());
+        } else {
+            return ClassUtil.toClassType(result);
+        }
+    }
+
+    @NonNull
+    public static Type getValueType(Type type, int index) {
+        if (type instanceof ParameterizedType) {
+            return ((ParameterizedType) type).getActualTypeArguments()[index];
+        }
+        return Object.class;
     }
 
     static class OrderObject<T> {

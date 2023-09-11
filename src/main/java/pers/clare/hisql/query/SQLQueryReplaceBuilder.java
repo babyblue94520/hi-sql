@@ -4,6 +4,7 @@ import org.springframework.lang.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Parse replace sql
@@ -81,7 +82,7 @@ public class SQLQueryReplaceBuilder {
         return new SQLQueryReplace(sqlParts, keyIndex);
     }
 
-    public boolean isKey(String key) {
-        return keyIndex.containsKey(key);
+    public Set<String> getKeys() {
+        return keyIndex.keySet();
     }
 }

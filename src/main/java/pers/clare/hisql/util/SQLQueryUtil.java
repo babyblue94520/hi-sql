@@ -102,21 +102,22 @@ public class SQLQueryUtil {
     public static SQLQuery to(
             SQLQueryReplaceBuilder sqlQueryReplaceBuilder
             , Object[] arguments
-            , Map<String, ArgumentHandler<?>> replaces
             , Map<String, ArgumentHandler<?>> valueHandlers
     ) {
         SQLQueryReplace replace = sqlQueryReplaceBuilder.build();
         Map<String, Object> values = new HashMap<>();
         Object value;
-        for (Map.Entry<String, ArgumentHandler<?>> entry : replaces.entrySet()) {
-            value = entry.getValue().apply(arguments);
+        for (String key : sqlQueryReplaceBuilder.getKeys()) {
+            ArgumentHandler<?> handler = valueHandlers.get(key);
+            if (handler == null) continue;
+            value = handler.apply(arguments);
             if (value instanceof String) {
-                replace.replace(entry.getKey(), (String) value);
+                replace.replace(key, (String) value);
             } else if (value instanceof SqlReplace) {
-                replace.replace(entry.getKey(), ((SqlReplace<?>) value).getSql());
-                values.put(entry.getKey(), ((SqlReplace<?>) value).getValue());
+                replace.replace(key, ((SqlReplace<?>) value).getSql());
+                values.put(key, ((SqlReplace<?>) value).getValue());
             } else {
-                throw new HiSqlException("%s must be String", entry.getKey());
+                throw new HiSqlException("%s must be String", key);
             }
         }
         SQLQuery query = replace.buildQuery();
