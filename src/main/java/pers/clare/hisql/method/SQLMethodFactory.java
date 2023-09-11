@@ -159,11 +159,12 @@ public class SQLMethodFactory {
                             , parseResult.getSort()
                     );
                     break;
-                case CommandType.Insert:
-                    sqlInvoke = buildSqlInsertInvoke(returnType, autoKey);
-                    break;
                 case CommandType.Update:
-                    sqlInvoke = buildSqlUpdateInvoke(returnType);
+                    if (autoKey) {
+                        sqlInvoke = buildSqlInsertInvoke(returnType);
+                    } else {
+                        sqlInvoke = buildSqlUpdateInvoke(returnType);
+                    }
                     break;
                 default:
 
@@ -192,10 +193,6 @@ public class SQLMethodFactory {
             switch (commandType) {
                 case CommandType.Query:
                     return (service, sql, arguments, originArguments) -> service.query(sql, originArguments, resultSetCallback.apply(originArguments));
-                case CommandType.Insert:
-                    return (service, sql, arguments, originArguments) -> service.insert(sql, arguments);
-                default:
-                    return (service, sql, arguments, originArguments) -> service.update(sql, arguments);
             }
         }
         return null;
@@ -247,25 +244,9 @@ public class SQLMethodFactory {
 
     private static SqlInvoke buildSqlInsertInvoke(
             Type type
-            , boolean autoKey
     ) {
         Class<?> keyClass = ClassUtil.toClassType(type);
-        if (autoKey) {
-            return (service, sql, arguments, originArguments) -> service.insert(keyClass, sql, arguments);
-        } else {
-            if (keyClass == int.class
-                || keyClass == Integer.class
-                || keyClass == void.class
-            ) {
-                return (service, sql, arguments, originArguments) -> service.insert(sql, arguments);
-            } else if (keyClass == long.class
-                       || keyClass == Long.class
-            ) {
-                return (service, sql, arguments, originArguments) -> service.insertLarge(sql, arguments);
-            } else {
-                throw new HiSqlException("Unsupported type : %s", keyClass);
-            }
-        }
+        return (service, sql, arguments, originArguments) -> service.insert(keyClass, sql, arguments);
     }
 
     /**

@@ -34,9 +34,9 @@ class SQLServiceTest {
 
     @Test
     void insert() {
-        int count = service.insert("insert into test3 (name) values ('test2')");
+        int count = service.update("insert into test3 (name) values ('test2')");
         assertEquals(1, count);
-        long count2 = service.insertLarge("insert into test3 (name) values ('test3')");
+        long count2 = service.updateLarge("insert into test3 (name) values ('test3')");
         assertEquals(1L, count2);
 
         int id = service.insert(Integer.class, "insert into test2 (name) values ('test2')");
@@ -47,10 +47,10 @@ class SQLServiceTest {
         }
         assertEquals(max, service.find(Integer.class, "select count(*) from test2"));
 
-        int count3 = service.insert("insert into test2 (name) values ('test2')");
+        int count3 = service.update("insert into test2 (name) values ('test2')");
         assertEquals(1, count3);
         for (int i = 1; i < max; i++) {
-            count3 = service.insert("insert into test2 (name) values (?)", i);
+            count3 = service.update("insert into test2 (name) values (?)", i);
             assertEquals(1, count3);
         }
     }
@@ -58,7 +58,7 @@ class SQLServiceTest {
     @Test
     void update() {
         for (int i = 0; i < max; i++) {
-            assertEquals(1, service.insert("insert into test2 (name) values (?)", i));
+            assertEquals(1, service.update("insert into test2 (name) values (?)", i));
         }
         String name = String.valueOf(System.currentTimeMillis());
         List<String> list = service.findAll(String.class, "select name from test2");

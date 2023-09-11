@@ -9,7 +9,6 @@ public class CommandTypeParser {
         switch (c) {
             case 'i':
             case 'I':
-                return CommandType.Insert;
             case 'u':
             case 'U':
             case 'd':

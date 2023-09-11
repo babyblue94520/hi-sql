@@ -28,7 +28,7 @@ public abstract class BasicTest {
     protected void create() {
         sqlService.update("create table " + table + " (id int auto_increment, name varchar(255),primary key(id))");
         for (int i = 1; i <= getMax(); i++) {
-            sqlService.insert("insert into " + table + " values(?,?)", i, i);
+            sqlService.update("insert into " + table + " values(?,?)", i, i);
         }
     }
 

@@ -8,26 +8,6 @@ import java.sql.Statement;
 
 public class SQLService extends SQLPageService {
 
-    public int insert(
-            String sql
-            , Object... parameters
-    ) {
-        return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
-            return statement.getUpdateCount();
-        });
-    }
-
-    public long insertLarge(
-            String sql
-            , Object... parameters
-    ) {
-        return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
-            return statement.getLargeUpdateCount();
-        });
-    }
-
     public <T> T insert(
             Class<T> keyType
             , String sql

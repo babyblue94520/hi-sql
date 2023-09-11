@@ -29,11 +29,6 @@ public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
     }
 
     @Override
-    public int executeInsert(String sql, Object... args) {
-        return sqlService.insert(sql, args);
-    }
-
-    @Override
     public <T> T executeInsert(Class<T> keyType, String sql, Object... args) {
         return sqlService.insert(keyType, sql, args);
     }
