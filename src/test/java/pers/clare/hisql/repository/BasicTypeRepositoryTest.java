@@ -93,6 +93,9 @@ public class BasicTypeRepositoryTest {
         String value = "1";
         Map<String, String> result = basicTypeRepository.findStringMap(value);
         assertEquals(value, result.get("VALUE"));
+        result = basicTypeRepository.findStringMap2(value, value);
+        assertEquals(value, result.get("VALUE"));
+        assertEquals(value, result.get("VALUE2"));
     }
 
     @Test

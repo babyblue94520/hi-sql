@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Repository
 public interface BasicTypeRepository extends SQLRepository {
-    @HiSql("select :value")
+    @HiSql("select ?")
     int findInt(int value);
 
     @HiSql("select :value")
@@ -49,6 +49,9 @@ public interface BasicTypeRepository extends SQLRepository {
     @HiSql("select :value as value")
     Map<String, String> findStringMap(String value);
 
+    @HiSql("select ? as value, ? as value2")
+    Map<String, String> findStringMap2(String value, String value2);
+
     @HiSql("select :value")
     Set<Integer> findIntegerSet(int value);
 
@@ -70,7 +73,7 @@ public interface BasicTypeRepository extends SQLRepository {
     @HiSql("select :value as value")
     List<Map<String, Integer>> findIntegerMapList(int value);
 
-    @HiSql("select :value as value")
+    @HiSql("select ? as value")
     List<Map<String, String>> findStringMapList(String value);
 
     @HiSql("select :value")

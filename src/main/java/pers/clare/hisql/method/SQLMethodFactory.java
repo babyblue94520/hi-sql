@@ -112,13 +112,22 @@ public class SQLMethodFactory {
             SqlInvoke sqlInvoke = buildInvoke(sqlStoreService, parseResult, returnType, commandType, autoKey);
             if (sqlInvoke == null) {
                 throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s not support return type.", clazz.getName(), method.getName())));
-
             }
+
             MethodInterceptor interceptor;
-            if (optional) {
-                interceptor = (invocation) -> Optional.ofNullable(sqlInvoke.apply(sqlStoreService, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments()));
+            if (sqlProcessor == null) {
+                String finalCommand = command;
+                if (optional) {
+                    interceptor = (invocation) -> Optional.ofNullable(sqlInvoke.apply(sqlStoreService, finalCommand, invocation.getArguments(), invocation.getArguments()));
+                } else {
+                    interceptor = (invocation) -> sqlInvoke.apply(sqlStoreService, finalCommand, invocation.getArguments(), invocation.getArguments());
+                }
             } else {
-                interceptor = (invocation) -> sqlInvoke.apply(sqlStoreService, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments());
+                if (optional) {
+                    interceptor = (invocation) -> Optional.ofNullable(sqlInvoke.apply(sqlStoreService, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments()));
+                } else {
+                    interceptor = (invocation) -> sqlInvoke.apply(sqlStoreService, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments());
+                }
             }
             methodInterceptors.put(method, interceptor);
         }
@@ -432,7 +441,7 @@ public class SQLMethodFactory {
             SQLQueryBuilder sqlQueryBuilder = SQLQueryBuilder.create(cs);
             return (arguments) -> SQLQueryUtil.to(sqlQueryBuilder, arguments, handlerMap).toString();
         }
-        return (arguments) -> command;
+        return null;
     }
 
 }
