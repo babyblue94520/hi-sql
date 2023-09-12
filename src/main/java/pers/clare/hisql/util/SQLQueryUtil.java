@@ -28,7 +28,7 @@ public class SQLQueryUtil {
                 switch (c) {
                     case '\'':
                     case '\\':
-                        sb.append('\\');
+                        sb.append(c);
                         break;
                 }
                 sb.append(c);
