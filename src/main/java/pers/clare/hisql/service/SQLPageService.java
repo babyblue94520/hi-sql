@@ -125,18 +125,22 @@ public abstract class SQLPageService extends SQLNextService {
         int page = pagination.getPage();
         int listSize = list.size();
         long total = (long) size * page + listSize;
-        if (total > 0) {
-            if (listSize == 0 || listSize >= size) {
-                long prevTotal = pagination.getTotal();
-                if (total < prevTotal) {
-                    // if total > 0, then skip count(*).
-                    total = prevTotal;
-                } else {
-                    if (pagination.isVirtualTotal()) {
-                        total = getPaginationMode().getVirtualTotal(pagination, connection, sql, parameters);
+
+        if (listSize >= size) {
+            long prevTotal = pagination.getTotal();
+            if (total < prevTotal) {
+                // if total > 0, then skip count(*).
+                total = prevTotal;
+            } else {
+                if (pagination.isVirtualTotal()) {
+                    long virtualTotal = getPaginationMode().getVirtualTotal(pagination, connection, sql, parameters);
+                    if (total < virtualTotal) {
+                        total = virtualTotal;
                     } else {
-                        total = getPaginationMode().getTotal(pagination, connection, sql, parameters);
+                        total += size;
                     }
+                } else {
+                    total = getPaginationMode().getTotal(pagination, connection, sql, parameters);
                 }
             }
         }
