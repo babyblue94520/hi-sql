@@ -4,6 +4,8 @@ import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.service.SQLService;
+import pers.clare.hisql.store.SQLStore;
+import pers.clare.hisql.store.SQLStoreFactory;
 
 @SuppressWarnings("unused")
 public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
@@ -36,5 +38,9 @@ public class SQLRepositoryImpl<S extends SQLService> implements SQLRepository {
     @Override
     public int executeUpdate(String sql, Object... args) {
         return sqlService.update(sql, args);
+    }
+
+    public <T> SQLStore<T> buildSQLStore(Class<T> clazz) {
+        return SQLStoreFactory.build(sqlService.getNaming(), sqlService.getResultSetConverter(), clazz);
     }
 }
