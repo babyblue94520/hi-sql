@@ -1,4 +1,4 @@
-package pers.clare.hisql.util;
+package pers.clare.util;
 
 
 import java.util.ArrayList;
@@ -61,41 +61,33 @@ public class PerformanceUtil {
 
     public static double byCondition(String tag, int thread, Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {
         AtomicLong counter = new AtomicLong();
+
         long startTime = System.currentTimeMillis();
-        ScheduledFuture<?> printFuture = printFuture(tag, counter, startTime, thread);
-        Runnable shutdown = performance(thread, () -> {
-            long index;
-            while (condition.apply((index = counter.incrementAndGet()))) {
-                try {
-                    consumer.apply(index).get();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            counter.decrementAndGet();
-            return null;
-        });
 
-        shutdown.run();
-        printFuture.cancel(true);
-        return println(tag, counter, startTime, thread);
-    }
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(thread + 1);
+        ScheduledFuture<?> printFuture = executor.scheduleAtFixedRate(() -> print(tag, counter, startTime, thread), 0, 1, TimeUnit.SECONDS);
 
-    public static Runnable performance(int thread, Callable<Void> callable) throws InterruptedException, ExecutionException {
-        ExecutorService executor = Executors.newFixedThreadPool(thread);
         List<Callable<Void>> tasks = new ArrayList<>();
         for (int i = 0; i < thread; i++) {
-            tasks.add(callable);
+            tasks.add(() -> {
+                long index;
+                while (condition.apply((index = counter.incrementAndGet()))) {
+                    try {
+                        consumer.apply(index).get();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                counter.decrementAndGet();
+                return null;
+            });
         }
         for (Future<Void> future : executor.invokeAll(tasks)) {
             future.get();
         }
-        return executor::shutdown;
-    }
-
-    private static ScheduledFuture<?> printFuture(String tag, AtomicLong counter, long startTime, int thread) {
-        return Executors.newScheduledThreadPool(1)
-                .scheduleAtFixedRate(() -> print(tag, counter, startTime, thread), 0, 1, TimeUnit.SECONDS);
+        printFuture.cancel(true);
+        executor.shutdown();
+        return println(tag, counter, startTime, thread);
     }
 
     private static double print(String tag, AtomicLong counter, long startTime, int thread) {

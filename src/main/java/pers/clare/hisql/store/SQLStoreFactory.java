@@ -5,7 +5,6 @@ import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.ResultSetValueConverter;
 import pers.clare.hisql.naming.NamingStrategy;
-import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.support.ResultSetConverter;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.FieldColumnFactory;
@@ -19,18 +18,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unused")
 public class SQLStoreFactory {
 
-    static final Map<Class<?>, SQLStore<?>> sqlStoreCacheMap = new ConcurrentHashMap<>();
+    static final Map<Class<?>, SQLStore<?>> storeCacheMap = new ConcurrentHashMap<>();
     static final Map<ResultSetConverter, Map<Class<?>, Map<String, FieldSetter>>> converterFieldSetMap = new ConcurrentHashMap<>();
 
-    public static <T> KeySQLBuilder<T> buildKey(Class<T> keyClass, SQLCrudStore<?> sqlStore) {
+    public static <T> KeySQLBuilder<T> buildKey(Class<T> keyClass, SQLCrudStore<?> store) {
         if (ClassUtil.isBasicType(keyClass)
             || keyClass.isArray()
         ) {
-            return (builder, key) -> SQLQueryUtil.setValue(builder, sqlStore.getKeyFields(), new Object[]{key});
+            return (builder, key) -> SQLQueryUtil.setValue(builder, store.getKeyFields(), new Object[]{key});
         } else {
-            Field[] keyFields = new Field[sqlStore.getKeyFields().length];
+            Field[] keyFields = new Field[store.getKeyFields().length];
             int count = 0;
-            for (Field field : sqlStore.getKeyFields()) {
+            for (Field field : store.getKeyFields()) {
                 try {
                     Field keyField = keyFields[count++] = keyClass.getDeclaredField(field.getName());
                     keyField.setAccessible(true);
@@ -49,9 +48,8 @@ public class SQLStoreFactory {
             , Class<T> clazz
     ) {
         if (FieldColumnFactory.isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore", clazz));
-        return (SQLStore<T>) sqlStoreCacheMap.computeIfAbsent(clazz, (key) -> doBuild(naming, converter, clazz));
+        return (SQLStore<T>) storeCacheMap.computeIfAbsent(clazz, (key) -> doBuild(naming, converter, clazz));
     }
-
 
     @SuppressWarnings("unchecked")
     public static <T> SQLCrudStore<T> buildCrud(
@@ -59,11 +57,13 @@ public class SQLStoreFactory {
             , ResultSetConverter converter
             , Class<T> clazz
     ) {
-        if (FieldColumnFactory.isIgnore(clazz)) throw new Error(String.format("%s can not build SQLCrudStore", clazz));
-        SQLStore<T> store = (SQLStore<T>) sqlStoreCacheMap.get(clazz);
-        if (store instanceof SQLCrudStore) return (SQLCrudStore<T>) store;
-        store = doBuildCrud(naming, converter, clazz);
-        sqlStoreCacheMap.put(clazz, store);
+        if (FieldColumnFactory.isIgnore(clazz))
+            throw new Error(String.format("%s can not build SQLSchemaStore", clazz));
+        SQLStore<T> store = (SQLStore<T>) storeCacheMap.get(clazz);
+        if (!(store instanceof SQLCrudStore)) {
+            store = doBuildCrud(naming, converter, clazz);
+            storeCacheMap.put(clazz, store);
+        }
         return (SQLCrudStore<T>) store;
     }
 
@@ -94,129 +94,26 @@ public class SQLStoreFactory {
         FieldColumn[] fieldColumns = FieldColumnFactory.get(naming, clazz);
         int length = fieldColumns.length;
         int keyCount = 0;
-        int fieldColumnCount = 0;
         Field[] keyFields = new Field[length];
-        StringBuilder selectColumns = new StringBuilder();
-        StringBuilder whereId = new StringBuilder(" where ");
         Field autoKey = null;
-        boolean nullable, insertable, updatable;
         for (FieldColumn column : fieldColumns) {
-            String columnName = column.getColumnName();
-
             if (column.isAuto()) autoKey = column.getField();
-
             if (column.isId()) {
                 keyFields[keyCount++] = column.getField();
-                whereId.append(columnName)
-                        .append('=')
-                        .append(':')
-                        .append(column.getField().getName())
-                        .append(" and ");
             }
-            selectColumns.append(columnName).append(',');
         }
         Field[] temp = keyFields;
         keyFields = new Field[keyCount];
         System.arraycopy(temp, 0, keyFields, 0, keyCount);
-        selectColumns.delete(selectColumns.length() - 1, selectColumns.length());
-        whereId.delete(whereId.length() - 5, whereId.length());
 
         try {
             return new SQLCrudStore<>(clazz.getConstructor()
                     , buildFieldSetters(naming, clazz, converter)
                     , tableName, fieldColumns, autoKey, keyFields
-                    , buildCount(tableName)
-                    , buildCountById(tableName, whereId)
-                    , buildSelect(tableName, selectColumns)
-                    , buildSelectById(tableName, selectColumns, whereId)
-                    , buildDeleteAll(tableName)
-                    , buildDeleteById(tableName, whereId)
             );
         } catch (NoSuchMethodException e) {
             throw new HiSqlException(e.getMessage());
         }
-    }
-
-
-    private static String buildCount(String tableName) {
-        int tl = tableName.length();
-        char[] chars = new char[21 + tl];
-        int index = 0;
-        "select count(*) from ".getChars(0, 21, chars, index);
-        index += 21;
-        tableName.getChars(0, tl, chars, index);
-        return new String(chars);
-    }
-
-    private static SQLQueryBuilder buildCountById(String tableName, StringBuilder whereId) {
-        int tl = tableName.length();
-        int wl = whereId.length();
-        char[] chars = new char[21 + tl + wl];
-        int index = 0;
-        "select count(*) from ".getChars(0, 21, chars, index);
-        index += 21;
-        tableName.getChars(0, tl, chars, index);
-        index += tl;
-        whereId.getChars(0, wl, chars, index);
-        return SQLQueryBuilder.create(chars);
-    }
-
-    private static String buildSelect(String tableName, StringBuilder selectColumns) {
-        int tl = tableName.length();
-        int scl = selectColumns.length();
-
-        char[] chars = new char[13 + tl + scl];
-        int index = 0;
-        "select ".getChars(0, 7, chars, index);
-        index += 7;
-        selectColumns.getChars(0, scl, chars, index);
-        index += scl;
-        " from ".getChars(0, 6, chars, index);
-        index += 6;
-        tableName.getChars(0, tl, chars, index);
-        return new String(chars);
-    }
-
-    private static SQLQueryBuilder buildSelectById(String tableName, StringBuilder selectColumns, StringBuilder whereId) {
-        int tl = tableName.length();
-        int scl = selectColumns.length();
-        int wl = whereId.length();
-
-        char[] chars = new char[13 + tl + scl + wl];
-        int index = 0;
-        "select ".getChars(0, 7, chars, index);
-        index += 7;
-        selectColumns.getChars(0, scl, chars, index);
-        index += scl;
-        " from ".getChars(0, 6, chars, index);
-        index += 6;
-        tableName.getChars(0, tl, chars, index);
-        index += tl;
-        whereId.getChars(0, wl, chars, index);
-        return SQLQueryBuilder.create(chars);
-    }
-
-    private static String buildDeleteAll(String tableName) {
-        int tl = tableName.length();
-        char[] chars = new char[12 + tl];
-        int index = 0;
-        "delete from ".getChars(0, 12, chars, index);
-        index += 12;
-        tableName.getChars(0, tl, chars, index);
-        return new String(chars);
-    }
-
-    private static SQLQueryBuilder buildDeleteById(String tableName, StringBuilder whereId) {
-        int tl = tableName.length();
-        int wl = whereId.length();
-        char[] chars = new char[12 + tl + wl];
-        int index = 0;
-        "delete from ".getChars(0, 12, chars, index);
-        index += 12;
-        tableName.getChars(0, tl, chars, index);
-        index += tl;
-        whereId.getChars(0, wl, chars, index);
-        return SQLQueryBuilder.create(chars);
     }
 
     private static Map<String, FieldSetter> buildFieldSetters(NamingStrategy naming, Class<?> clazz, ResultSetConverter converter) {
@@ -248,5 +145,18 @@ public class SQLStoreFactory {
         }
     }
 
+    private static char[] merge(String... strings) {
+        int size = 0;
+        for (String string : strings) {
+            size += string.length();
+        }
+        char[] cs = new char[size];
+        int i = 0;
+        for (String string : strings) {
+            string.getChars(0, string.length(), cs, i);
+            i += string.length();
+        }
+        return cs;
+    }
 
 }

@@ -39,7 +39,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
 
     public long count(Entity entity) {
         try {
-            Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity));
+            Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity), sqlStore);
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -52,10 +52,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return countById(false, key);
     }
 
-    public long countById(
-            Boolean readonly
-            , Key key
-    ) {
+    public long countById(Boolean readonly, Key key) {
         try {
             Long count = sqlService.find(Long.class, keySQLBuilder.apply(sqlStore.getCountById(), key));
             return count == null ? 0 : count;
@@ -66,9 +63,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         }
     }
 
-    public List<Entity> findAll(
-            Sort sort
-    ) {
+    public List<Entity> findAll(Sort sort) {
         return sqlService.findAll(sqlStore, sqlStore.getSelect(), sort);
     }
 
@@ -86,9 +81,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.findAll(sqlStore, sqlStore.getSelect());
     }
 
-    public Entity findById(
-            Key key
-    ) {
+    public Entity findById(Key key) {
         return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
     }
 
@@ -97,27 +90,19 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.find(sqlStore, entity);
     }
 
-    public Entity insert(
-            Entity entity
-    ) {
+    public Entity insert(Entity entity) {
         return sqlService.insert(sqlStore, entity);
     }
 
-    public int update(
-            Entity entity
-    ) {
+    public int update(Entity entity) {
         return sqlService.update(sqlStore, entity);
     }
 
-    public int delete(
-            Entity entity
-    ) {
-        return sqlService.update(SQLQueryUtil.setValue(sqlStore.getDeleteById(), sqlStore.getKeyFields(), entity));
+    public int delete(Entity entity) {
+        return sqlService.delete(sqlStore, entity);
     }
 
-    public int deleteById(
-            Key key
-    ) {
+    public int deleteById(Key key) {
         return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), key));
     }
 
@@ -143,7 +128,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
 
     @Override
     public int deleteAll() {
-        return sqlService.update(sqlStore.getDeleteAll());
+        return sqlService.update(sqlStore.getDelete());
     }
 
     @Override
@@ -155,4 +140,26 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
     public int[] deleteAll(Entity[] entities) {
         return sqlService.deleteAll(sqlStore, entities);
     }
+
+
+    @Override
+    public <T> T findByObject(T object) {
+        return sqlService.findByObject(object);
+    }
+
+    @Override
+    public <T> T insertByObject(T object) {
+        return sqlService.insertByObject(object);
+    }
+
+    @Override
+    public <T> int updateByObject(T object) {
+        return sqlService.updateByObject(object);
+    }
+
+    @Override
+    public <T> int deleteByObject(T object) {
+        return sqlService.deleteByObject(object);
+    }
+
 }

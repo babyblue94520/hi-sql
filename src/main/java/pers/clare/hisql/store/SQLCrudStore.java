@@ -3,6 +3,7 @@ package pers.clare.hisql.store;
 
 import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.query.SQLQueryBuilder;
+import pers.clare.hisql.util.SQLStoreUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -10,15 +11,16 @@ import java.util.Map;
 
 public class SQLCrudStore<T> extends SQLStore<T> {
     private final String tableName;
+
     private final FieldColumn[] fieldColumns;
     private final Field autoKey;
     private final Field[] keyFields;
-    private final String count;
-    private final SQLQueryBuilder countById;
-    private final String select;
-    private final SQLQueryBuilder selectById;
-    private final String deleteAll;
-    private final SQLQueryBuilder deleteById;
+    private String count;
+    private SQLQueryBuilder countById;
+    private String select;
+    private SQLQueryBuilder selectById;
+    private String delete;
+    private SQLQueryBuilder deleteById;
 
     public SQLCrudStore(
             Constructor<T> constructor
@@ -27,24 +29,12 @@ public class SQLCrudStore<T> extends SQLStore<T> {
             , FieldColumn[] fieldColumns
             , Field autoKey
             , Field[] keyFields
-            , String count
-            , SQLQueryBuilder countById
-            , String select
-            , SQLQueryBuilder selectById
-            , String deleteAll
-            , SQLQueryBuilder deleteById
     ) {
         super(constructor, fieldSetMap);
         this.tableName = tableName;
         this.fieldColumns = fieldColumns;
         this.autoKey = autoKey;
         this.keyFields = keyFields;
-        this.count = count;
-        this.countById = countById;
-        this.select = select;
-        this.selectById = selectById;
-        this.deleteAll = deleteAll;
-        this.deleteById = deleteById;
     }
 
     public String getTableName() {
@@ -64,26 +54,44 @@ public class SQLCrudStore<T> extends SQLStore<T> {
     }
 
     public String getCount() {
+        if (count == null) {
+            count = "select count(*) from " + tableName;
+        }
         return count;
     }
 
     public SQLQueryBuilder getCountById() {
+        if (countById == null) {
+            countById = SQLStoreUtil.buildCountById(fieldColumns, tableName);
+        }
         return countById;
     }
 
     public String getSelect() {
+        if (select == null) {
+            select = SQLStoreUtil.buildSelect(fieldColumns, tableName);
+        }
         return select;
     }
 
     public SQLQueryBuilder getSelectById() {
+        if (selectById == null) {
+            selectById = SQLStoreUtil.getSelectById(fieldColumns, tableName);
+        }
         return selectById;
     }
 
-    public String getDeleteAll() {
-        return deleteAll;
+    public String getDelete() {
+        if (delete == null) {
+            delete = "delete from " + tableName;
+        }
+        return delete;
     }
 
     public SQLQueryBuilder getDeleteById() {
+        if (deleteById == null) {
+            deleteById = SQLStoreUtil.buildDeleteById(fieldColumns, tableName);
+        }
         return deleteById;
     }
 }

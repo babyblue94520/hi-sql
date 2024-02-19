@@ -13,7 +13,7 @@ import pers.clare.hisql.data.repository.UserRepository;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.performance.jpa.UserJpaRepository;
-import pers.clare.hisql.util.PerformanceUtil;
+import pers.clare.util.PerformanceUtil;
 
 import java.util.List;
 

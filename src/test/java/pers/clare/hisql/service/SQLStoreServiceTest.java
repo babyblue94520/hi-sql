@@ -147,4 +147,20 @@ class SQLStoreServiceTest {
         service.deleteAll(store, Arrays.stream(array).filter(t -> t.getId() > max / 2).collect(Collectors.toList()));
         assertEquals(max / 2, service.find(Long.class, "select count(*) from test"));
     }
+
+
+    @Test
+    @Order(9)
+    void byObject() {
+        String name = String.valueOf(System.currentTimeMillis());
+        TestTable testTable = service.insertByObject(new TestTable(null, name));
+        assertNotNull(testTable.getId());
+        assertNotNull(service.findByObject(testTable));
+        String name2 = "test";
+        service.updateByObject(new TestTable(testTable.getId(), name2));
+        assertNotEquals(testTable.getName(), service.find(store, testTable).getName());
+        assertEquals(name2, service.find(store, testTable).getName());
+        service.deleteByObject(testTable);
+        assertNull(service.findByObject(testTable));
+    }
 }

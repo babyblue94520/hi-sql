@@ -69,4 +69,11 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
 
     Entity findById(Key key);
 
+    <T> T findByObject(T object);
+
+    <T> T insertByObject(T object);
+
+    <T> int updateByObject(T object);
+
+    <T> int deleteByObject(T object);
 }

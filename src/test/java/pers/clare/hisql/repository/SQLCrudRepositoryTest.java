@@ -293,4 +293,21 @@ public class SQLCrudRepositoryTest {
         }
         assertEquals(0, userRepository.count());
     }
+
+    @Test
+    void byObject() {
+        User user = new User();
+        String account = String.valueOf(System.currentTimeMillis());
+        user.setAccount(account);
+        userRepository.insertByObject(user);
+        assertNotNull(userRepository.findByObject(user));
+        assertEquals(account, user.getAccount());
+
+        String name = String.valueOf(System.currentTimeMillis());
+        user.setName(name);
+        assertEquals(1, userRepository.updateByObject(user));
+        assertEquals(name, userRepository.findByObject(user).getName());
+        assertEquals(1, userRepository.deleteByObject(user));
+        assertNull(userRepository.findByObject(user));
+    }
 }
