@@ -35,6 +35,7 @@ public class SQLQueryBuilder {
                         case ' ':
                         case ',':
                         case ')':
+                        case '\n':
                             put(keyIndex, new String(temp, 0, tempLength), partCount++);
                             tempLength = 0;
                             temp[tempLength++] = c;
