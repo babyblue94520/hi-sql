@@ -22,6 +22,10 @@ public class SQLCrudStore<T> extends SQLStore<T> {
     private String delete;
     private SQLQueryBuilder deleteById;
 
+    // Force the use of PreparedStatement
+    private boolean ps;
+
+
     public SQLCrudStore(
             Constructor<T> constructor
             , Map<String, FieldSetter> fieldSetMap
@@ -29,12 +33,14 @@ public class SQLCrudStore<T> extends SQLStore<T> {
             , FieldColumn[] fieldColumns
             , Field autoKey
             , Field[] keyFields
+            , boolean ps
     ) {
         super(constructor, fieldSetMap);
         this.tableName = tableName;
         this.fieldColumns = fieldColumns;
         this.autoKey = autoKey;
         this.keyFields = keyFields;
+        this.ps = ps;
     }
 
     public String getTableName() {
@@ -93,5 +99,9 @@ public class SQLCrudStore<T> extends SQLStore<T> {
             deleteById = SQLStoreUtil.buildDeleteById(fieldColumns, tableName);
         }
         return deleteById;
+    }
+
+    public boolean isPs() {
+        return ps;
     }
 }

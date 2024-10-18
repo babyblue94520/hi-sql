@@ -11,6 +11,7 @@ import pers.clare.hisql.util.FieldColumnFactory;
 import pers.clare.hisql.util.SQLQueryUtil;
 
 import javax.persistence.Table;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,11 +97,16 @@ public class SQLStoreFactory {
         int keyCount = 0;
         Field[] keyFields = new Field[length];
         Field autoKey = null;
+        boolean ps = false;
         for (FieldColumn column : fieldColumns) {
             if (column.isAuto()) autoKey = column.getField();
             if (column.isId()) {
                 keyFields[keyCount++] = column.getField();
             }
+            if (InputStream.class.isAssignableFrom(column.getField().getType())) {
+                ps = true;
+            }
+
         }
         Field[] temp = keyFields;
         keyFields = new Field[keyCount];
@@ -109,7 +115,7 @@ public class SQLStoreFactory {
         try {
             return new SQLCrudStore<>(clazz.getConstructor()
                     , buildFieldSetters(naming, clazz, converter)
-                    , tableName, fieldColumns, autoKey, keyFields
+                    , tableName, fieldColumns, autoKey, keyFields, ps
             );
         } catch (NoSuchMethodException e) {
             throw new HiSqlException(e.getMessage());

@@ -2,14 +2,12 @@ package pers.clare.hisql.service;
 
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.store.SQLCrudStore;
+import pers.clare.hisql.store.SQLData;
 import pers.clare.hisql.store.SQLStoreFactory;
-import pers.clare.hisql.util.ConnectionUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 import pers.clare.hisql.util.SQLStoreUtil;
 
 import java.lang.reflect.Field;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -25,11 +23,20 @@ public class SQLStoreService extends SQLStorePageService {
         }
         try {
             Field autoKey = store.getAutoKey();
-            String sql = SQLStoreUtil.buildInsertSQL(store, entity);
-            if (autoKey == null) {
-                update(sql);
+            if (store.isPs()) {
+                SQLData data = SQLStoreUtil.toInsertSQLData(store, entity);
+                if (autoKey == null) {
+                    update(data.getSql(), data.getParameters());
+                } else {
+                    autoKey.set(entity, insert(autoKey.getType(), data.getSql(), data.getParameters()));
+                }
             } else {
-                autoKey.set(entity, insert(autoKey.getType(), sql));
+                String sql = SQLStoreUtil.buildInsertSQL(store, entity);
+                if (autoKey == null) {
+                    update(sql);
+                } else {
+                    autoKey.set(entity, insert(autoKey.getType(), sql));
+                }
             }
             return entity;
         } catch (IllegalAccessException e) {
@@ -41,9 +48,7 @@ public class SQLStoreService extends SQLStorePageService {
             SQLCrudStore<T> store
             , T[] entities
     ) {
-        if (entities != null && entities.length > 0) {
-            insertAll(store, Arrays.asList(entities));
-        }
+        insertAll(store, Arrays.asList(entities));
         return entities;
     }
 
@@ -52,24 +57,10 @@ public class SQLStoreService extends SQLStorePageService {
             , Collection<T> entities
     ) {
         if (entities == null || entities.size() == 0) return entities;
-        return this.connection((connection) -> {
-            Field autoKey = store.getAutoKey();
-            Statement statement = connection.createStatement();
-            if (autoKey == null) {
-                for (T entity : entities) {
-                    ConnectionUtil.update(connection, SQLStoreUtil.buildInsertSQL(store, entity));
-                }
-            } else {
-                for (T entity : entities) {
-                    int count = statement.executeUpdate(SQLStoreUtil.buildInsertSQL(store, entity), Statement.RETURN_GENERATED_KEYS);
-                    if (count > 0) {
-                        ResultSet rs = statement.getGeneratedKeys();
-                        autoKey.set(entity, rs.next() ? rs.getObject(1, autoKey.getType()) : null);
-                    }
-                }
-            }
-            return entities;
-        });
+        for (T entity : entities) {
+            insert(store, entity);
+        }
+        return entities;
     }
 
     public <T> int update(
@@ -79,14 +70,22 @@ public class SQLStoreService extends SQLStorePageService {
         if (entity == null) {
             return 0;
         }
-        return update(SQLStoreUtil.buildUpdateSQL(store, entity));
+        if (store.isPs()) {
+            try {
+                SQLData data = SQLStoreUtil.toUpdateSQLData(store, entity);
+                return update(data.getSql(), data.getParameters());
+            } catch (IllegalAccessException e) {
+                throw new HiSqlException(e);
+            }
+        } else {
+            return update(SQLStoreUtil.buildUpdateSQL(store, entity));
+        }
     }
 
     public final <T> int[] updateAll(
             SQLCrudStore<T> sqlStore
             , T[] entities
     ) {
-        if (entities == null || entities.length == 0) return new int[0];
         return updateAll(sqlStore, Arrays.asList(entities));
     }
 
@@ -95,15 +94,12 @@ public class SQLStoreService extends SQLStorePageService {
             , Collection<T> entities
     ) {
         if (entities == null || entities.size() == 0) return new int[0];
-        return this.connection((connection) -> {
-            int[] counts = new int[entities.size()];
-            int i = 0;
-            Statement statement = connection.createStatement();
-            for (T entity : entities) {
-                counts[i++] = statement.executeUpdate(SQLStoreUtil.buildUpdateSQL(store, entity));
-            }
-            return counts;
-        });
+        int[] counts = new int[entities.size()];
+        int i = 0;
+        for (T entity : entities) {
+            counts[i++] = update(store, entity);
+        }
+        return counts;
     }
 
     public <T> int delete(
@@ -129,15 +125,12 @@ public class SQLStoreService extends SQLStorePageService {
             , Collection<T> entities
     ) {
         if (entities == null || entities.size() == 0) return new int[0];
-        return this.connection((connection) -> {
-            int[] counts = new int[entities.size()];
-            int i = 0;
-            Statement statement = connection.createStatement();
-            for (T entity : entities) {
-                counts[i++] = statement.executeUpdate(SQLQueryUtil.setValue(store.getDeleteById(), store.getKeyFields(), entity));
-            }
-            return counts;
-        });
+        int[] counts = new int[entities.size()];
+        int i = 0;
+        for (T entity : entities) {
+            counts[i++] = delete(store, entity);
+        }
+        return counts;
     }
 
     public <T> T findByObject(
@@ -146,10 +139,7 @@ public class SQLStoreService extends SQLStorePageService {
         if (entity == null) {
             return null;
         }
-        return find(
-                SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass())
-                , entity
-        );
+        return find(toStore(entity), entity);
     }
 
     public <T> T insertByObject(
@@ -158,10 +148,7 @@ public class SQLStoreService extends SQLStorePageService {
         if (entity == null) {
             return null;
         }
-        return insert(
-                SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass())
-                , entity
-        );
+        return insert(toStore(entity), entity);
     }
 
     public <T> int updateByObject(
@@ -173,10 +160,7 @@ public class SQLStoreService extends SQLStorePageService {
         if (entity instanceof String) {
             return update((String) entity);
         } else {
-            return update(
-                    SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass())
-                    , entity
-            );
+            return update(toStore(entity), entity);
         }
     }
 
@@ -186,10 +170,11 @@ public class SQLStoreService extends SQLStorePageService {
         if (entity == null) {
             return 0;
         }
-        return delete(
-                SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass())
-                , entity
-        );
+        return delete(toStore(entity), entity);
+    }
+
+    private <T> SQLCrudStore<T> toStore(T entity) {
+        return SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass());
     }
 
 }
