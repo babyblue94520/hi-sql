@@ -27,7 +27,7 @@ public class MySQLPaginationMode implements PaginationMode {
             , String sql
             , Object[] parameters
     ) throws SQLException {
-        String totalSql = "explain select count(*) from(" + sql + ")t";
+        String totalSql = "explain " + sql;
         ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
         if (rs.next()) {
             return rs.getLong("rows");
@@ -35,4 +35,5 @@ public class MySQLPaginationMode implements PaginationMode {
             throw new HiSqlException(String.format("query total error.(%s)", totalSql));
         }
     }
+
 }
