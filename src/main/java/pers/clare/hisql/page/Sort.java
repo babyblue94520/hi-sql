@@ -1,5 +1,10 @@
 package pers.clare.hisql.page;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 @SuppressWarnings("unused")
 public class Sort {
     public static final String[] EMPTY = new String[]{};
@@ -17,11 +22,4 @@ public class Sort {
         return new Sort(sorts);
     }
 
-    public String[] getSorts() {
-        return sorts;
-    }
-
-    public void setSorts(String[] sorts) {
-        this.sorts = sorts;
-    }
 }

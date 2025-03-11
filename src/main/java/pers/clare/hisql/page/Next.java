@@ -1,10 +1,13 @@
 package pers.clare.hisql.page;
 
+import lombok.Getter;
+
 import java.util.Collections;
 import java.util.List;
 
 
 @SuppressWarnings("unused")
+@Getter
 public class Next<T> {
     private final int page;
     private final int size;
@@ -23,17 +26,4 @@ public class Next<T> {
     public static <T> Next<T> empty(Pagination pagination) {
         return new Next<>(pagination.getPage(), pagination.getSize(), Collections.emptyList());
     }
-
-    public int getPage() {
-        return page;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public List<T> getRecords() {
-        return records;
-    }
-
 }
