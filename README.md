@@ -7,9 +7,9 @@
 ![](images/orm.png)
 ![](images/write_sql.png)
 
-A simple and highly flexible pure __SQL__ package.
+A simple and highly flexible pure __SQL__ library.
 
-There are many __ORM Frameworks__ available, and different projects may use different __ORMs__. When using them, you need to design __SQL__ based on requirements, then convert it into the corresponding __ORM__ syntax. Additionally, you must ensure that the __ORM__ translates into the expected __SQL__. Special __SQL__ cases may require extra effort to convert into __ORM__ syntax, and some adjustments might be necessary depending on the database used. We won’t go into more details about the pros and cons here.
+There are many __ORM Frameworks__ available, and different projects may use different __ORMs__. When using them, you need to design __SQL__ based on requirements, convert it into the corresponding __ORM__ syntax, and ensure that the __ORM__ generates the expected __SQL__. Special __SQL__ cases require extra effort to convert to __ORM__ syntax, and some need adjustments based on the database being used. The pros and cons of __ORMs__ are well known, so they won't be discussed further here.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ There are many __ORM Frameworks__ available, and different projects may use diff
 
 * Primarily __Native SQL__
 * High performance
-* Supports basic parameterized queries and dynamic __SQL__ replacement
+* Provides basic parameterized queries and dynamic __SQL__ substitution
 * Maps query results to any __Java__ object
 * Supports __Spring @Transactional__
 
@@ -28,7 +28,7 @@ There are many __ORM Frameworks__ available, and different projects may use diff
 
 ### Configuration
 
-By default, it scans all __Interfaces__ annotated with __@Repository__ in the same package.
+By default, it scans all __Interfaces__ annotated with __@Repository__ within the same __Package__.
 
 [HiSqlConfig.java](src/test/java/pers/clare/hisql/data/HiSqlConfig.java)
 
@@ -39,11 +39,11 @@ public class HiSqlConfig {
 }
 ```
 
-### Creating Entity and Interface
+### Create Entity and Interface
 
 * __SQLCrudRepository__
 
-  Extend __SQLCrudRepository__ to enable basic functionalities such as INSERT, UPDATE, DELETE, and SELECT for an __Entity__.
+  Extend __SQLCrudRepository__ to get basic INSERT, UPDATE, DELETE, and SELECT functionalities for an __Entity__.
 
   [User.java](src/test/java/pers/clare/hisql/data/entity/User.java)
 
@@ -80,7 +80,7 @@ public class UserService {
 
 * Parameterization
 
-    * Simple parameter
+    * Standard parameters
 
       ```java
       @Repository
@@ -93,7 +93,7 @@ public class UserService {
 
     * Object parameters
 
-      Parses an object into parameters like __id__, __obj.id__, __name__, __obj.name__. If there are duplicate parameter names, they are overridden based on order.
+      Converts an object into parameters like __id__, __obj.id__, __name__, __obj.name__. If duplicate parameter names exist, they are overwritten in order.
 
       ```java
       import lombok.Getter;
@@ -123,14 +123,15 @@ public class UserService {
       
         @HiSql("select * from test where name=:name")
         List<ValueObject> findAll2(ValueObject obj);
+      
       }
       ```
 
-* Dynamic __SQL__ Replacement
+* Dynamic __SQL__ Substitution
 
-  Use this method when you need to dynamically add conditions or replace __SQL__ strings.
+  Use this method when dynamically adding conditions or replacing __SQL__ strings.
 
-  Avoid concatenating __SQL__ externally to prevent __SQL Injection__. Follow the example below.
+  Avoid manual __SQL__ concatenation externally to prevent __SQL Injection__. Follow the example below.
 
   ```java
   @Repository
@@ -148,9 +149,9 @@ public class UserService {
       private DemoRepository demoRepository;
         
       public void findAll(String value){
-          // Simple string replacement operation
+          // Simple string substitution
           demoRepository.findAll("and column = :value", value);
-          // Using SqlReplace to replace null with blank or the specified string
+          // Using SqlReplace, if value is null, it is replaced with blank, otherwise, it is substituted along with the value parameter
           demoRepository.findAll(SqlReplace.of(value," and column = :value"));
       }
   }
@@ -158,11 +159,11 @@ public class UserService {
 
 * Read __SQL__ from __XML__
 
-    * The default root directory is __resources/hisql/__, where an __XML__ file with the same name as the __Class Name__ should be created.
+    * The default root directory is __resources/hisql/__, where an __XML__ file with the same name as the __Class__ should be created.
 
       Example: `resources/hisql/CustomRepository.xml`
 
-    * Create a __Tag__ with the same name as the **Method Name** or specify a __Tag__ with __@HiSql(name=...)__
+    * Create a __Tag__ with the same name as the **Method Name** or use __@HiSql(name=...)__ to specify a __Tag__.
 
         ```xml
         <?xml version="1.0" encoding="UTF-8"?>
@@ -174,7 +175,7 @@ public class UserService {
         </SQL>
         ```
 
-* Check tests for more examples
+* More examples in tests
 
   [CustomRepository.java](src/test/java/pers/clare/hisql/data/repository/CustomRepository.java)
 
@@ -182,7 +183,7 @@ public class UserService {
 
 * ### Pagination Optimization
 
-  Use initially calculated total count or an estimated value to avoid recalculating total count when paginating. Not recommended if precision is required.
+  Use an initially calculated total or an estimated value to avoid repeatedly calculating the total when paginating. If precise totals are required, this method is not recommended.
 
     ```java
     Pagination pagination = Pagination.of(0,20);
@@ -194,13 +195,19 @@ public class UserService {
 
 * ### Virtual Total Count
 
-  Using __select count(*)__ in pagination can be slow. Instead, use estimated totals to avoid scanning the entire result set.
+  In pagination mode, using __select count(*)__ to query the total count can be very slow. Estimating the total count avoids scanning the entire result set.
+
+  ### Usage
 
     ```java
     pagination.setVirtualTotal(true);
     ```
 
-    * MySQL implementation
+  ### Implementation
+
+    * MySQL
+
+      Replace the actual count (*) with the explain result "rows".
 
         ```java
         @Override
@@ -219,4 +226,94 @@ public class UserService {
             }
         }
         ```
+
+* ### Modifying __PaginationMode__
+
+  ### Configuration
+
+    ```java
+    @EnableHiSql(
+        paginationMode = MySQLPaginationMode.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+
+  ### Custom Implementation
+
+    ```java
+    public class CustomPaginationMode implements PaginationMode {
+
+        public void appendPaginationSQL(
+                StringBuilder sql
+                , Pagination pagination
+        ) {
+            appendSortSQL(sql, pagination.getSorts());
+            sql.append(" limit ")
+                    .append(pagination.getSize() * pagination.getPage())
+                    .append(',')
+                    .append(pagination.getSize());
+        }
+
+        @Override
+        public long getVirtualTotal(
+                Pagination pagination
+                , Connection connection
+                , String sql
+                , Object[] parameters
+        ) throws SQLException {
+            // TODO
+        }
+    }
+    ```
+
+* ### Modifying NamingStrategy
+
+  ### Configuration
+
+    ```java
+    @EnableHiSql(
+        naming = UpperCaseNamingStrategy.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+
+  ### Custom Implementation
+
+    ```java
+    public class CustomNamingStrategy implements NamingStrategy{
+    }
+
+    @EnableHiSql(
+        naming = CustomNamingStrategy.class
+    )
+    public class Demo2HiSqlConfig {
+    }
+    ```
+
+* ### Custom ResultSetConverter
+
+  Converts ResultSet Value to the target special type.
+
+  ### Custom Implementation
+
+    ```java
+    public class CustomResultSetConverter extends ResultSetConverter {
+        {
+            register(Pattern.class, (rs, i) -> Pattern.compile(rs.getString(i)));
+        }
+    }
+    ```
+
+  ### Configuration
+
+    ```java
+    @EnableHiSql(
+            resultSetConverter = CustomResultSetConverter.class
+    )
+    public class HiSqlConfig {
+    }
+    ```
+
 
