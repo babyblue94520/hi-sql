@@ -39,7 +39,7 @@ public interface PaginationMode {
         if (sorts == null || sorts.length == 0) return;
         sql.append(" order by ");
         for (String sort : sorts) {
-            if (sort == null || sort.length() == 0) continue;
+            if (sort == null || sort.isEmpty()) continue;
             if (Character.isUpperCase(sort.charAt(0))) {
                 sql.append(sort);
             } else {

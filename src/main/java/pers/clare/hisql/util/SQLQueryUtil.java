@@ -68,7 +68,7 @@ public class SQLQueryUtil {
         } else if (Collection.class.isAssignableFrom(valueClass)) {
             @SuppressWarnings("unchecked")
             Collection<Object> vs = (Collection<Object>) value;
-            if (vs.size() == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+            if (vs.isEmpty()) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
             sb.append('(');
             for (Object v : vs) appendInValue(sb, v);
             sb.deleteCharAt(sb.length() - 1).append(')');

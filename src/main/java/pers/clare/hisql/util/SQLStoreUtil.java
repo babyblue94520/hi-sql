@@ -83,20 +83,8 @@ public class SQLStoreUtil {
 
     public static SQLQueryBuilder buildCountById(FieldColumn[] fieldColumns, String tableName) {
         StringBuilder sql = new StringBuilder("select count(*) from ")
-                .append(tableName)
-                .append(" where ");
-        String and = " and ";
-        for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
-            if (fieldColumn.isId()) {
-                sql.append(fieldColumn.getColumnName())
-                        .append('=')
-                        .append(':')
-                        .append(fieldColumn.getField().getName())
-                        .append(and);
-            }
-        }
-        sql.delete(sql.length() - and.length(), sql.length() - 1);
+                .append(tableName);
+        appendWhere(sql, fieldColumns);
         return SQLQueryBuilder.create(sql.toString());
     }
 
@@ -137,21 +125,8 @@ public class SQLStoreUtil {
 
     public static SQLQueryBuilder buildDeleteById(FieldColumn[] fieldColumns, String tableName) {
         StringBuilder sql = new StringBuilder("delete from ")
-                .append(tableName)
-                .append(" where ");
-        String and = " and ";
-        for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
-            if (fieldColumn.isId()) {
-                sql.append(fieldColumn.getColumnName())
-                        .append('=')
-                        .append(':')
-                        .append(fieldColumn.getField().getName())
-                        .append(and);
-            }
-        }
-        sql.delete(sql.length() - and.length(), sql.length() - 1);
-
+                .append(tableName);
+        appendWhere(sql, fieldColumns);
         return SQLQueryBuilder.create(sql.toString());
     }
 
@@ -220,7 +195,23 @@ public class SQLStoreUtil {
 
 
     public static String getColumnName(NamingStrategy namingStrategy, Field field, Column column) {
-        return column == null || column.name().length() == 0 ? namingStrategy.turnCamelCase(field.getName()) : column.name();
+        return column == null || column.name().isEmpty() ? namingStrategy.turnCamelCase(field.getName()) : column.name();
+    }
+
+    private static void appendWhere(StringBuilder sql, FieldColumn[] fieldColumns) {
+        sql.append(" where ");
+        String and = " and ";
+        for (FieldColumn fieldColumn : fieldColumns) {
+            if (fieldColumn == null) continue;
+            if (fieldColumn.isId()) {
+                sql.append(fieldColumn.getColumnName())
+                        .append('=')
+                        .append(':')
+                        .append(fieldColumn.getField().getName())
+                        .append(" and ");
+            }
+        }
+        sql.delete(sql.length() - and.length(), sql.length() - 1);
     }
 
 }

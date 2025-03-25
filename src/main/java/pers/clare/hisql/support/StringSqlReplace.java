@@ -24,6 +24,6 @@ public class StringSqlReplace implements SqlReplace<String> {
 
     @Override
     public String getSql() {
-        return value == null || value.length() == 0 ? emptySql : sql;
+        return value == null || value.isEmpty() ? emptySql : sql;
     }
 }

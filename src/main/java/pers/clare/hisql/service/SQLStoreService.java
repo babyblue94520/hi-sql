@@ -56,7 +56,7 @@ public class SQLStoreService extends SQLStorePageService {
             SQLCrudStore<T> store
             , Collection<T> entities
     ) {
-        if (entities == null || entities.size() == 0) return entities;
+        if (entities == null || entities.isEmpty()) return entities;
         for (T entity : entities) {
             insert(store, entity);
         }
@@ -93,7 +93,7 @@ public class SQLStoreService extends SQLStorePageService {
             SQLCrudStore<T> store
             , Collection<T> entities
     ) {
-        if (entities == null || entities.size() == 0) return new int[0];
+        if (entities == null || entities.isEmpty()) return new int[0];
         int[] counts = new int[entities.size()];
         int i = 0;
         for (T entity : entities) {
@@ -124,7 +124,7 @@ public class SQLStoreService extends SQLStorePageService {
             SQLCrudStore<T> store
             , Collection<T> entities
     ) {
-        if (entities == null || entities.size() == 0) return new int[0];
+        if (entities == null || entities.isEmpty()) return new int[0];
         int[] counts = new int[entities.size()];
         int i = 0;
         for (T entity : entities) {

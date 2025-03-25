@@ -48,7 +48,7 @@ public class SQLQuery {
     public SQLQuery value(String key, Object value) {
         if (key == null) return this;
         List<Integer> list = keyIndex.get(key);
-        if (list == null || list.size() == 0) return this;
+        if (list == null || list.isEmpty()) return this;
         if (value == null) {
             value = NULL;
         }

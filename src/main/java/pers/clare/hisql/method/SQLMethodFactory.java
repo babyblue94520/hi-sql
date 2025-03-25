@@ -100,7 +100,7 @@ public class SQLMethodFactory {
             // check start with 'from'
             if (command.charAt(0) == 'f' || command.charAt(0) == 'F') {
                 command = CommandUtil.appendSelectColumns(sqlStoreService.getNaming(), returnType, command);
-                log.debug(String.format("%s.%s append select columns '%s'.", clazz.getSimpleName(), method.getName(), command));
+                log.debug("{}.{} append select columns '{}'.", clazz.getSimpleName(), method.getName(), command);
             }
 
             int commandType = sqlStoreService.getCommandTypeParser().parse(command);

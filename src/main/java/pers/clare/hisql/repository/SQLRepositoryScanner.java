@@ -152,7 +152,6 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
         @Override
         public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
                 throws IOException {
-
             return metadataReader.getClassMetadata().isInterface() && super.match(metadataReader, metadataReaderFactory);
         }
     }

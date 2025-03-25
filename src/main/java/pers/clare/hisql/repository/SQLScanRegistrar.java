@@ -91,7 +91,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         Class<? extends CommandTypeParser> commandTypeParser = annotationAttributes.getClass("commandTypeParser");
 
         BeanDefinitionBuilder sqlStoreServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLStoreService.class);
-        if (dataSourceName.length() == 0) {
+        if (dataSourceName.isEmpty()) {
             sqlStoreServiceBuilder.addAutowiredProperty("dataSource");
         } else {
             sqlStoreServiceBuilder.addPropertyReference("dataSource", dataSourceName);
