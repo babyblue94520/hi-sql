@@ -1,38 +1,35 @@
 # Hi SQL
 
-[中文](README.zh-TW.md)
+[English](README.md)
 
-## Overview
+## 概述
 
 ![](images/orm.png)
 ![](images/write_sql.png)
 
-A simple and highly flexible pure __SQL__ library.
+簡單、彈性高的純 __SQL__ 套件。
 
-There are many __ORM Frameworks__ available, and different projects may use different __ORMs__. When using them, you
-need to design __SQL__ based on requirements, convert it into the corresponding __ORM__ syntax, and ensure that the _
-_ORM__ generates the expected __SQL__. Special __SQL__ cases require extra effort to convert to __ORM__ syntax, and some
-need adjustments based on the database being used. The pros and cons of __ORMs__ are well known, so they won't be
-discussed further here.
+市面上有許多 __ORM Framework__，不同專案可能使用不同的 __ORM__，使用時，根據需求設計 __SQL__，再轉換成對應的 __ORM__ 語法，還須確定
+__ORM__ 轉換成預期的 __SQL__，遇到特殊的 __SQL__ 時，得花更多的時間轉成 __ORM__ 語法，少部分需要依使用的資料庫做調整，更多的優缺點，就不多說。
 
-## Requirements
+## 必要條件
 
 * Spring Framework 5+
 * Java 11+
 
-## Features
+## 特色
 
-* Primarily __Native SQL__
-* High performance
-* Provides basic parameterized queries and dynamic __SQL__ substitution
-* Maps query results to any __Java__ object
-* Supports __Spring @Transactional__
+* __Native SQL__ 為主
+* 高效能
+* 提供基本的參數化查詢和動態 __SQL__ 替換
+* 將查詢結果映射成任意 __Java__ 物件
+* 支持 __Spring @Transactional__
 
-## Quick Start
+## 快速開始
 
-### Configuration
+### 配置
 
-By default, it scans all __Interfaces__ annotated with __@Repository__ within the same __Package__.
+預設掃描同 __Package__ 下的所有有 __@Repository__ 的 __Interface__。
 
 [HiSqlConfig.java](src/test/java/pers/clare/hisql/data/HiSqlConfig.java)
 
@@ -44,11 +41,11 @@ public class HiSqlConfig {
 }
 ```
 
-### Create Entity and Interface
+### 建立 Entity 和 Interface
 
 * __SQLCrudRepository__
 
-  Extend __SQLCrudRepository__ to get basic INSERT, UPDATE, DELETE, and SELECT functionalities for an __Entity__.
+  繼承 __SQLCrudRepository__，即有對 __Entity__ INSERT、UPDATE、DELETE 和 SELECT 的基本功能。
 
   [User.java](src/test/java/pers/clare/hisql/data/entity/User.java)
 
@@ -63,9 +60,9 @@ public class HiSqlConfig {
 
 * __SQLRepository__
 
-  Extend __SQLRepository__ to create a lightweight __Repository__.
+  繼承 __SQLRepository__，建立輕量化的 __Repository__。
 
-### Usage
+### 使用
 
 ```java
 
@@ -82,11 +79,11 @@ public class UserService {
 }
 ```
 
-## Features
+## 功能
 
-* Parameterization
+* 參數化
 
-    * Standard parameters
+    * 一般參數
 
       ```java
       @Repository
@@ -97,10 +94,9 @@ public class UserService {
       }
       ```
 
-    * Object parameters
+    * 物件參數
 
-      Converts an object into parameters like __id__, __obj.id__, __name__, __obj.name__. If duplicate parameter names
-      exist, they are overwritten in order.
+      將物件解析為 __id__、__obj.id__、__name__、__obj.name__ 參數名稱，如果有相同的參數名稱時，則會根據順序覆蓋。
 
       ```java
       import lombok.Getter;
@@ -134,11 +130,11 @@ public class UserService {
       }
       ```
 
-* Dynamic __SQL__ Substitution
+* 動態 __SQL__ 替換
 
-  Use this method when dynamically adding conditions or replacing __SQL__ strings.
+  根據程式邏輯，需要動態增加條件或者替換 __SQL__ 字串時，可以使用該方法。
 
-  Avoid manual __SQL__ concatenation externally to prevent __SQL Injection__. Follow the example below.
+  另外，請勿自行在外部拼接 __SQL__，應遵循範例中的做法，避免 __SQL Injection__。
 
   ```java
   @Repository
@@ -156,22 +152,21 @@ public class UserService {
       private DemoRepository demoRepository;
         
       public void findAll(String value){
-          // Simple string substitution
+          // 簡單的字串替換操作
           demoRepository.findAll("and column = :value", value);
-          // Using SqlReplace, if value is null, it is replaced with blank, otherwise, it is substituted along with the value parameter
+          // 使用 SqlReplace，如果 value 是 null，則會替換成空白，反之則替換為指定字串，並且帶入 value 參數
           demoRepository.findAll(SqlReplace.of(value," and column = :value"));
       }
   }
   ```
 
-* Read __SQL__ from __XML__
+* 從 __XML__ 讀取 __SQL__
 
-    * The default root directory is __resources/hisql/__, where an __XML__ file with the same name as the __Class__
-      should be created.
+    * 預設根目錄為 __resources/hisql/__，建立和 __Class Name__ 一樣的 __XML__ 檔。
 
-      Example: `resources/hisql/CustomRepository.xml`
+      範例： `resources/hisql/CustomRepository.xml`
 
-    * Create a __Tag__ with the same name as the **Method Name** or use __@HiSql(name=...)__ to specify a __Tag__.
+    * 建立和 **Method Name** 一樣的 __Tag__ 或者 __@HiSql(name=...)__ 指定 __Tag__
 
         ```xml
         <?xml version="1.0" encoding="UTF-8"?>
@@ -183,16 +178,15 @@ public class UserService {
         </SQL>
         ```
 
-* More examples in tests
+* 參考測試更多範例
 
   [CustomRepository.java](src/test/java/pers/clare/hisql/data/repository/CustomRepository.java)
 
-## Advanced
+## 進階
 
-* ### Pagination Optimization
+* ### 分頁優化
 
-  Use an initially calculated total or an estimated value to avoid repeatedly calculating the total when paginating. If
-  precise totals are required, this method is not recommended.
+  使用初次計算的總數或預估值，避免在翻頁時重複計算總數。如果對總數精度有要求，則不建議使用此方式。
 
     ```java
     Pagination pagination = Pagination.of(0,20);
@@ -202,18 +196,17 @@ public class UserService {
     repository.page(pagination);
     ```
 
-* ### Virtual Total Count
+* ### 虛擬總數
 
-  In pagination mode, using __select count(*)__ to query the total count can be very slow. Estimating the total count
-  avoids scanning the entire result set.
+  在分頁模式中，使用 __select count(*)__ 查詢總數會非常慢，通過預估總數可以避免對整個結果集進行掃描。
 
-  ### Usage
+  ### 使用方式
 
     ```java
     pagination.setVirtualTotal(true);
     ```
 
-  ### Implementation
+  ### 實作
 
     * MySQL
 
@@ -237,19 +230,21 @@ public class UserService {
         }
         ```
 
-* ### Modifying __PaginationMode__
 
-  ### Configuration
+* ### 修改 __PaginationMode__
+
+  ### 設定
 
     ```java
     @EnableHiSql(
         paginationMode = MySQLPaginationMode.class
     )
     public class Demo2HiSqlConfig {
+
     }
     ```
 
-  ### Custom Implementation
+  ### 自定義
 
     ```java
     public class CustomPaginationMode implements PaginationMode {
@@ -275,11 +270,12 @@ public class UserService {
             // TODO
         }
     }
+
     ```
 
-* ### Modifying NamingStrategy
+* ### 修改 NamingStrategy
 
-  ### Configuration
+  ### 設定
 
     ```java
     @EnableHiSql(
@@ -289,7 +285,7 @@ public class UserService {
     }
     ```
 
-  ### Custom Implementation
+  ### 自定義
 
     ```java
     public class CustomNamingStrategy implements NamingStrategy{
@@ -302,11 +298,12 @@ public class UserService {
     }
     ```
 
-* ### Custom ResultSetConverter
 
-  Converts ResultSet Value to the target special type.
+* ### 自定義 ResultSetConverter
 
-  ### Custom Implementation
+  將 ResultSet Value 轉為目標的特殊類型。
+
+  ### 自定義
 
     ```java
     public class CustomResultSetConverter extends ResultSetConverter {
@@ -316,7 +313,7 @@ public class UserService {
     }
     ```
 
-  ### Configuration
+  ### 設定
 
     ```java
     @EnableHiSql(
@@ -325,5 +322,3 @@ public class UserService {
     public class HiSqlConfig {
     }
     ```
-
-
