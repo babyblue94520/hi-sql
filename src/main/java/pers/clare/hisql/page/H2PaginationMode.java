@@ -26,8 +26,7 @@ public class H2PaginationMode implements PaginationMode {
 
     @Override
     public long getVirtualTotal(
-            Pagination pagination
-            , Connection connection
+            Connection connection
             , String sql
             , Object[] parameters
     ) throws SQLException {

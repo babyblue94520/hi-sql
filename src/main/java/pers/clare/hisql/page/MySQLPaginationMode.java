@@ -22,8 +22,7 @@ public class MySQLPaginationMode implements PaginationMode {
 
     @Override
     public long getVirtualTotal(
-            Pagination pagination
-            , Connection connection
+            Connection connection
             , String sql
             , Object[] parameters
     ) throws SQLException {

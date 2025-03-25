@@ -128,7 +128,7 @@ public abstract class SQLPageService extends SQLNextService {
 
         if (listSize == 0) {
             if (!pagination.isVirtualTotal()) {
-                total = getPaginationMode().getTotal(pagination, connection, sql, parameters);
+                total = getPaginationMode().getTotal(connection, sql, parameters);
             }
         } else if (listSize >= size) {
             long prevTotal = pagination.getTotal();
@@ -137,14 +137,14 @@ public abstract class SQLPageService extends SQLNextService {
                 total = prevTotal;
             } else {
                 if (pagination.isVirtualTotal()) {
-                    long virtualTotal = getPaginationMode().getVirtualTotal(pagination, connection, sql, parameters);
+                    long virtualTotal = getPaginationMode().getVirtualTotal(connection, sql, parameters);
                     if (total < virtualTotal) {
                         total = virtualTotal;
                     } else {
                         total += size;
                     }
                 } else {
-                    total = getPaginationMode().getTotal(pagination, connection, sql, parameters);
+                    total = getPaginationMode().getTotal(connection, sql, parameters);
                 }
             }
         }

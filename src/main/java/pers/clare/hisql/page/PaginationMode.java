@@ -87,8 +87,7 @@ public interface PaginationMode {
     }
 
     default long getTotal(
-            Pagination pagination
-            , Connection connection
+            Connection connection
             , String sql
             , Object[] parameters
     ) throws SQLException {
@@ -102,11 +101,10 @@ public interface PaginationMode {
     }
 
     default long getVirtualTotal(
-            Pagination pagination
-            , Connection connection
+            Connection connection
             , String sql
             , Object[] parameters
     ) throws SQLException {
-        return getTotal(pagination, connection, sql, parameters);
+        return getTotal(connection, sql, parameters);
     }
 }
