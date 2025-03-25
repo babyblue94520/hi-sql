@@ -190,9 +190,8 @@ public class SQLMethodFactory {
         }
 
         if (resultSetCallback != null) {
-            switch (commandType) {
-                case CommandType.Query:
-                    return (service, sql, arguments, originArguments) -> service.query(sql, originArguments, resultSetCallback.apply(originArguments));
+            if (commandType == CommandType.Query) {
+                return (service, sql, arguments, originArguments) -> service.query(sql, originArguments, resultSetCallback.apply(originArguments));
             }
         }
         return null;

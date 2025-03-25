@@ -173,6 +173,7 @@ public class SQLStoreService extends SQLStorePageService {
         return delete(toStore(entity), entity);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> SQLCrudStore<T> toStore(T entity) {
         return SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass());
     }
