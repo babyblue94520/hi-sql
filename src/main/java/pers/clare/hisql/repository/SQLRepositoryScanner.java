@@ -87,7 +87,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                 if (isCandidateInterfaces(this.classLoader.loadClass(interfaceName))) return true;
             }
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.error(e);
         }
         return false;
     }

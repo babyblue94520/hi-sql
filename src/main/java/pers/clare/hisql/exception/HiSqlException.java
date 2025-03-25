@@ -1,7 +1,10 @@
 package pers.clare.hisql.exception;
 
+import lombok.Getter;
+
 import java.sql.SQLException;
 
+@Getter
 @SuppressWarnings("unused")
 public class HiSqlException extends RuntimeException {
     private SQLException sqlException;
@@ -29,7 +32,4 @@ public class HiSqlException extends RuntimeException {
         }
     }
 
-    public SQLException getSqlException() {
-        return sqlException;
-    }
 }

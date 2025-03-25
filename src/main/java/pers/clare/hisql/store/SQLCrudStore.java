@@ -1,6 +1,7 @@
 package pers.clare.hisql.store;
 
 
+import lombok.Getter;
 import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.util.SQLStoreUtil;
@@ -10,21 +11,25 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 public class SQLCrudStore<T> extends SQLStore<T> {
+    @Getter
     private final String tableName;
 
+    @Getter
     private final FieldColumn[] fieldColumns;
+    @Getter
     private final Field autoKey;
+    @Getter
     private final Field[] keyFields;
+    // Force the use of PreparedStatement
+    @Getter
+    private final boolean ps;
+
     private String count;
     private SQLQueryBuilder countById;
     private String select;
     private SQLQueryBuilder selectById;
     private String delete;
     private SQLQueryBuilder deleteById;
-
-    // Force the use of PreparedStatement
-    private boolean ps;
-
 
     public SQLCrudStore(
             Constructor<T> constructor
@@ -41,22 +46,6 @@ public class SQLCrudStore<T> extends SQLStore<T> {
         this.autoKey = autoKey;
         this.keyFields = keyFields;
         this.ps = ps;
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public FieldColumn[] getFieldColumns() {
-        return fieldColumns;
-    }
-
-    public Field getAutoKey() {
-        return autoKey;
-    }
-
-    public Field[] getKeyFields() {
-        return keyFields;
     }
 
     public String getCount() {
@@ -101,7 +90,4 @@ public class SQLCrudStore<T> extends SQLStore<T> {
         return deleteById;
     }
 
-    public boolean isPs() {
-        return ps;
-    }
 }

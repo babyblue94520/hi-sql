@@ -1,5 +1,7 @@
 package pers.clare.hisql.service;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.*;
@@ -12,6 +14,8 @@ import pers.clare.hisql.util.ConnectionUtil;
 import javax.sql.DataSource;
 import java.sql.Connection;
 
+@Setter
+@Getter
 public abstract class SQLBasicService {
 
     private DataSource dataSource;
@@ -25,54 +29,6 @@ public abstract class SQLBasicService {
     private ResultSetConverter resultSetConverter;
 
     private CommandTypeParser commandTypeParser;
-
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public String getXmlRoot() {
-        return xmlRoot;
-    }
-
-    public void setXmlRoot(String xmlRoot) {
-        this.xmlRoot = xmlRoot;
-    }
-
-    public PaginationMode getPaginationMode() {
-        return paginationMode;
-    }
-
-    public void setPaginationMode(PaginationMode paginationMode) {
-        this.paginationMode = paginationMode;
-    }
-
-    public NamingStrategy getNaming() {
-        return naming;
-    }
-
-    public void setNaming(NamingStrategy naming) {
-        this.naming = naming;
-    }
-
-    public ResultSetConverter getResultSetConverter() {
-        return resultSetConverter;
-    }
-
-    public void setResultSetConverter(ResultSetConverter resultSetConverter) {
-        this.resultSetConverter = resultSetConverter;
-    }
-
-    public CommandTypeParser getCommandTypeParser() {
-        return commandTypeParser;
-    }
-
-    public void setCommandTypeParser(CommandTypeParser commandTypeParser) {
-        this.commandTypeParser = commandTypeParser;
-    }
 
     public Connection getConnection() {
         return DataSourceUtils.getConnection(dataSource);

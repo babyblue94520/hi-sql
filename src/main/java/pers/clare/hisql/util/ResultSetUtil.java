@@ -66,7 +66,7 @@ public class ResultSetUtil {
     }
 
     public static <T> T toInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
         if (rs.next()) {
             return buildInstance(rs, sqlStore.getConstructor(), fields);
         }
@@ -75,7 +75,7 @@ public class ResultSetUtil {
 
     public static <T> Set<T> toSetInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         Set<T> result = new HashSet<>();
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
         while (rs.next()) {
             result.add(buildInstance(rs, sqlStore.getConstructor(), fields));
         }
@@ -84,7 +84,7 @@ public class ResultSetUtil {
 
     public static <T> List<T> toInstances(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
         List<T> list = new ArrayList<>();
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetMap());
+        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
         while (rs.next()) {
             list.add(buildInstance(rs, sqlStore.getConstructor(), fields));
         }

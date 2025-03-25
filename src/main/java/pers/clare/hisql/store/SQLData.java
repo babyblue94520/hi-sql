@@ -1,5 +1,8 @@
 package pers.clare.hisql.store;
 
+import lombok.Getter;
+
+@Getter
 public class SQLData {
     private final String sql;
     private final Object[] parameters;
@@ -9,11 +12,4 @@ public class SQLData {
         this.parameters = parameters;
     }
 
-    public String getSql() {
-        return sql;
-    }
-
-    public Object[] getParameters() {
-        return parameters;
-    }
 }

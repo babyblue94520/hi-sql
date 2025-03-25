@@ -1,5 +1,7 @@
 package pers.clare.hisql.repository;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
@@ -29,15 +31,25 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Applicat
         , BeanNameAware, BeanFactoryAware, BeanClassLoaderAware {
 
     protected BeanFactory beanFactory;
+    @Getter
     private ApplicationContext applicationContext;
     private ClassLoader classLoader;
 
+    @Getter
     private String beanName;
 
+    @Setter
+    @Getter
     private String serviceName;
 
+    @Setter
+    @Getter
     private String basePackage;
+    @Setter
+    @Getter
     private boolean processPropertyPlaceHolders;
+    @Setter
+    @Getter
     private AnnotationAttributes annotationAttributes;
 
     @Override
@@ -118,17 +130,9 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Applicat
         }
     }
 
-    public ApplicationContext getApplicationContext() {
-        return applicationContext;
-    }
-
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
-    }
-
-    public String getBeanName() {
-        return beanName;
     }
 
     @Override
@@ -136,35 +140,4 @@ public class SQLScanner implements BeanDefinitionRegistryPostProcessor, Applicat
         this.beanName = beanName;
     }
 
-    public String getBasePackage() {
-        return basePackage;
-    }
-
-    public void setBasePackage(String basePackage) {
-        this.basePackage = basePackage;
-    }
-
-    public boolean isProcessPropertyPlaceHolders() {
-        return processPropertyPlaceHolders;
-    }
-
-    public void setProcessPropertyPlaceHolders(boolean processPropertyPlaceHolders) {
-        this.processPropertyPlaceHolders = processPropertyPlaceHolders;
-    }
-
-    public AnnotationAttributes getAnnotationAttributes() {
-        return annotationAttributes;
-    }
-
-    public void setAnnotationAttributes(AnnotationAttributes annotationAttributes) {
-        this.annotationAttributes = annotationAttributes;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
 }

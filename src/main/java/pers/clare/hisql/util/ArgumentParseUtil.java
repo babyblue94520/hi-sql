@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import lombok.Getter;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentHandler;
 import pers.clare.hisql.function.ConnectionCallback;
@@ -148,6 +149,7 @@ public class ArgumentParseUtil {
         return values;
     }
 
+    @Getter
     public static class ParseResult {
         private final Map<String, ArgumentHandler<?>> getters = new HashMap<>();
         private ArgumentHandler<Pagination> pagination;
@@ -155,30 +157,6 @@ public class ArgumentParseUtil {
         private ArgumentHandler<ConnectionCallback<?>> connection;
         private ArgumentHandler<PreparedStatementCallback<?>> preparedStatement;
         private ArgumentHandler<ResultSetCallback<?>> resultSet;
-
-        public Map<String, ArgumentHandler<?>> getGetters() {
-            return getters;
-        }
-
-        public ArgumentHandler<Pagination> getPagination() {
-            return pagination;
-        }
-
-        public ArgumentHandler<Sort> getSort() {
-            return sort;
-        }
-
-        public ArgumentHandler<ConnectionCallback<?>> getConnection() {
-            return connection;
-        }
-
-        public ArgumentHandler<PreparedStatementCallback<?>> getPreparedStatement() {
-            return preparedStatement;
-        }
-
-        public ArgumentHandler<ResultSetCallback<?>> getResultSet() {
-            return resultSet;
-        }
 
         public boolean hasCallback() {
             return connection != null || preparedStatement != null || resultSet != null;

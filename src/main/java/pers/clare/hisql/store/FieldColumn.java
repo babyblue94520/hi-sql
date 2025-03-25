@@ -1,8 +1,11 @@
 package pers.clare.hisql.store;
 
+import lombok.Getter;
+
 import java.lang.reflect.Field;
 
 
+@Getter
 public class FieldColumn {
     private final Field field;
     private final boolean id;
@@ -22,31 +25,4 @@ public class FieldColumn {
         this.columnName = columnName;
     }
 
-    public Field getField() {
-        return field;
-    }
-
-    public boolean isId() {
-        return id;
-    }
-
-    public boolean isAuto() {
-        return auto;
-    }
-
-    public boolean isNotNullable() {
-        return notNullable;
-    }
-
-    public boolean isInsertable() {
-        return insertable;
-    }
-
-    public boolean isUpdatable() {
-        return updatable;
-    }
-
-    public String getColumnName() {
-        return columnName;
-    }
 }

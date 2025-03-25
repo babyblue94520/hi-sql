@@ -1,17 +1,26 @@
 package pers.clare.hisql.page;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
 @SuppressWarnings("unused")
 public class Pagination {
+    @Setter
     private int page;
+    @Setter
     private int size;
 
     /**
      * If total > 0, no more select count(*) will be executed.
      */
+    @Setter
     private long total;
-    private String[] sorts;
 
+    @Setter
     private boolean virtualTotal;
+
+    private String[] sorts;
 
     public Pagination() {
     }
@@ -51,26 +60,6 @@ public class Pagination {
         return new Pagination(page, size, sort.getSorts(), total);
     }
 
-    public int getPage() {
-        return page;
-    }
-
-    public void setPage(int page) {
-        this.page = page;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    public String[] getSorts() {
-        return sorts;
-    }
-
     public void setSorts(String... sorts) {
         this.sorts = sorts;
     }
@@ -79,22 +68,6 @@ public class Pagination {
         if (sort != null) {
             this.sorts = sort.getSorts();
         }
-    }
-
-    public long getTotal() {
-        return total;
-    }
-
-    public void setTotal(long total) {
-        this.total = total;
-    }
-
-    public boolean isVirtualTotal() {
-        return virtualTotal;
-    }
-
-    public void setVirtualTotal(boolean virtualTotal) {
-        this.virtualTotal = virtualTotal;
     }
 
     public Pagination next() {
