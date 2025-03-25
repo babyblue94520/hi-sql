@@ -14,12 +14,9 @@ import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Repository;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -55,7 +52,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
     }
 
     public void registerFilters() {
-        addIncludeFilter(new InterfaceTypeFilter(SQLRepository.class));
+        addIncludeFilter(new AssignableTypeFilter(SQLRepository.class));
     }
 
     @Override
@@ -141,18 +138,6 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
                     log.error(e);
                 }
             }
-        }
-    }
-
-    private static class InterfaceTypeFilter extends AssignableTypeFilter {
-        public InterfaceTypeFilter(Class<?> targetType) {
-            super(targetType);
-        }
-
-        @Override
-        public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
-                throws IOException {
-            return metadataReader.getClassMetadata().isInterface() && super.match(metadataReader, metadataReaderFactory);
         }
     }
 }
