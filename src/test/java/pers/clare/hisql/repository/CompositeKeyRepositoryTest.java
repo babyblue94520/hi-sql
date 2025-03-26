@@ -137,14 +137,37 @@ public class CompositeKeyRepositoryTest {
     @Test
     void findById() {
         CompositeTable data = create();
-        CompositeTable data2 = compositeKeyRepository.findById(
+        CompositeTable result = compositeKeyRepository.findById(
                 new CompositeKey()
                         .setId(data.getId())
                         .setAccount(data.getAccount())
         );
-        assertNotNull(data2);
-        assertEquals(data.getId(), data2.getId());
-        assertEquals(data.getAccount(), data2.getAccount());
+        assertNotNull(result);
+        assertEquals(data.getId(), result.getId());
+        assertEquals(data.getAccount(), result.getAccount());
+    }
+
+    @Test
+    void findAllByIds() {
+        List<CompositeTable> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        CompositeKey[] keys = new CompositeKey[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = new CompositeKey()
+                    .setId(data.getId())
+                    .setAccount(data.getAccount());
+        }
+        List<CompositeTable> result = compositeKeyRepository.findAllByIds(keys);
+        assertNotNull(result);
+        for (int i = 0; i < result.size(); i++) {
+            var o = list.get(i);
+            var r = result.get(i);
+            assertEquals(o.getId(), r.getId());
+            assertEquals(o.getAccount(), r.getAccount());
+        }
     }
 
     @Test
@@ -191,6 +214,26 @@ public class CompositeKeyRepositoryTest {
                         .setId(data.getId())
                         .setAccount(data.getAccount())
         ));
+    }
+
+    @Test
+    void deleteByIds() {
+        List<CompositeTable> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        CompositeKey[] keys = new CompositeKey[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = new CompositeKey()
+                    .setId(data.getId())
+                    .setAccount(data.getAccount());
+        }
+        int count = compositeKeyRepository.deleteByIds(keys);
+        assertEquals(list.size(), count);
+        for (var entity : list) {
+            assertNull(compositeKeyRepository.find(entity));
+        }
     }
 
     @Test

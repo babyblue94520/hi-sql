@@ -65,9 +65,13 @@ public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
     @NonNull
     int deleteById(Key key);
 
+    int deleteByIds(Key[] keys);
+
     Entity find(Entity entity);
 
     Entity findById(Key key);
+
+    List<Entity> findAllByIds(Key[] key);
 
     <T> T findByObject(T object);
 

@@ -2,6 +2,7 @@ package pers.clare.hisql.repository;
 
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.KeySQLBuilder;
+import pers.clare.hisql.function.KeysSQLBuilder;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
@@ -20,6 +21,7 @@ import java.util.List;
 public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity, Key> {
     protected final SQLCrudStore<Entity> sqlStore;
     protected final KeySQLBuilder<Key> keySQLBuilder;
+    protected final KeysSQLBuilder<Key> keysSQLBuilder;
 
     @SuppressWarnings("unchecked")
     public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<Entity> repositoryClass) {
@@ -29,7 +31,8 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         sqlStore = SQLStoreFactory.buildCrud(sqlService.getNaming(), sqlService.getResultSetConverter(), entityClass);
 
         Class<Key> keyClass = (Class<Key>) types[1];
-        keySQLBuilder = SQLStoreFactory.buildKey(keyClass, sqlStore);
+        keySQLBuilder = SQLStoreFactory.buildKeySQLBuilder(keyClass, sqlStore);
+        keysSQLBuilder = SQLStoreFactory.buildKeysSQLBuilder(keyClass, sqlStore);
     }
 
     public long count() {
@@ -85,6 +88,9 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
     }
 
+    public final List<Entity> findAllByIds(Key[] keys) {
+        return sqlService.findAll(sqlStore, keysSQLBuilder.apply(sqlStore.getSelectByIds(), keys));
+    }
 
     public Entity find(Entity entity) {
         return sqlService.find(sqlStore, entity);
@@ -104,6 +110,10 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
 
     public int deleteById(Key key) {
         return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), key));
+    }
+
+    public int deleteByIds(Key[] keys) {
+        return sqlService.update(keysSQLBuilder.apply(sqlStore.getDeleteByIds(), keys));
     }
 
     @Override

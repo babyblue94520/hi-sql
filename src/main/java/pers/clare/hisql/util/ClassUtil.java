@@ -113,6 +113,14 @@ public class ClassUtil {
         return type.isPrimitive() || type.getName().startsWith("java.");
     }
 
+    public static boolean isBasicTypeArray(Class<?> type) {
+        if (type.isArray()) {
+            type = type.getComponentType();
+            return isBasicType(type) || isBasicTypeArray(type);
+        }
+        return false;
+    }
+
     @NonNull
     public static Class<?> toClassType(Type type) {
         if (type instanceof Class) {

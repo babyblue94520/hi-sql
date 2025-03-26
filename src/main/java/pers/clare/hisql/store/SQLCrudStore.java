@@ -28,8 +28,10 @@ public class SQLCrudStore<T> extends SQLStore<T> {
     private SQLQueryBuilder countById;
     private String select;
     private SQLQueryBuilder selectById;
+    private SQLQueryBuilder selectByIds;
     private String delete;
     private SQLQueryBuilder deleteById;
+    private SQLQueryBuilder deleteByIds;
 
     public SQLCrudStore(
             Constructor<T> constructor
@@ -76,6 +78,13 @@ public class SQLCrudStore<T> extends SQLStore<T> {
         return selectById;
     }
 
+    public SQLQueryBuilder getSelectByIds() {
+        if (selectByIds == null) {
+            selectByIds = SQLStoreUtil.getSelectByIds(fieldColumns, tableName);
+        }
+        return selectByIds;
+    }
+
     public String getDelete() {
         if (delete == null) {
             delete = "delete from " + tableName;
@@ -90,4 +99,10 @@ public class SQLCrudStore<T> extends SQLStore<T> {
         return deleteById;
     }
 
+    public SQLQueryBuilder getDeleteByIds() {
+        if (deleteByIds == null) {
+            deleteByIds = SQLStoreUtil.buildDeleteByIds(fieldColumns, tableName);
+        }
+        return deleteByIds;
+    }
 }

@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pers.clare.hisql.data.entity.CompositeKey;
+import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.repository.UserRepository;
 import pers.clare.hisql.page.Next;
@@ -138,6 +140,27 @@ public class SQLCrudRepositoryTest {
     }
 
     @Test
+    void findAllByIds() {
+        List<User> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        Long[] keys = new Long[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = data.getId();
+        }
+        List<User> result = userRepository.findAllByIds(keys);
+        assertNotNull(result);
+        for (int i = 0; i < result.size(); i++) {
+            var o = list.get(i);
+            var r = result.get(i);
+            assertEquals(o.getId(), r.getId());
+            assertEquals(o.getAccount(), r.getAccount());
+        }
+    }
+
+    @Test
     void insert() {
         User user = create();
         assertEquals("", user.getName());
@@ -175,6 +198,24 @@ public class SQLCrudRepositoryTest {
         int count = userRepository.deleteById(user.getId());
         assertEquals(1, count);
         assertNull(userRepository.findById(user.getId()));
+    }
+
+    @Test
+    void deleteByIds() {
+        List<User> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        Long[] keys = new Long[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = data.getId();
+        }
+        int count = userRepository.deleteByIds(keys);
+        assertEquals(list.size(), count);
+        for (var entity : list) {
+            assertNull(userRepository.find(entity));
+        }
     }
 
     @Test

@@ -21,7 +21,7 @@ public class SQLStoreUtil {
         List<Object> values = new ArrayList<>();
         Object value;
         for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null || !fieldColumn.isInsertable()) continue;
+            if (!fieldColumn.isInsertable()) continue;
             value = fieldColumn.getField().get(entity);
             if (value == null) {
                 if (fieldColumn.isAuto()) continue;
@@ -48,23 +48,21 @@ public class SQLStoreUtil {
         List<Object> setValues = new ArrayList<>();
         List<Object> whereValues = new ArrayList<>();
         for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
             Object value = fieldColumn.getField().get(entity);
             if (fieldColumn.isId()) {
+                whereValues.add(value);
                 whereSql.append(fieldColumn.getColumnName())
                         .append('=')
-                        .append('?');
-                whereValues.add(value);
-                whereSql.append(" and ");
+                        .append('?')
+                        .append(" and ");
             } else {
                 if (!fieldColumn.isUpdatable()) continue;
                 if (value == null && fieldColumn.isNotNullable()) continue;
-
+                setValues.add(value);
                 valueSql.append(fieldColumn.getColumnName())
                         .append('=')
                         .append('?')
                         .append(',');
-                setValues.add(value);
             }
         }
         whereSql.delete(whereSql.length() - 5, whereSql.length() - 1);
@@ -82,52 +80,58 @@ public class SQLStoreUtil {
     }
 
     public static SQLQueryBuilder buildCountById(FieldColumn[] fieldColumns, String tableName) {
-        StringBuilder sql = new StringBuilder("select count(*) from ")
-                .append(tableName);
-        appendWhere(sql, fieldColumns);
-        return SQLQueryBuilder.create(sql.toString());
+        String sql = "select count(*) from " +
+                     tableName +
+                     buildWhereById(fieldColumns);
+        return SQLQueryBuilder.create(sql);
     }
-
 
     public static String buildSelect(FieldColumn[] fieldColumns, String tableName) {
         StringBuilder sql = new StringBuilder("select ");
-        if (fieldColumns != null && fieldColumns.length > 0) {
-            for (FieldColumn column : fieldColumns) {
-                sql.append(column.getColumnName()).append(',');
-            }
-            sql.delete(sql.length() - 1, sql.length());
+        for (FieldColumn column : fieldColumns) {
+            sql.append(column.getColumnName()).append(',');
         }
+        sql.delete(sql.length() - 1, sql.length());
         sql.append(" from ").append(tableName);
         return sql.toString();
     }
 
     public static SQLQueryBuilder getSelectById(FieldColumn[] fieldColumns, String tableName) {
         StringBuilder sql = new StringBuilder("select ");
-        StringBuilder columnSql = new StringBuilder();
-        StringBuilder whereSql = new StringBuilder(" where ");
-        String and = " and ";
         for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
-            columnSql.append(fieldColumn.getColumnName()).append(',');
-            if (fieldColumn.isId()) {
-                whereSql.append(fieldColumn.getColumnName())
-                        .append('=')
-                        .append(':')
-                        .append(fieldColumn.getField().getName())
-                        .append(and);
-            }
+            sql.append(fieldColumn.getColumnName()).append(',');
         }
-        columnSql.delete(columnSql.length() - 1, columnSql.length());
-        whereSql.delete(whereSql.length() - and.length(), whereSql.length());
-        sql.append(columnSql).append(" from ").append(tableName).append(whereSql);
+        sql.delete(sql.length() - 1, sql.length());
+        sql.append(" from ")
+                .append(tableName)
+                .append(buildWhereById(fieldColumns));
+        return SQLQueryBuilder.create(sql.toString());
+    }
+
+    public static SQLQueryBuilder getSelectByIds(FieldColumn[] fieldColumns, String tableName) {
+        StringBuilder sql = new StringBuilder("select ");
+        for (FieldColumn fieldColumn : fieldColumns) {
+            sql.append(fieldColumn.getColumnName()).append(',');
+        }
+        sql.delete(sql.length() - 1, sql.length());
+        sql.append(" from ")
+                .append(tableName)
+                .append(buildWhereByIds(fieldColumns));
         return SQLQueryBuilder.create(sql.toString());
     }
 
     public static SQLQueryBuilder buildDeleteById(FieldColumn[] fieldColumns, String tableName) {
-        StringBuilder sql = new StringBuilder("delete from ")
-                .append(tableName);
-        appendWhere(sql, fieldColumns);
-        return SQLQueryBuilder.create(sql.toString());
+        String sql = "delete from " +
+                     tableName +
+                     buildWhereById(fieldColumns);
+        return SQLQueryBuilder.create(sql);
+    }
+
+    public static SQLQueryBuilder buildDeleteByIds(FieldColumn[] fieldColumns, String tableName) {
+        String sql = "delete from " +
+                     tableName +
+                     buildWhereByIds(fieldColumns);
+        return SQLQueryBuilder.create(sql);
     }
 
 
@@ -140,7 +144,7 @@ public class SQLStoreUtil {
             sql.append("insert into ").append(tableName).append("(");
             StringBuilder valueSql = new StringBuilder("values(");
             for (FieldColumn fieldColumn : fieldColumns) {
-                if (fieldColumn == null || !fieldColumn.isInsertable()) continue;
+                if (!fieldColumn.isInsertable()) continue;
                 Object value = fieldColumn.getField().get(entity);
                 if (value == null && (fieldColumn.isAuto() || fieldColumn.isNotNullable())) continue;
                 sql.append(fieldColumn.getColumnName()).append(',');
@@ -167,7 +171,6 @@ public class SQLStoreUtil {
             StringBuilder whereSql = new StringBuilder(" where ");
             String and = " and ";
             for (FieldColumn fieldColumn : fieldColumns) {
-                if (fieldColumn == null) continue;
                 if (fieldColumn.isId()) {
                     Object value = fieldColumn.getField().get(entity);
                     whereSql.append(fieldColumn.getColumnName())
@@ -193,25 +196,34 @@ public class SQLStoreUtil {
         }
     }
 
-
     public static String getColumnName(NamingStrategy namingStrategy, Field field, Column column) {
         return column == null || column.name().isEmpty() ? namingStrategy.turnCamelCase(field.getName()) : column.name();
     }
 
-    private static void appendWhere(StringBuilder sql, FieldColumn[] fieldColumns) {
-        sql.append(" where ");
-        String and = " and ";
+    private static StringBuilder buildWhereById(FieldColumn[] fieldColumns) {
+        StringBuilder result = new StringBuilder(" where ");
         for (FieldColumn fieldColumn : fieldColumns) {
-            if (fieldColumn == null) continue;
             if (fieldColumn.isId()) {
-                sql.append(fieldColumn.getColumnName())
+                result.append(fieldColumn.getColumnName())
                         .append('=')
                         .append(':')
                         .append(fieldColumn.getField().getName())
                         .append(" and ");
             }
         }
-        sql.delete(sql.length() - and.length(), sql.length() - 1);
+        result.delete(result.length() - 5, result.length() - 1);
+        return result;
     }
 
+    private static StringBuilder buildWhereByIds(FieldColumn[] fieldColumns) {
+        StringBuilder result = new StringBuilder(" where (");
+        for (FieldColumn fieldColumn : fieldColumns) {
+            if (fieldColumn.isId()) {
+                result.append(fieldColumn.getColumnName()).append(',');
+            }
+        }
+        result.delete(result.length() - 1, result.length());
+        result.append(") in :keys");
+        return result;
+    }
 }
