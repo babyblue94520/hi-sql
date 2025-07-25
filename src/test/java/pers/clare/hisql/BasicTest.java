@@ -14,10 +14,10 @@ public abstract class BasicTest {
     protected final String column1 = "ID";
     protected final String column2 = "NAME";
 
-    protected final String findAll = "select * from " + table;
-    protected final String findAllWhereColumn1 = findAll + " where " + column1 + ">?";
+    protected final String findAll = "SELECT * FROM " + table;
+    protected final String findAllWhereColumn1 = findAll + " WHERE " + column1 + ">?";
 
-    protected final String descColumn1 = column1 + " desc";
+    protected final String descColumn1 = column1 + " DESC";
 
     @Autowired
     private SQLService sqlService;
@@ -26,15 +26,15 @@ public abstract class BasicTest {
 
     @BeforeEach
     protected void create() {
-        sqlService.update("create table " + table + " (id int auto_increment, name varchar(255),primary key(id))");
+        sqlService.update("CREATE TABLE " + table + " (id INT AUTO_INCREMENT, name VARCHAR(255),PRIMARY KEY(id))");
         for (int i = 1; i <= getMax(); i++) {
-            sqlService.update("insert into " + table + " values(?,?)", i, i);
+            sqlService.update("INSERT INTO " + table + " VALUES(?,?)", i, i);
         }
     }
 
     @AfterEach
     protected void drop() {
-        sqlService.update("drop table " + table);
+        sqlService.update("DROP TABLE " + table);
     }
 
 }

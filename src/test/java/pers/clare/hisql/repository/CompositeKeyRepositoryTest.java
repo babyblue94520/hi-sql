@@ -72,9 +72,9 @@ public class CompositeKeyRepositoryTest {
         assertEquals(1, compositeKeyRepository.findAll().size());
         create();
         assertEquals(2, compositeKeyRepository.findAll().size());
-        List<CompositeTable> datas = compositeKeyRepository.findAll(Sort.of("id desc,account asc"));
+        List<CompositeTable> datas = compositeKeyRepository.findAll(Sort.of("id DESC,account ASC"));
         assertTrue(datas.get(0).getId() > datas.get(datas.size() - 1).getId());
-        datas = compositeKeyRepository.findAll(Sort.of("id asc,account desc"));
+        datas = compositeKeyRepository.findAll(Sort.of("id ASC,account DESC"));
         assertTrue(datas.get(0).getId() < datas.get(datas.size() - 1).getId());
     }
 
@@ -96,9 +96,9 @@ public class CompositeKeyRepositoryTest {
         }
         assertEquals(total, count);
 
-        List<CompositeTable> datas = compositeKeyRepository.page(Pagination.of(0, size, "id desc,account asc")).getRecords();
+        List<CompositeTable> datas = compositeKeyRepository.page(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
         assertTrue(datas.get(0).getId() > datas.get(datas.size() - 1).getId());
-        datas = compositeKeyRepository.page(Pagination.of(0, size, "id asc,account desc")).getRecords();
+        datas = compositeKeyRepository.page(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
         assertTrue(datas.get(0).getId() < datas.get(datas.size() - 1).getId());
     }
 
@@ -119,9 +119,9 @@ public class CompositeKeyRepositoryTest {
         }
         assertEquals(total, count);
 
-        List<CompositeTable> datas = compositeKeyRepository.next(Pagination.of(0, size, "id desc,account asc")).getRecords();
+        List<CompositeTable> datas = compositeKeyRepository.next(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
         assertTrue(datas.get(0).getId() > datas.get(datas.size() - 1).getId());
-        datas = compositeKeyRepository.next(Pagination.of(0, size, "id asc,account desc")).getRecords();
+        datas = compositeKeyRepository.next(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
         assertTrue(datas.get(0).getId() < datas.get(datas.size() - 1).getId());
     }
 

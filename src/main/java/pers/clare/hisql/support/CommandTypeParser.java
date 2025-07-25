@@ -13,9 +13,9 @@ public class CommandTypeParser {
             case 'U':
             case 'd':
             case 'D':
-                return CommandType.Update;
+                return CommandType.UPDATE;
             default:
-                return CommandType.Query;
+                return CommandType.QUERY;
         }
     }
 }

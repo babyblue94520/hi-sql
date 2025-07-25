@@ -23,7 +23,7 @@ public class SQLBasicServiceTest {
 
     @Test
     void connection() {
-        String sql = "select ?";
+        String sql = "SELECT ?";
         Object value = "1";
         Object[] values = new Object[]{value};
         Object result = sqlBasicService.connection(sql, values, (connection, sql2, args) -> {
@@ -45,7 +45,7 @@ public class SQLBasicServiceTest {
 
     @Test
     void prepared() {
-        String sql = "select ?";
+        String sql = "SELECT ?";
         Object value = "1";
         Object result = sqlBasicService.prepared(sql, (ps) -> {
             ps.setObject(1, value);
@@ -60,12 +60,12 @@ public class SQLBasicServiceTest {
 
     @Test
     void query() {
-        String sql = "select ?";
+        String sql = "SELECT ?";
         Object value = "1";
         Object result = sqlBasicService.query(sql, new Object[]{value}, (rs) -> rs.next() ? rs.getObject(1) : null);
         assertEquals(value, result);
 
-        sql = "select '2'";
+        sql = "SELECT '2'";
         result = sqlBasicService.query(sql, new Object[]{value}, (rs) -> rs.next() ? rs.getObject(1) : null);
         assertEquals("2", result);
     }

@@ -45,7 +45,7 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public String getCount() {
         if (count == null) {
-            count = "select count(*) from " + tableName;
+            count = SQLStoreUtil.buildCount(tableName);
         }
         return count;
     }
@@ -80,7 +80,7 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public String getDelete() {
         if (delete == null) {
-            delete = "delete from " + tableName;
+            count = SQLStoreUtil.buildDelete(tableName);
         }
         return delete;
     }

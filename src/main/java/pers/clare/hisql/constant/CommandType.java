@@ -4,10 +4,10 @@ public interface CommandType {
     /**
      * executeQuery
      */
-    int Query = 1;
+    int QUERY = 1;
 
     /**
      * executeUpdate
      */
-    int Update = 2;
+    int UPDATE = 2;
 }

@@ -7,12 +7,12 @@ import pers.clare.hisql.repository.SQLRepository;
 @Repository
 public interface InjectRepository extends SQLRepository {
 
-    @HiSql("select true where 'test' = ?")
+    @HiSql("SELECT true WHERE 'test' = ?")
     Boolean query(String sql);
 
-    @HiSql("select true where 'test' = :sql")
+    @HiSql("SELECT true WHERE 'test' = :sql")
     Boolean query2(String sql);
 
-    @HiSql("select :sql")
+    @HiSql("SELECT :sql")
     String query3(String sql);
 }

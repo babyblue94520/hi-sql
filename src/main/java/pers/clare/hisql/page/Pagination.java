@@ -12,7 +12,7 @@ public class Pagination {
     private int size;
 
     /**
-     * If total > 0, no more select count(*) will be executed.
+     * If total > 0, no more SELECT COUNT(*) will be executed.
      */
     @Setter
     private long total;

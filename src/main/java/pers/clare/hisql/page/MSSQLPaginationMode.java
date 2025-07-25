@@ -7,10 +7,10 @@ public class MSSQLPaginationMode implements PaginationMode {
             , Pagination pagination
     ) {
         appendSortSQL(sql, pagination.getSorts());
-        sql.append(" offset ")
+        sql.append(" OFFSET ")
                 .append(pagination.getSize() * pagination.getPage())
-                .append(" fetch next ")
+                .append(" FETCH NEXT ")
                 .append(pagination.getSize())
-                .append(" rows only");
+                .append(" ROWS ONLY");
     }
 }

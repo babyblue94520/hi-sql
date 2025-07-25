@@ -14,7 +14,7 @@ public class MySQLPaginationMode implements PaginationMode {
             , Pagination pagination
     ) {
         appendSortSQL(sql, pagination.getSorts());
-        sql.append(" limit ")
+        sql.append(" LIMIT ")
                 .append(pagination.getSize() * pagination.getPage())
                 .append(',')
                 .append(pagination.getSize());
@@ -26,10 +26,10 @@ public class MySQLPaginationMode implements PaginationMode {
             , String sql
             , Object[] parameters
     ) throws SQLException {
-        String totalSql = "explain " + sql;
+        String totalSql = "EXPLAIN " + sql;
         ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
         if (rs.next()) {
-            return rs.getLong("rows");
+            return rs.getLong("ROWS");
         } else {
             throw new HiSqlException(String.format("query total error.(%s)", totalSql));
         }

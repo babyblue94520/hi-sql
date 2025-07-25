@@ -62,9 +62,9 @@ class SQLQueryServiceTest extends BasicTest {
 
     @Test
     void findAllMap() {
-        String sql = "select 1,2 union all select 2,3 union all select 1,4 union all select 2,3";
+        String sql = "SELECT 1,2 union all SELECT 2,3 union all SELECT 1,4 union all SELECT 2,3";
         assertEquals(4, service.findAllMap(Long.class, sql).size());
-        sql = "select 1,2 union all select 2,3 union all select 1,4 union all select 2,3";
+        sql = "SELECT 1,2 union all SELECT 2,3 union all SELECT 1,4 union all SELECT 2,3";
         assertEquals(4, service.findAllMap(Long.class, sql).size());
     }
 
@@ -74,7 +74,7 @@ class SQLQueryServiceTest extends BasicTest {
         assertEquals(max, service.findAll(Long.class, sql).size());
         assertEquals(max, service.findAll(String.class, sql).size());
 
-        sql = "select ?,? union all select 3,4";
+        sql = "SELECT ?,? union all SELECT 3,4";
         List<Long> result = service.findAll(Long.class, sql, 1, 2);
         assertEquals(2, result.size());
         assertEquals(1, result.get(0));

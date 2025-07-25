@@ -10,7 +10,7 @@ import java.sql.SQLException;
 public interface PaginationMode {
 
     default String buildTotalSQL(String sql) {
-        return "select count(*) from(" + sql + ")t";
+        return "SELECT COUNT(*) FROM(" + sql + ")t";
     }
 
     default String buildSortSQL(
@@ -37,7 +37,7 @@ public interface PaginationMode {
 
     default void appendSortSQL(StringBuilder sql, String[] sorts) {
         if (sorts == null || sorts.length == 0) return;
-        sql.append(" order by ");
+        sql.append(" ORDER BY ");
         for (String sort : sorts) {
             if (sort == null || sort.isEmpty()) continue;
             if (Character.isUpperCase(sort.charAt(0))) {
@@ -96,7 +96,7 @@ public interface PaginationMode {
         if (rs.next()) {
             return rs.getLong(1);
         } else {
-            throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+            throw new HiSqlException(String.format("Query total error.(%s)", totalSql));
         }
     }
 

@@ -92,7 +92,7 @@ public class UserService {
       @Repository
       public interface DemoRepository extends SQLRepository {
       
-        @HiSql("select * from test where value=:value")
+        @HiSql("SELECT * FROM test WHERE value=:value")
         List<Object> findAll(String value);
       }
       ```
@@ -118,17 +118,17 @@ public class UserService {
       public interface DemoRepository extends SQLRepository {
       
         @HiSql("""
-              select *
-              from test
-              where name=:obj.name
+              SELECT *
+              FROM test
+              WHERE name=:obj.name
               limit 1
           """)
         ValueObject findAll(ValueObject obj);
       
-        @HiSql("select * from test where name=:obj.name")
+        @HiSql("SELECT * FROM test WHERE name=:obj.name")
         List<ValueObject> findAll(ValueObject obj);
       
-        @HiSql("select * from test where name=:name")
+        @HiSql("SELECT * FROM test WHERE name=:name")
         List<ValueObject> findAll2(ValueObject obj);
       
       }
@@ -144,10 +144,10 @@ public class UserService {
   @Repository
   public interface DemoRepository extends SQLRepository {
     
-      @HiSql("select * from test where 1=1 {valueCondition}")
+      @HiSql("SELECT * FROM test WHERE 1=1 {valueCondition}")
       List<Map<String,Object>> findAll(String valueCondition, String value);
       
-      @HiSql("select * from test where 1=1 {value}")
+      @HiSql("SELECT * FROM test WHERE 1=1 {value}")
       List<Map<String,Object>> findAll(SqlReplace<Object> value);
   }
     
@@ -157,9 +157,9 @@ public class UserService {
         
       public void findAll(String value){
           // Simple string substitution
-          demoRepository.findAll("and column = :value", value);
+          demoRepository.findAll("AND column = :value", value);
           // Using SqlReplace, if value is null, it is replaced with blank, otherwise, it is substituted along with the value parameter
-          demoRepository.findAll(SqlReplace.of(value," and column = :value"));
+          demoRepository.findAll(SqlReplace.of(value," AND column = :value"));
       }
   }
   ```
@@ -178,7 +178,7 @@ public class UserService {
         <!DOCTYPE SQL>
         <SQL>
             <findAll><![CDATA[
-                select * from user where 1=1 {id} and :id is not null
+                SELECT * FROM user WHERE 1=1 {id} AND :id IS NOT NULL
             ]]></findAll>
         </SQL>
         ```
@@ -204,7 +204,7 @@ public class UserService {
 
 * ### Virtual Total Count
 
-  In pagination mode, using __select count(*)__ to query the total count can be very slow. Estimating the total count
+  In pagination mode, using __SELECT COUNT(*)__ to query the total count can be very slow. Estimating the total count
   avoids scanning the entire result set.
 
   ### Usage
@@ -227,7 +227,7 @@ public class UserService {
                 , String sql
                 , Object[] parameters
         ) throws SQLException {
-            String totalSql = "explain select count(*) from(" + sql + ")t";
+            String totalSql = "EXPLAIN SELECT COUNT(*) FROM(" + sql + ")t";
             ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
             if (rs.next()) {
                 return rs.getLong("rows");

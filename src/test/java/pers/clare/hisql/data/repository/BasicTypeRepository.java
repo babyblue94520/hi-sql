@@ -13,114 +13,114 @@ import java.util.Set;
 
 @Repository
 public interface BasicTypeRepository extends SQLRepository {
-    @HiSql("select ?")
+    @HiSql("SELECT ?")
     int findInt(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     long findLong(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     float findFloat(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     boolean findBoolean(int value);
 
-    @HiSql("select :value where false")
+    @HiSql("SELECT :value WHERE false")
     int notFoundInt(int value);
 
-    @HiSql("select :value where false")
+    @HiSql("SELECT :value WHERE false")
     long notFoundLong(int value);
 
-    @HiSql("select :value where false")
+    @HiSql("SELECT :value WHERE false")
     float notFoundFloat(int value);
 
-    @HiSql("select :value where false")
+    @HiSql("SELECT :value WHERE false")
     boolean notFoundBoolean(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Integer findInteger(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     String findString(String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Map<String, Integer> findIntegerMap(int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Map<String, String> findStringMap(String value);
 
-    @HiSql("select ? as value, ? as value2")
+    @HiSql("SELECT ? AS value, ? AS value2")
     Map<String, String> findStringMap2(String value, String value2);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Set<Integer> findIntegerSet(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Set<String> findStringSet(String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Set<Map<String, Integer>> findIntegerMapSet(int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Set<Map<String, String>> findStringMapSet(String value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     List<Integer> findIntegerList(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     List<String> findStringList(String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     List<Map<String, Integer>> findIntegerMapList(int value);
 
-    @HiSql("select ? as value")
+    @HiSql("SELECT ? AS value")
     List<Map<String, String>> findStringMapList(String value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Page<Integer> pageInteger(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Page<Integer> pageInteger(Pagination pagination, int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Page<String> pageString(String value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Page<String> pageString(Pagination pagination, String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Page<Map<String, Integer>> pageIntegerMap(int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Page<Map<String, Integer>> pageIntegerMap(Pagination pagination, int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Page<Map<String, String>> pageStringMap(String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Page<Map<String, String>> pageStringMap(Pagination pagination, String value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Next<Integer> nextInteger(int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Next<Integer> nextInteger(Pagination pagination, int value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Next<String> nextString(String value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Next<String> nextString(Pagination pagination, String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Next<Map<String, Integer>> nextIntegerMap(int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Next<Map<String, Integer>> nextIntegerMap(Pagination pagination, int value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Next<Map<String, String>> nextStringMap(String value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Next<Map<String, String>> nextStringMap(Pagination pagination, String value);
 }

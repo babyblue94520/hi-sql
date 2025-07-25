@@ -13,18 +13,18 @@ import java.util.List;
 @Repository
 public interface CompositeKeyRepository extends SQLCrudRepository<CompositeTable, CompositeKey> {
 
-    @HiSql(value = "insert into composite_table (account)values(:account)", returnIncrementKey = true)
+    @HiSql(value = "INSERT INTO composite_table (account)VALUES(:account)", returnIncrementKey = true)
     Long insert(String account);
 
-    @HiSql("select * from composite_table where (id,account) in :keys")
+    @HiSql("SELECT * FROM composite_table WHERE (id,account) IN :keys")
     List<CompositeTable> findAll(Collection<CompositeKey> keys);
 
-    @HiSql("select * from composite_table where (account,id) in :keys")
+    @HiSql("SELECT * FROM composite_table WHERE (account,id) IN :keys")
     List<CompositeTable> findAll2(Collection<CompositeKey2> keys);
 
-    @HiSql("select * from composite_table where (id,account) in :keys")
+    @HiSql("SELECT * FROM composite_table WHERE (id,account) IN :keys")
     List<CompositeTable> findAll(CompositeKey[] keys);
 
-    @HiSql("select * from composite_table where (account,id) in :keys")
+    @HiSql("SELECT * FROM composite_table WHERE (account,id) IN :keys")
     List<CompositeTable> findAll2(CompositeKey2[] keys);
 }

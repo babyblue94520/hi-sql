@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class BasicTypeRepositoryTest {
+class BasicTypeRepositoryTest {
 
     private final BasicTypeRepository basicTypeRepository;
 

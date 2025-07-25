@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class SQLCrudRepositoryTest {
+class SQLCrudRepositoryTest {
 
     private final UserRepository userRepository;
 
@@ -66,9 +66,9 @@ public class SQLCrudRepositoryTest {
         assertEquals(1, userRepository.findAll().size());
         create();
         assertEquals(2, userRepository.findAll().size());
-        List<User> users = userRepository.findAll(Sort.of("id desc,account asc"));
+        List<User> users = userRepository.findAll(Sort.of("id DESC,account ASC"));
         assertTrue(users.get(0).getId() > users.get(users.size() - 1).getId());
-        users = userRepository.findAll(Sort.of("id asc,account desc"));
+        users = userRepository.findAll(Sort.of("id ASC,account DESC"));
         assertTrue(users.get(0).getId() < users.get(users.size() - 1).getId());
     }
 
@@ -90,10 +90,21 @@ public class SQLCrudRepositoryTest {
         }
         assertEquals(total, count);
 
-        List<User> users = userRepository.page(Pagination.of(0, size, "id desc,account asc")).getRecords();
+        List<User> users = userRepository.page(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
         assertTrue(users.get(0).getId() > users.get(users.size() - 1).getId());
-        users = userRepository.page(Pagination.of(0, size, "id asc,account desc")).getRecords();
+        users = userRepository.page(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
         assertTrue(users.get(0).getId() < users.get(users.size() - 1).getId());
+    }
+
+    @Test
+    void virtual() {
+        int total = 23;
+        for (int i = 0; i < total; i++) {
+            create();
+        }
+        Pagination pagination = Pagination.of(0, 10, "id DESC,account ASC");
+        pagination.setVirtualTotal(true);
+        userRepository.page(pagination);
     }
 
     @Test
@@ -113,9 +124,9 @@ public class SQLCrudRepositoryTest {
         }
         assertEquals(total, count);
 
-        List<User> users = userRepository.next(Pagination.of(0, size, "id desc,account asc")).getRecords();
+        List<User> users = userRepository.next(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
         assertTrue(users.get(0).getId() > users.get(users.size() - 1).getId());
-        users = userRepository.next(Pagination.of(0, size, "id asc,account desc")).getRecords();
+        users = userRepository.next(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
         assertTrue(users.get(0).getId() < users.get(users.size() - 1).getId());
     }
 

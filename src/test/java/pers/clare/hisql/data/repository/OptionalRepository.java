@@ -12,45 +12,45 @@ import java.util.Optional;
 @Repository
 public interface OptionalRepository extends SQLRepository {
     @SuppressWarnings({"rawtypes"})
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional find(Object value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional<?> findAny(Object value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     <T> Optional<T> findGeneric(T value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional<String> findString(Object value);
 
     @SuppressWarnings({"rawtypes"})
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional<List> findAll(Object value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional<List<?>> findAllAny(Object value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     <T> Optional<List<T>> findAllGeneric(T value);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     Optional<List<String>> findAllString(Object value);
 
     @SuppressWarnings({"rawtypes"})
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Optional<List<Map>> findAllMap(Object value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     <T> Optional<List<Map<String, T>>> findAllGenericMap(T value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Optional<List<Map<String, Object>>> findAllObjectMap(Object value);
 
     @SuppressWarnings({"rawtypes"})
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     Optional<Page> page(Object value);
 
-    @HiSql("select :value as value")
+    @HiSql("SELECT :value AS value")
     <T> Optional<Page<T>> pageGeneric(T value);
 }

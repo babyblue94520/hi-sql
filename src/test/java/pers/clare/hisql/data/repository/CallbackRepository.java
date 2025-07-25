@@ -9,18 +9,18 @@ import pers.clare.hisql.repository.SQLRepository;
 
 @Repository
 public interface CallbackRepository extends SQLRepository {
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     <T> T connection(T value, ConnectionCallback<T> callback);
 
-    @HiSql("select ?")
+    @HiSql("SELECT ?")
     <T> T connectionPrepared(T value, ConnectionCallback<T> callback);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     <T> T prepared(T value, PreparedStatementCallback<T> callback);
 
-    @HiSql("select ?")
+    @HiSql("SELECT ?")
     <T> T prepared2(PreparedStatementCallback<T> callback);
 
-    @HiSql("select :value")
+    @HiSql("SELECT :value")
     <T> T resultSet(T value, ResultSetCallback<T> callback);
 }

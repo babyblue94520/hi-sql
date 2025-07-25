@@ -1,21 +1,34 @@
 package pers.clare.hisql.util;
 
+import lombok.experimental.UtilityClass;
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.page.Next;
+import pers.clare.hisql.page.Page;
 import pers.clare.hisql.query.SQLQueryBuilder;
+import pers.clare.hisql.service.SQLBasicService;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLData;
 import pers.clare.hisql.store.SQLStoreColumn;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.lang.reflect.Type;
+import java.util.*;
 
+@UtilityClass
 public class SQLStoreUtil {
+
+    private static final Set<Class<?>> parameterizedTypes = new HashSet<>();
+
+    static {
+
+        parameterizedTypes.add(Optional.class);
+        parameterizedTypes.add(Page.class);
+        parameterizedTypes.add(Next.class);
+    }
 
     public static SQLData toInsertSQLData(SQLCrudStore<?> sqlStore, Object entity) throws Exception {
         SQLStoreColumn[] columns = sqlStore.getColumns();
-        StringBuilder columnSql = new StringBuilder("insert into " + sqlStore.getTableName() + "(");
-        StringBuilder valueSql = new StringBuilder("values(");
+        StringBuilder columnSql = new StringBuilder("INSERT INTO " + sqlStore.getTableName() + "(");
+        StringBuilder valueSql = new StringBuilder("VALUES(");
         List<Object> values = new ArrayList<>();
         Object value;
         for (SQLStoreColumn column : columns) {
@@ -40,8 +53,8 @@ public class SQLStoreUtil {
 
     public static SQLData toUpdateSQLData(SQLCrudStore<?> sqlStore, Object entity) throws Exception {
         SQLStoreColumn[] columns = sqlStore.getColumns();
-        StringBuilder valueSql = new StringBuilder("update " + sqlStore.getTableName() + " set ");
-        StringBuilder whereSql = new StringBuilder(" where ");
+        StringBuilder valueSql = new StringBuilder("UPDATE " + sqlStore.getTableName() + " SET ");
+        StringBuilder whereSql = new StringBuilder(" WHERE ");
         List<Object> setValues = new ArrayList<>();
         List<Object> whereValues = new ArrayList<>();
         for (SQLStoreColumn column : columns) {
@@ -51,7 +64,7 @@ public class SQLStoreUtil {
                 whereSql.append(column.getName())
                         .append('=')
                         .append('?')
-                        .append(" and ");
+                        .append(" AND ");
             } else {
                 if (!column.isUpdatable()) continue;
                 Object value = column.getValue(entity);
@@ -77,56 +90,91 @@ public class SQLStoreUtil {
         return new SQLData(valueSql.toString(), values);
     }
 
+    public static String buildCount(String tableName) {
+        return "SELECT COUNT(*) FROM " + tableName;
+    }
+
     public static SQLQueryBuilder buildCountById(SQLStoreColumn[] columns, String tableName) {
-        String sql = "select count(*) from " +
+        String sql = "SELECT COUNT(*) FROM " +
                      tableName +
                      buildWhereById(columns);
         return SQLQueryBuilder.create(sql);
     }
 
     public static String buildSelect(SQLStoreColumn[] columns, String tableName) {
-        StringBuilder sql = new StringBuilder("select ");
+        StringBuilder sql = new StringBuilder("SELECT ");
         for (SQLStoreColumn column : columns) {
             sql.append(column.getName()).append(',');
         }
         sql.delete(sql.length() - 1, sql.length());
-        sql.append(" from ").append(tableName);
+        sql.append(" FROM ").append(tableName);
         return sql.toString();
     }
 
     public static SQLQueryBuilder getSelectById(SQLStoreColumn[] columns, String tableName) {
-        StringBuilder sql = new StringBuilder("select ");
+        StringBuilder sql = new StringBuilder("SELECT ");
         for (SQLStoreColumn column : columns) {
             sql.append(column.getName()).append(',');
         }
         sql.delete(sql.length() - 1, sql.length());
-        sql.append(" from ")
+        sql.append(" FROM ")
                 .append(tableName)
                 .append(buildWhereById(columns));
         return SQLQueryBuilder.create(sql.toString());
     }
 
     public static SQLQueryBuilder getSelectByIds(SQLStoreColumn[] columns, String tableName) {
-        StringBuilder sql = new StringBuilder("select ");
+        StringBuilder sql = new StringBuilder("SELECT ");
         for (SQLStoreColumn column : columns) {
             sql.append(column.getName()).append(',');
         }
         sql.delete(sql.length() - 1, sql.length());
-        sql.append(" from ")
+        sql.append(" FROM ")
                 .append(tableName)
                 .append(buildWhereByIds(columns));
         return SQLQueryBuilder.create(sql.toString());
     }
 
+
+    public static String appendSelectColumns(SQLBasicService service, Type returnType, String command) {
+        Class<?> returnClass = ClassUtil.toWrapperClass(returnType);
+        if (
+                parameterizedTypes.contains(returnClass)
+                || returnClass.isArray()
+                || Collection.class.isAssignableFrom(returnClass)
+        ) {
+            returnClass = ClassUtil.getValueClass(returnType, 0);
+        }
+        if (returnClass == Map.class) {
+            return "SELECT * " + command;
+        } else {
+            if (SQLStoreUtil.isIgnore(returnClass)) {
+                throw new HiSqlException("Select return type not support type. %s", returnClass);
+            }
+            SQLStoreColumn[] columns = SQLStoreColumnUtil.create(returnClass, service);
+            StringBuilder sb = new StringBuilder("SELECT ");
+            for (SQLStoreColumn column : columns) {
+                sb.append(column.getName()).append(',');
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(' ').append(command);
+            return sb.toString();
+        }
+    }
+
+    public static String buildDelete(String tableName) {
+        return "DELETE FROM " + tableName;
+    }
+
     public static SQLQueryBuilder buildDeleteById(SQLStoreColumn[] columns, String tableName) {
-        String sql = "delete from " +
+        String sql = "DELETE FROM " +
                      tableName +
                      buildWhereById(columns);
         return SQLQueryBuilder.create(sql);
     }
 
     public static SQLQueryBuilder buildDeleteByIds(SQLStoreColumn[] columns, String tableName) {
-        String sql = "delete from " +
+        String sql = "DELETE FROM " +
                      tableName +
                      buildWhereByIds(columns);
         return SQLQueryBuilder.create(sql);
@@ -139,8 +187,8 @@ public class SQLStoreUtil {
             String tableName = store.getTableName();
 
             StringBuilder sql = new StringBuilder();
-            sql.append("insert into ").append(tableName).append("(");
-            StringBuilder valueSql = new StringBuilder("values(");
+            sql.append("INSERT INTO ").append(tableName).append("(");
+            StringBuilder valueSql = new StringBuilder("VALUES(");
             for (SQLStoreColumn column : columns) {
                 if (!column.isInsertable()) continue;
                 Object value = column.getValue(entity);
@@ -165,9 +213,9 @@ public class SQLStoreUtil {
             String tableName = store.getTableName();
 
             StringBuilder sql = new StringBuilder();
-            sql.append("update ").append(tableName).append(" set ");
-            StringBuilder whereSql = new StringBuilder(" where ");
-            String and = " and ";
+            sql.append("UPDATE ").append(tableName).append(" SET ");
+            StringBuilder whereSql = new StringBuilder(" WHERE ");
+            String and = " AND ";
             for (SQLStoreColumn column : columns) {
                 if (column.isId()) {
                     Object value = column.getValue(entity);
@@ -195,14 +243,14 @@ public class SQLStoreUtil {
     }
 
     private static StringBuilder buildWhereById(SQLStoreColumn[] columns) {
-        StringBuilder result = new StringBuilder(" where ");
+        StringBuilder result = new StringBuilder(" WHERE ");
         for (SQLStoreColumn column : columns) {
             if (column.isId()) {
                 result.append(column.getName())
                         .append('=')
                         .append(':')
                         .append(column.getField().getName())
-                        .append(" and ");
+                        .append(" AND ");
             }
         }
         result.delete(result.length() - 5, result.length() - 1);
@@ -210,14 +258,14 @@ public class SQLStoreUtil {
     }
 
     private static StringBuilder buildWhereByIds(SQLStoreColumn[] columns) {
-        StringBuilder result = new StringBuilder(" where (");
+        StringBuilder result = new StringBuilder(" WHERE (");
         for (SQLStoreColumn column : columns) {
             if (column.isId()) {
                 result.append(column.getName()).append(',');
             }
         }
         result.delete(result.length() - 1, result.length());
-        result.append(") in :keys");
+        result.append(") IN :keys");
         return result;
     }
 
@@ -232,4 +280,38 @@ public class SQLStoreUtil {
                 ;
     }
 
+    public static String normalizeWhitespace(String command) {
+        char[] cs = command.toCharArray();
+        char c;
+        int count = 0;
+        char[] temp = new char[cs.length];
+        boolean pause = false;
+        boolean space = false;
+        for (int i = 0; i < cs.length; i++) {
+            c = cs[i];
+            switch (c) {
+                case '\t':
+                case '\n':
+                case '\r':
+                case ' ':
+                    if (!pause) {
+                        space = count > 0;
+                        break;
+                    }
+                default:
+                    if (space) {
+                        temp[count++] = ' ';
+                        space = false;
+                    }
+                    temp[count++] = c;
+                    if (c == '\'') {
+                        pause = !pause;
+                    } else if (c == '\\' && cs[i + 1] == '\'') {
+                        temp[count++] = '\'';
+                        i++;
+                    }
+            }
+        }
+        return new String(temp, 0, count);
+    }
 }

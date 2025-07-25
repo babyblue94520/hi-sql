@@ -83,12 +83,12 @@ public class SQLMethodFactory {
                     throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or @HiSql", clazz.getName(), method.getName())));
                 }
             }
-            command = CommandUtil.clearCommand(command);
+            command = SQLStoreUtil.normalizeWhitespace(command);
 
             // check start with 'from'
-            if (command.charAt(0) == 'f' || command.charAt(0) == 'F') {
-                command = CommandUtil.appendSelectColumns(service, returnType, command);
-                log.debug("{}.{} append select columns '{}'.", clazz.getSimpleName(), method.getName(), command);
+            if (command.regionMatches(true, 0, "FROM", 0, 4)) {
+                command = SQLStoreUtil.appendSelectColumns(service, returnType, command);
+                log.debug("{}.{} append SELECT columns '{}'.", clazz.getSimpleName(), method.getName(), command);
             }
 
             int commandType = service.getCommandTypeParser().parse(command);
@@ -106,15 +106,15 @@ public class SQLMethodFactory {
             if (sqlProcessor == null) {
                 String finalCommand = command;
                 if (optional) {
-                    interceptor = (invocation) -> Optional.ofNullable(sqlInvoke.apply(service, finalCommand, invocation.getArguments(), invocation.getArguments()));
+                    interceptor = invocation -> Optional.ofNullable(sqlInvoke.apply(service, finalCommand, invocation.getArguments(), invocation.getArguments()));
                 } else {
-                    interceptor = (invocation) -> sqlInvoke.apply(service, finalCommand, invocation.getArguments(), invocation.getArguments());
+                    interceptor = invocation -> sqlInvoke.apply(service, finalCommand, invocation.getArguments(), invocation.getArguments());
                 }
             } else {
                 if (optional) {
-                    interceptor = (invocation) -> Optional.ofNullable(sqlInvoke.apply(service, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments()));
+                    interceptor = invocation -> Optional.ofNullable(sqlInvoke.apply(service, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments()));
                 } else {
-                    interceptor = (invocation) -> sqlInvoke.apply(service, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments());
+                    interceptor = invocation -> sqlInvoke.apply(service, sqlProcessor.apply(invocation.getArguments()), null, invocation.getArguments());
                 }
             }
             methodInterceptors.put(method, interceptor);
@@ -138,7 +138,7 @@ public class SQLMethodFactory {
             );
         } else {
             switch (commandType) {
-                case CommandType.Query:
+                case CommandType.QUERY:
                     sqlInvoke = buildSqlSelectInvoke(
                             returnType
                             , service
@@ -146,7 +146,7 @@ public class SQLMethodFactory {
                             , parseResult.getSort()
                     );
                     break;
-                case CommandType.Update:
+                case CommandType.UPDATE:
                     if (autoKey) {
                         sqlInvoke = buildSqlInsertInvoke(returnType);
                     } else {
@@ -177,7 +177,7 @@ public class SQLMethodFactory {
         }
 
         if (resultSetCallback != null) {
-            if (commandType == CommandType.Query) {
+            if (CommandType.QUERY == commandType) {
                 return (service, sql, arguments, originArguments) -> service.query(sql, originArguments, resultSetCallback.apply(originArguments));
             }
         }

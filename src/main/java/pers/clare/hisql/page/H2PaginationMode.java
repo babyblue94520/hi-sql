@@ -18,7 +18,7 @@ public class H2PaginationMode implements PaginationMode {
             , Pagination pagination
     ) {
         appendSortSQL(sql, pagination.getSorts());
-        sql.append(" limit ")
+        sql.append(" LIMIT ")
                 .append(pagination.getSize() * pagination.getPage())
                 .append(',')
                 .append(pagination.getSize());
@@ -30,7 +30,7 @@ public class H2PaginationMode implements PaginationMode {
             , String sql
             , Object[] parameters
     ) throws SQLException {
-        ResultSet rs = ConnectionUtil.query(connection, "explain analyze " + sql, parameters);
+        ResultSet rs = ConnectionUtil.query(connection, "EXPLAIN ANALYZE " + sql, parameters);
         if (rs.next()) {
             String plan = rs.getString(1);
             Matcher matcher = scanCountPattern.matcher(plan);
@@ -39,6 +39,6 @@ public class H2PaginationMode implements PaginationMode {
                 return Long.parseLong(countString);
             }
         }
-        throw new HiSqlException(String.format("query total error.(%s)", sql));
+        throw new HiSqlException(String.format("Query total error.(%s)", sql));
     }
 }

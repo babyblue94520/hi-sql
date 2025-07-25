@@ -89,7 +89,7 @@ public class UserService {
       @Repository
       public interface DemoRepository extends SQLRepository {
       
-        @HiSql("select * from test where value=:value")
+        @HiSql("SELECT * FROM test WHERE value=:value")
         List<Object> findAll(String value);
       }
       ```
@@ -114,17 +114,17 @@ public class UserService {
       public interface DemoRepository extends SQLRepository {
       
         @HiSql("""
-              select *
-              from test
-              where name=:obj.name
+              SELECT *
+              FROM test
+              WHERE name=:obj.name
               limit 1
           """)
         ValueObject findAll(ValueObject obj);
       
-        @HiSql("select * from test where name=:obj.name")
+        @HiSql("SELECT * FROM test WHERE name=:obj.name")
         List<ValueObject> findAll(ValueObject obj);
       
-        @HiSql("select * from test where name=:name")
+        @HiSql("SELECT * FROM test WHERE name=:name")
         List<ValueObject> findAll2(ValueObject obj);
       
       }
@@ -140,10 +140,10 @@ public class UserService {
   @Repository
   public interface DemoRepository extends SQLRepository {
     
-      @HiSql("select * from test where 1=1 {valueCondition}")
+      @HiSql("SELECT * FROM test WHERE 1=1 {valueCondition}")
       List<Map<String,Object>> findAll(String valueCondition, String value);
       
-      @HiSql("select * from test where 1=1 {value}")
+      @HiSql("SELECT * FROM test WHERE 1=1 {value}")
       List<Map<String,Object>> findAll(SqlReplace<Object> value);
   }
     
@@ -153,9 +153,9 @@ public class UserService {
         
       public void findAll(String value){
           // 簡單的字串替換操作
-          demoRepository.findAll("and column = :value", value);
+          demoRepository.findAll("AND column = :value", value);
           // 使用 SqlReplace，如果 value 是 null，則會替換成空白，反之則替換為指定字串，並且帶入 value 參數
-          demoRepository.findAll(SqlReplace.of(value," and column = :value"));
+          demoRepository.findAll(SqlReplace.of(value," AND column = :value"));
       }
   }
   ```
@@ -173,7 +173,7 @@ public class UserService {
         <!DOCTYPE SQL>
         <SQL>
             <findAll><![CDATA[
-                select * from user where 1=1 {id} and :id is not null
+                SELECT * FROM user WHERE 1=1 {id} AND :id IS NOT NULL
             ]]></findAll>
         </SQL>
         ```
@@ -198,7 +198,7 @@ public class UserService {
 
 * ### 虛擬總數
 
-  在分頁模式中，使用 __select count(*)__ 查詢總數會非常慢，通過預估總數可以避免對整個結果集進行掃描。
+  在分頁模式中，使用 __SELECT COUNT(*)__ 查詢總數會非常慢，通過預估總數可以避免對整個結果集進行掃描。
 
   ### 使用方式
 
@@ -220,7 +220,7 @@ public class UserService {
                 , String sql
                 , Object[] parameters
         ) throws SQLException {
-            String totalSql = "explain select count(*) from(" + sql + ")t";
+            String totalSql = "EXPLAIN SELECT COUNT(*) FROM(" + sql + ")t";
             ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
             if (rs.next()) {
                 return rs.getLong("rows");

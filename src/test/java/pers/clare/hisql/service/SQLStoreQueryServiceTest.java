@@ -44,7 +44,7 @@ class SQLStoreQueryServiceTest extends BasicTest {
         TestTable testTable = service.find(store, findAll);
         assertEquals(1, testTable.getId());
         assertEquals("1", testTable.getName());
-        testTable = service.find(store, findAll + " where id=?", 2);
+        testTable = service.find(store, findAll + " WHERE id=?", 2);
         assertEquals(2, testTable.getId());
         assertEquals("2", testTable.getName());
 

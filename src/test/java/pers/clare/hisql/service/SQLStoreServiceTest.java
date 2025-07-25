@@ -56,7 +56,7 @@ class SQLStoreServiceTest {
             list.add(new TestTable(null, String.valueOf(i + 1)));
         }
         service.insertAll(store, list);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
     }
 
     @Test
@@ -67,7 +67,7 @@ class SQLStoreServiceTest {
             array[i] = new TestTable(null, String.valueOf(i + 1));
         }
         service.insertAll(store, array);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
     }
 
     @Test
@@ -90,7 +90,7 @@ class SQLStoreServiceTest {
             list.add(new TestTable(null, String.valueOf(i + 1)));
         }
         service.insertAll(store, list);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
         String name = "test";
         for (TestTable testTable : list) {
             testTable.setName(name);
@@ -109,7 +109,7 @@ class SQLStoreServiceTest {
             array[i] = new TestTable(null, String.valueOf(i + 1));
         }
         service.insertAll(store, array);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
         String name = "test";
         for (TestTable testTable : array) {
             testTable.setName(name);
@@ -129,9 +129,9 @@ class SQLStoreServiceTest {
             list.add(new TestTable(null, String.valueOf(i + 1)));
         }
         service.insertAll(store, list);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
         service.deleteAll(store, list.stream().filter(t -> t.getId() > max / 2).collect(Collectors.toList()));
-        assertEquals(max / 2, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max / 2, service.find(Long.class, "SELECT COUNT(*) FROM test"));
     }
 
     @Test
@@ -142,9 +142,9 @@ class SQLStoreServiceTest {
             array[i] = new TestTable(null, String.valueOf(i + 1));
         }
         service.insertAll(store, array);
-        assertEquals(max, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max, service.find(Long.class, "SELECT COUNT(*) FROM test"));
         service.deleteAll(store, Arrays.stream(array).filter(t -> t.getId() > max / 2).collect(Collectors.toList()));
-        assertEquals(max / 2, service.find(Long.class, "select count(*) from test"));
+        assertEquals(max / 2, service.find(Long.class, "SELECT COUNT(*) FROM test"));
     }
 
 

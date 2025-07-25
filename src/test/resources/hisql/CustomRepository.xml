@@ -2,6 +2,6 @@
 <!DOCTYPE SQL>
 <SQL>
     <findAll><![CDATA[
-		select * from user where 1=1 {id} and :id is not null
+		SELECT * FROM user WHERE 1=1 {id} AND :id IS NOT NULL
 	]]></findAll>
 </SQL>

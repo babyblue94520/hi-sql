@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-public class SQLRepositoryTest {
+class SQLRepositoryTest {
 
     private final CustomRepository customRepository;
 
@@ -227,13 +227,13 @@ public class SQLRepositoryTest {
         for (int i = 0; i < count; i++) {
             customRepository.insert(account);
         }
-        List<User> users = customRepository.findAllByAccount(Sort.of("id desc,account asc"), account);
+        List<User> users = customRepository.findAllByAccount(Sort.of("id DESC,account ASC"), account);
         long prevId = Long.MAX_VALUE;
         for (User user : users) {
             assertTrue(prevId > user.getId());
             prevId = user.getId();
         }
-        users = customRepository.findAllByAccount(Sort.of("id asc,account asc"), account);
+        users = customRepository.findAllByAccount(Sort.of("id ASC,account ASC"), account);
         prevId = 0;
         for (User user : users) {
             assertTrue(prevId < user.getId());
@@ -342,7 +342,7 @@ public class SQLRepositoryTest {
         );
         assertEquals(count, users.size());
         users = customRepository.findAll(
-                "and id=:id"
+                "AND id=:id"
                 , id
         );
         assertEquals(1, users.size());
@@ -360,10 +360,10 @@ public class SQLRepositoryTest {
 
         List<User> users = customRepository.findAll(SqlReplace.of(id, ""));
         assertEquals(count, users.size());
-        users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
+        users = customRepository.findAll(SqlReplace.of(id, "AND id=:id"));
         assertEquals(1, users.size());
         id = null;
-        users = customRepository.findAll(SqlReplace.of(id, "and id=:id"));
+        users = customRepository.findAll(SqlReplace.of(id, "AND id=:id"));
         assertEquals(0, users.size());
     }
 

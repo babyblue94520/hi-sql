@@ -154,7 +154,7 @@ public class PerformanceTests {
         List<User> users = page.getRecords();
         PerformanceUtil.byTime("jdbc_update", thread, time, (index) -> {
             User user = users.get((int) (index % pageSize));
-            jdbcTemplate.update("update user set update_time = ? where id=?", System.currentTimeMillis(), user.getId());
+            jdbcTemplate.update("UPDATE user SET update_time = ? WHERE id=?", System.currentTimeMillis(), user.getId());
         });
     }
 }

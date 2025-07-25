@@ -34,23 +34,23 @@ class SQLServiceTest {
 
     @Test
     void insert() {
-        int count = service.update("insert into test3 (name) values ('test2')");
+        int count = service.update("INSERT INTO test3 (name) VALUES ('test2')");
         assertEquals(1, count);
-        long count2 = service.updateLarge("insert into test3 (name) values ('test3')");
+        long count2 = service.updateLarge("INSERT INTO test3 (name) VALUES ('test3')");
         assertEquals(1L, count2);
 
-        int id = service.insert(Integer.class, "insert into test2 (name) values ('test2')");
+        int id = service.insert(Integer.class, "INSERT INTO test2 (name) VALUES ('test2')");
         assertEquals(1, id);
         for (int i = 1; i < max; i++) {
-            id = service.insert(Integer.class, "insert into test2 (name) values (?)", i);
+            id = service.insert(Integer.class, "INSERT INTO test2 (name) VALUES (?)", i);
             assertEquals(i + 1, id);
         }
-        assertEquals(max, service.find(Integer.class, "select count(*) from test2"));
+        assertEquals(max, service.find(Integer.class, "SELECT COUNT(*) FROM test2"));
 
-        int count3 = service.update("insert into test2 (name) values ('test2')");
+        int count3 = service.update("INSERT INTO test2 (name) VALUES ('test2')");
         assertEquals(1, count3);
         for (int i = 1; i < max; i++) {
-            count3 = service.update("insert into test2 (name) values (?)", i);
+            count3 = service.update("INSERT INTO test2 (name) VALUES (?)", i);
             assertEquals(1, count3);
         }
     }
@@ -58,16 +58,16 @@ class SQLServiceTest {
     @Test
     void update() {
         for (int i = 0; i < max; i++) {
-            assertEquals(1, service.update("insert into test2 (name) values (?)", i));
+            assertEquals(1, service.update("INSERT INTO test2 (name) VALUES (?)", i));
         }
         String name = String.valueOf(System.currentTimeMillis());
-        List<String> list = service.findAll(String.class, "select name from test2");
+        List<String> list = service.findAll(String.class, "SELECT name FROM test2");
         assertEquals(max, list.size());
         for (String s : list) {
             assertNotEquals(name, s);
         }
-        assertEquals(max, service.update("update test2 set name=?", name));
-        list = service.findAll(String.class, "select name from test2");
+        assertEquals(max, service.update("UPDATE test2 SET name=?", name));
+        list = service.findAll(String.class, "SELECT name FROM test2");
         assertEquals(max, list.size());
         for (String s : list) {
             assertEquals(name, s);
