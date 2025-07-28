@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import pers.clare.hisql.repository.SQLCrudRepository;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+@UtilityClass
 public class ClassUtil {
 
     private static final ConcurrentMap<Class<?>, Method[]> declaredMethodsMap = new ConcurrentHashMap<>();

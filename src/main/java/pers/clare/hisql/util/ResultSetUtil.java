@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import lombok.experimental.UtilityClass;
 import pers.clare.hisql.function.ResultSetConvertHandler;
 import pers.clare.hisql.store.SQLStore;
 import pers.clare.hisql.store.SQLStoreColumn;
@@ -10,10 +11,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
+@UtilityClass
 public class ResultSetUtil {
 
-    private ResultSetUtil() {
-    }
 
     public static String[] getNames(ResultSet rs) throws SQLException {
         ResultSetMetaData metaData = rs.getMetaData();

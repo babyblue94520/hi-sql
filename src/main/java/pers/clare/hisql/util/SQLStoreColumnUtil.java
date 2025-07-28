@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import lombok.experimental.UtilityClass;
 import pers.clare.hisql.service.SQLBasicService;
 import pers.clare.hisql.store.SQLStoreColumn;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@UtilityClass
 public class SQLStoreColumnUtil {
     private static final Map<Class<?>, SQLStoreColumn[]> cacheMap = new ConcurrentHashMap<>();
 

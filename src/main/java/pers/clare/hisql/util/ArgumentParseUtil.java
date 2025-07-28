@@ -1,6 +1,7 @@
 package pers.clare.hisql.util;
 
 import lombok.Getter;
+import lombok.experimental.UtilityClass;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentHandler;
 import pers.clare.hisql.function.ConnectionCallback;
@@ -17,6 +18,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 
+@UtilityClass
 public class ArgumentParseUtil {
 
     public static ParseResult build(Method method) {

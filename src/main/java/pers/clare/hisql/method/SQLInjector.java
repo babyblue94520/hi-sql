@@ -1,7 +1,7 @@
 package pers.clare.hisql.method;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -14,9 +14,9 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+@UtilityClass
+@Log4j2
 public class SQLInjector {
-    private static final Logger log = LogManager.getLogger();
-
     private static final DocumentBuilder documentBuilder;
 
     static {
@@ -25,9 +25,6 @@ public class SQLInjector {
         } catch (ParserConfigurationException e) {
             throw new Error(e.getMessage(), e);
         }
-    }
-
-    private SQLInjector() {
     }
 
     public static Map<String, String> getContents(String root, Class<?> clazz) {

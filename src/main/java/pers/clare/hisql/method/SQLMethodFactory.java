@@ -1,8 +1,8 @@
 package pers.clare.hisql.method;
 
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import org.aopalliance.intercept.MethodInterceptor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.util.StringUtils;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.constant.CommandType;
@@ -27,12 +27,9 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 
-
+@Log4j2
+@UtilityClass
 public class SQLMethodFactory {
-    private static final Logger log = LogManager.getLogger();
-
-    private SQLMethodFactory() {
-    }
 
     public static Map<Method, MethodInterceptor> create(
             Class<?> repositoryInterface

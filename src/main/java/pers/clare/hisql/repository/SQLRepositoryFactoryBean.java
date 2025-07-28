@@ -1,15 +1,14 @@
 package pers.clare.hisql.repository;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
 import org.springframework.util.Assert;
 import pers.clare.hisql.method.SQLProxyFactory;
 import pers.clare.hisql.service.SQLStoreService;
 
+@Log4j2
 public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware, BeanFactoryAware {
-    private static final Logger log = LogManager.getLogger();
     private final Class<?> repositoryInterface;
     private final String serviceBeanName;
     protected ClassLoader classLoader;

@@ -1,7 +1,7 @@
 package pers.clare.hisql.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import pers.clare.hisql.function.ConnectionCallback;
 import pers.clare.hisql.function.PreparedStatementCallback;
 import pers.clare.hisql.function.ResultSetCallback;
@@ -11,12 +11,10 @@ import pers.clare.hisql.page.Sort;
 import java.io.InputStream;
 import java.sql.*;
 
+@UtilityClass
+@Log4j2
 @SuppressWarnings("UnusedReturnValue")
 public class ConnectionUtil {
-    private static final Logger log = LogManager.getLogger();
-
-    private ConnectionUtil() {
-    }
 
     public static ResultSet query(Connection connection, String sql, Object[] parameters) throws SQLException {
         log.debug(sql);

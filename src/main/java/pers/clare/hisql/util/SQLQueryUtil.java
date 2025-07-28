@@ -1,5 +1,6 @@
 package pers.clare.hisql.util;
 
+import lombok.experimental.UtilityClass;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.ArgumentHandler;
 import pers.clare.hisql.query.SQLQuery;
@@ -13,9 +14,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+@UtilityClass
 public class SQLQueryUtil {
-    private SQLQueryUtil() {
-    }
 
     public static void appendValue(
             StringBuilder sb
