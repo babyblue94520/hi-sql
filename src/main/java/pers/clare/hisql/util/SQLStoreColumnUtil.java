@@ -42,7 +42,7 @@ public class SQLStoreColumnUtil {
             , SQLBasicService service
             , List<SQLStoreColumn> result
     ) {
-        if (SQLStoreUtil.isIgnore(clazz)) return;
+        if (SQLStoreSqlUtil.isIgnore(clazz)) return;
         addFields(clazz.getSuperclass(), service, result);
         addFields(ClassUtil.getOrderFields(clazz), service, result);
     }
@@ -72,6 +72,9 @@ public class SQLStoreColumnUtil {
         boolean id = false;
         boolean auto = false;
         boolean nullable = true, insertable = true, updatable = true;
+        boolean nullable = true;
+        boolean insertable = true;
+        boolean updatable = true;
         Class<?> type = field.getType();
         for (Annotation annotation : field.getAnnotations()) {
             if (annotation instanceof Transient) {

@@ -1,7 +1,6 @@
 package pers.clare.hisql.repository;
 
 import org.springframework.lang.NonNull;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -9,69 +8,66 @@ import pers.clare.hisql.page.Sort;
 import java.util.Collection;
 import java.util.List;
 
-public interface SQLCrudRepository<Entity, Key> extends SQLRepository {
+public interface SQLCrudRepository<E, K> extends SQLRepository {
 
     @NonNull
     long count();
 
     @NonNull
-    long count(Entity entity);
+    long count(E entity);
 
     @NonNull
-    List<Entity> findAll();
+    List<E> findAll();
 
     @NonNull
-    List<Entity> findAll(Sort sort);
+    List<E> findAll(Sort sort);
 
     @NonNull
-    Page<Entity> page(Pagination pagination);
+    Page<E> page(Pagination pagination);
 
     @NonNull
-    Next<Entity> next(Pagination pagination);
+    E insert(@NonNull E entity);
 
     @NonNull
-    Entity insert(@NonNull Entity entity);
+    int update(E entity);
 
     @NonNull
-    int update(Entity entity);
+    int delete(E entity);
 
     @NonNull
-    int delete(Entity entity);
+    Collection<E> insertAll(@NonNull Collection<E> entities);
 
     @NonNull
-    Collection<Entity> insertAll(@NonNull Collection<Entity> entities);
+    E[] insertAll(@NonNull E[] entities);
 
     @NonNull
-    Entity[] insertAll(@NonNull Entity[] entities);
+    int[] updateAll(@NonNull Collection<E> entities);
 
     @NonNull
-    int[] updateAll(@NonNull Collection<Entity> entities);
-
-    @NonNull
-    int[] updateAll(@NonNull Entity[] entities);
+    int[] updateAll(@NonNull E[] entities);
 
     @NonNull
     int deleteAll();
 
     @NonNull
-    int[] deleteAll(@NonNull Collection<Entity> entities);
+    int[] deleteAll(@NonNull Collection<E> entities);
 
     @NonNull
-    int[] deleteAll(@NonNull Entity[] entities);
+    int[] deleteAll(@NonNull E[] entities);
 
     @NonNull
-    long countById(Key key);
+    long countById(K key);
 
     @NonNull
-    int deleteById(Key key);
+    int deleteById(K key);
 
-    int deleteByIds(Key[] keys);
+    int deleteByIds(K[] keys);
 
-    Entity find(Entity entity);
+    E find(E entity);
 
-    Entity findById(Key key);
+    E findById(K key);
 
-    List<Entity> findAllByIds(Key[] key);
+    List<E> findAllByIds(K[] key);
 
     <T> T findByObject(T object);
 

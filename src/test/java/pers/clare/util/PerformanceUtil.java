@@ -15,7 +15,7 @@ public class PerformanceUtil {
     }
 
     public static double byCount(String tag, int thread, long max, Consumer<Long> consumer) throws Exception {
-        return byCondition(tag, thread, (count) -> count <= max, consumer);
+        return byCondition(tag, thread, count -> count <= max, consumer);
     }
 
     public static double byTime(String tag, long ms, Consumer<Long> consumer) throws Exception {
@@ -24,7 +24,7 @@ public class PerformanceUtil {
 
     public static double byTime(String tag, int thread, long ms, Consumer<Long> consumer) throws Exception {
         long endTime = System.currentTimeMillis() + ms;
-        return byCondition(tag, thread, (count) -> System.currentTimeMillis() < endTime, consumer);
+        return byCondition(tag, thread, count -> System.currentTimeMillis() < endTime, consumer);
     }
 
     public static double byCondition(String tag, Function<Long, Boolean> condition, Consumer<Long> consumer) throws Exception {
@@ -43,7 +43,7 @@ public class PerformanceUtil {
     }
 
     public static double byCount(String tag, int thread, long max, Function<Long, Future<Void>> consumer) throws Exception {
-        return byCondition(tag, thread, (count) -> count <= max, consumer);
+        return byCondition(tag, thread, count -> count <= max, consumer);
     }
 
     public static double byTime(String tag, long ms, Function<Long, Future<Void>> consumer) throws Exception {
@@ -52,7 +52,7 @@ public class PerformanceUtil {
 
     public static double byTime(String tag, int thread, long ms, Function<Long, Future<Void>> consumer) throws Exception {
         long endTime = System.currentTimeMillis() + ms;
-        return byCondition(tag, thread, (count) -> System.currentTimeMillis() < endTime, consumer);
+        return byCondition(tag, thread, count -> System.currentTimeMillis() < endTime, consumer);
     }
 
     public static double byCondition(String tag, Function<Long, Boolean> condition, Function<Long, Future<Void>> consumer) throws Exception {

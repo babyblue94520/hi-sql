@@ -13,10 +13,10 @@ import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @Log4j2
@@ -24,14 +24,68 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class SQLPageServiceTest extends BasicTest {
-    private final SQLPageService service;
+class SQLTypeServiceTest extends BasicTest {
+    private final SQLTypeService service;
 
     private final int max = 50;
 
     @Override
     protected int getMax() {
         return max;
+    }
+
+    @Test
+    void find() {
+        assertEquals(1L, service.find(Long.class, findAll));
+        assertEquals("1", service.find(String.class, findAll));
+        assertEquals("2", service.find(String.class, findAllWhereColumn1, 1));
+        assertEquals("4", service.find(String.class, findAllWhereColumn1, 3));
+        assertNull(service.find(String.class, findAllWhereColumn1, max));
+    }
+
+    @Test
+    void findMap() {
+        assertEquals(1L, service.findMap(Long.class, findAll).get(column1));
+        assertEquals("1", service.findMap(String.class, findAll).get(column1));
+        assertEquals("2", service.findMap(String.class, findAllWhereColumn1, 1).get(column1));
+
+        assertEquals("1", service.findMap(String.class, findAll).get(column1));
+        assertEquals("1", service.findMap(String.class, findAll).get(column2));
+    }
+
+    @Test
+    void findSet() {
+        String sql = findAll;
+        assertTrue(service.findSet(Long.class, sql).contains(1L));
+        assertEquals(max, service.findSet(Long.class, sql).size());
+    }
+
+
+    @Test
+    void findAllMapSet() {
+        assertEquals(max, service.findAllMapSet(Long.class, findAll).size());
+    }
+
+    @Test
+    void findAllMap() {
+        String sql = "SELECT 1,2 union all SELECT 2,3 union all SELECT 1,4 union all SELECT 2,3";
+        assertEquals(4, service.findAllMap(Long.class, sql).size());
+        sql = "SELECT 1,2 union all SELECT 2,3 union all SELECT 1,4 union all SELECT 2,3";
+        assertEquals(4, service.findAllMap(Long.class, sql).size());
+    }
+
+    @Test
+    void findAll() {
+        String sql = findAll;
+        assertEquals(max, service.findAll(Long.class, sql).size());
+        assertEquals(max, service.findAll(String.class, sql).size());
+
+        sql = "SELECT ?,? union all SELECT 3,4";
+        List<Long> result = service.findAll(Long.class, sql, 1, 2);
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0));
+        assertEquals(3, result.get(1));
+        assertEquals(2, service.findAll(String.class, sql, 1, 2).size());
     }
 
     @Test
@@ -43,7 +97,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             assertEquals(total, result.getTotal());
             count += result.getRecords().size();
             result = service.page(Long.class, sql, Pagination.of(page, result.getSize()));
@@ -60,7 +114,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             count += result.getRecords().size();
             result = service.page(Long.class, sql, Pagination.of(page, result.getSize()), total);
         }
@@ -77,7 +131,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             assertEquals(total, result.getTotal());
             count += result.getRecords().size();
             long prev = Integer.MAX_VALUE;
@@ -99,7 +153,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             result.getRecords().forEach(map -> assertEquals(map.get(column1), map.get(column2)));
             assertEquals(total, result.getTotal());
             count += result.getRecords().size();
@@ -117,7 +171,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             assertEquals(total, result.getTotal());
             result.getRecords().forEach(map -> assertEquals(map.get(column1), map.get(column2)));
             count += result.getRecords().size();
@@ -136,7 +190,7 @@ class SQLPageServiceTest extends BasicTest {
         int count = 0;
         while (result.getRecords().size() > 0) {
             assertEquals(page++, result.getPage());
-            assertEquals(SQLPageService.DefaultPagination.getSize(), result.getSize());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
             assertEquals(total, result.getTotal());
             long prev = Integer.MAX_VALUE;
             for (Map<String, Long> map : result.getRecords()) {

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Log4j2
@@ -90,7 +91,7 @@ public class SQLRepositoryScanner extends ClassPathBeanDefinitionScanner {
 
     private boolean isRepository(AnnotationMetadata annotationMetadata) {
         for (MergedAnnotation<Annotation> annotation : annotationMetadata.getAnnotations()) {
-            if (annotation.getType().getName().equals(Repository.class.getName())) return true;
+            if (Objects.equals(Repository.class.getName(), annotation.getType().getName())) return true;
         }
         return false;
     }

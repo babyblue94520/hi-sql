@@ -1,46 +1,39 @@
 package pers.clare.hisql.service;
 
-import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.util.ConnectionUtil;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.page.Pagination;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 
-public class SQLService extends SQLPageService {
+public interface SQLService extends SQLStoreService, SQLTypeService, SQLBasicService {
 
-    public <T> T insert(
-            Class<T> keyType
+    default <T> Page<T> toPage(
+            Pagination pagination
+            , List<T> list
             , String sql
-            , Object... parameters
+            , Object[] parameters
     ) {
-        if (keyType == null) throw new HiSqlException("GeneratedKey type can not null!");
-        return this.connection(keyType, sql, parameters, (connection, keyTypeArg, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.insert(connection, sqlArg, parametersArg);
-            if (keyTypeArg == void.class) return null;
-            if (statement.getUpdateCount() == 0) return null;
-            ResultSet rs = statement.getGeneratedKeys();
-            return rs.next() ? rs.getObject(1, keyTypeArg) : null;
-        });
-    }
+        pagination = getPagination(pagination);
+        int size = pagination.getSize();
+        int page = pagination.getPage();
+        int listSize = list.size();
+        long total = (long) size * page + listSize;
+        if (total > 0) {
+            if (pagination.isVirtualTotal()) {
+                long virtualTotal = pagination.getTotal();
+                if (virtualTotal == 0) {
+                    virtualTotal = getPaginationMode().getVirtualTotal(this, sql, parameters);
+                }
+                if (total < virtualTotal) {
+                    total = virtualTotal;
+                } else if (listSize > 0) {
+                    total += size;
+                }
+            } else {
+                total = getPaginationMode().getTotal(this, sql, parameters);
+            }
+        }
 
-    public int update(
-            String sql
-            , Object... parameters
-    ) {
-        return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
-            return statement.getUpdateCount();
-        });
+        return Page.of(page, size, list, total);
     }
-
-    public long updateLarge(
-            String sql
-            , Object... parameters
-    ) {
-        return this.connection(sql, parameters, (connection, sqlArg, parametersArg) -> {
-            Statement statement = ConnectionUtil.update(connection, sqlArg, parametersArg);
-            return statement.getLargeUpdateCount();
-        });
-    }
-
 }

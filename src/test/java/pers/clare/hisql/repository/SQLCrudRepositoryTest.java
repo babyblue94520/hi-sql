@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.repository.UserRepository;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -105,29 +104,6 @@ class SQLCrudRepositoryTest {
         Pagination pagination = Pagination.of(0, 10, "id DESC,account ASC");
         pagination.setVirtualTotal(true);
         userRepository.page(pagination);
-    }
-
-    @Test
-    void next() {
-        int page = 0;
-        int size = 5;
-        Next<User> userNext = userRepository.next(Pagination.of(page, size));
-        assertEquals(0, userNext.getRecords().size());
-        int total = 23;
-        for (int i = 0; i < total; i++) {
-            create();
-        }
-        int count = 0;
-        while ((userNext = userRepository.next(Pagination.of(page++, size))).getRecords().size() > 0) {
-            count += userNext.getRecords().size();
-            assertEquals(size, userNext.getSize());
-        }
-        assertEquals(total, count);
-
-        List<User> users = userRepository.next(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
-        assertTrue(users.get(0).getId() > users.get(users.size() - 1).getId());
-        users = userRepository.next(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
-        assertTrue(users.get(0).getId() < users.get(users.size() - 1).getId());
     }
 
     @Test

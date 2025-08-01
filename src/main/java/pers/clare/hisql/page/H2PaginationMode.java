@@ -1,11 +1,8 @@
 package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.util.ConnectionUtil;
+import pers.clare.hisql.service.SQLTypeService;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,19 +23,17 @@ public class H2PaginationMode implements PaginationMode {
 
     @Override
     public long getVirtualTotal(
-            Connection connection
+            SQLTypeService service
             , String sql
             , Object[] parameters
-    ) throws SQLException {
-        ResultSet rs = ConnectionUtil.query(connection, "EXPLAIN ANALYZE " + sql, parameters);
-        if (rs.next()) {
-            String plan = rs.getString(1);
-            Matcher matcher = scanCountPattern.matcher(plan);
-            if (matcher.find()) {
-                String countString = matcher.group(1);
-                return Long.parseLong(countString);
-            }
+    ) {
+        String virtualTotalSql = "EXPLAIN ANALYZE " + sql;
+        String result = service.find(String.class, virtualTotalSql, parameters);
+        Matcher matcher = scanCountPattern.matcher(result);
+        if (matcher.find()) {
+            String countString = matcher.group(1);
+            return Long.parseLong(countString);
         }
-        throw new HiSqlException(String.format("Query total error.(%s)", sql));
+        throw new HiSqlException(String.format("Query virtual total error.(%s)", virtualTotalSql));
     }
 }

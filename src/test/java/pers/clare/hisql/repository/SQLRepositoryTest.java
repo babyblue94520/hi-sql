@@ -8,7 +8,6 @@ import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.entity.UserSimple;
 import pers.clare.hisql.data.repository.CustomRepository;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -186,38 +185,6 @@ class SQLRepositoryTest {
         page = customRepository.pageByAccount(pagination, account);
         assertEquals(0, page.getRecords().size());
         assertEquals(count, page.getTotal());
-    }
-
-
-    @Test
-    void nextByAccount() {
-        Next<User> next = customRepository.nextByAccount("");
-        assertNotNull(next);
-        assertNotNull(next.getRecords());
-        customRepository.delete();
-        int count = 5;
-        String account = String.valueOf(System.currentTimeMillis());
-        for (int i = 0; i < count; i++) {
-            customRepository.insert(account);
-        }
-        next = customRepository.nextByAccount(account);
-        assertEquals(count, next.getRecords().size());
-    }
-
-    @Test
-    void nextByAccount2() {
-        int count = 5;
-        String account = String.valueOf(System.currentTimeMillis());
-        for (int i = 0; i < count; i++) {
-            customRepository.insert(account);
-        }
-        Pagination pagination = Pagination.of(0, 3);
-        Next<User> next = customRepository.nextByAccount(pagination, account);
-
-        assertEquals(pagination.getSize(), next.getRecords().size());
-        pagination = Pagination.of(3, 3);
-        next = customRepository.nextByAccount(pagination, account);
-        assertEquals(0, next.getRecords().size());
     }
 
     @Test

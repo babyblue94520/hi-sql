@@ -10,7 +10,8 @@ import org.springframework.util.StringUtils;
 import pers.clare.hisql.annotation.EnableHiSql;
 import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.PaginationMode;
-import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.service.SQLService;
+import pers.clare.hisql.service.impl.SQLServiceImpl;
 import pers.clare.hisql.support.CommandTypeParser;
 import pers.clare.hisql.support.ResultSetConverter;
 
@@ -65,7 +66,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             basePackages.add(getDefaultBasePackage(annotationMetadata));
         }
         builder.addPropertyValue("basePackage", StringUtils.collectionToCommaDelimitedString(basePackages));
-        builder.addPropertyValue("serviceName", registerSQLStoreService(annotationMetadata, annotationAttributes, registry));
+        builder.addPropertyValue("serviceName", registerSQLService(annotationMetadata, annotationAttributes, registry));
 
         StringBuilder beanName = new StringBuilder(annotationAttributes.getString("beanNamePrefix"));
         if (beanName.length() == 0) {
@@ -78,7 +79,7 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
     }
 
 
-    private String registerSQLStoreService(
+    private String registerSQLService(
             AnnotationMetadata annotationMetadata
             , AnnotationAttributes annotationAttributes
             , BeanDefinitionRegistry registry
@@ -90,21 +91,21 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
         Class<? extends CommandTypeParser> commandTypeParser = annotationAttributes.getClass("commandTypeParser");
 
-        BeanDefinitionBuilder sqlStoreServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLStoreService.class);
+        BeanDefinitionBuilder sqlServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLServiceImpl.class);
         if (dataSourceName.isEmpty()) {
-            sqlStoreServiceBuilder.addAutowiredProperty("dataSource");
+            sqlServiceBuilder.addAutowiredProperty("dataSource");
         } else {
-            sqlStoreServiceBuilder.addPropertyReference("dataSource", dataSourceName);
+            sqlServiceBuilder.addPropertyReference("dataSource", dataSourceName);
         }
-        sqlStoreServiceBuilder.addPropertyValue("xmlRoot", xmlRootPath);
+        sqlServiceBuilder.addPropertyValue("xmlRoot", xmlRootPath);
 
-        sqlStoreServiceBuilder.addPropertyValue("paginationMode", paginationModeClass.getConstructor().newInstance());
+        sqlServiceBuilder.addPropertyValue("paginationMode", paginationModeClass.getConstructor().newInstance());
 
-        sqlStoreServiceBuilder.addPropertyValue("naming", namingClass.getConstructor().newInstance());
+        sqlServiceBuilder.addPropertyValue("naming", namingClass.getConstructor().newInstance());
 
-        sqlStoreServiceBuilder.addPropertyValue("resultSetConverter", resultSetConverter.getConstructor().newInstance());
+        sqlServiceBuilder.addPropertyValue("resultSetConverter", resultSetConverter.getConstructor().newInstance());
 
-        sqlStoreServiceBuilder.addPropertyValue("commandTypeParser", commandTypeParser.getConstructor().newInstance());
+        sqlServiceBuilder.addPropertyValue("commandTypeParser", commandTypeParser.getConstructor().newInstance());
 
         StringBuilder beanName = new StringBuilder(annotationAttributes.getString("beanNamePrefix"));
         if (beanName.length() == 0) {
@@ -112,8 +113,8 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
                     .append('#');
         }
 
-        beanName.append(SQLStoreService.class.getSimpleName());
-        registry.registerBeanDefinition(beanName.toString(), sqlStoreServiceBuilder.getBeanDefinition());
+        beanName.append(SQLService.class.getSimpleName());
+        registry.registerBeanDefinition(beanName.toString(), sqlServiceBuilder.getBeanDefinition());
         return beanName.toString();
     }
 }

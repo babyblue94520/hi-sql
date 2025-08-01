@@ -3,15 +3,15 @@ package pers.clare.hisql.repository;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.KeySQLBuilder;
 import pers.clare.hisql.function.KeysSQLBuilder;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
+import pers.clare.hisql.util.SQLStoreFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
@@ -21,23 +21,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
-public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity, Key> {
+public class SQLCrudRepositoryImpl<E, K> extends SQLRepositoryImpl<SQLService> implements SQLCrudRepository<E, K> {
 
     protected static final Map<Class<?>, Field[]> keyFieldsMap = new ConcurrentHashMap<>();
 
-    protected final SQLCrudStore<Entity> sqlStore;
-    protected final KeySQLBuilder<Key> keySQLBuilder;
-    protected final KeysSQLBuilder<Key> keysSQLBuilder;
-    protected final Class<Key> keyClass;
+    protected final SQLCrudStore<E> sqlStore;
+    protected final KeySQLBuilder<K> keySQLBuilder;
+    protected final KeysSQLBuilder<K> keysSQLBuilder;
+    protected final Class<K> keyClass;
     protected final Field[] keyFields;
 
     @SuppressWarnings("unchecked")
-    public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<Entity> repositoryClass) {
+    public SQLCrudRepositoryImpl(SQLService sqlService, Class<E> repositoryClass) {
         super(sqlService);
         Type[] types = ClassUtil.findTypes(repositoryClass);
-        Class<Entity> entityClass = (Class<Entity>) types[0];
-        sqlStore = sqlService.buildCrud(entityClass);
-        keyClass = (Class<Key>) types[1];
+        Class<E> entityClass = (Class<E>) types[0];
+        sqlStore = SQLStoreFactory.buildCrud(sqlService, entityClass);
+        keyClass = (Class<K>) types[1];
 
         if (ClassUtil.isBasicType(keyClass)
             || ClassUtil.isBasicTypeArray(keyClass)
@@ -57,7 +57,7 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return count == null ? 0 : count;
     }
 
-    public long count(Entity entity) {
+    public long count(E entity) {
         try {
             Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity), sqlStore);
             return count == null ? 0 : count;
@@ -68,13 +68,9 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         }
     }
 
-    public long countById(Key key) {
-        return countById(false, key);
-    }
-
-    public long countById(Boolean readonly, Key key) {
+    public long countById(K k) {
         try {
-            Long count = sqlService.find(Long.class, keySQLBuilder.apply(sqlStore.getCountById(), key));
+            Long count = sqlService.find(Long.class, keySQLBuilder.apply(sqlStore.getCountById(), k));
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -83,73 +79,68 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         }
     }
 
-    public List<Entity> findAll(Sort sort) {
+    public List<E> findAll(Sort sort) {
         return sqlService.findAll(sqlStore, sqlStore.getSelect(), sort);
     }
 
     @Override
-    public Page<Entity> page(Pagination pagination) {
+    public Page<E> page(Pagination pagination) {
         return sqlService.page(sqlStore, pagination);
     }
 
-    @Override
-    public Next<Entity> next(Pagination pagination) {
-        return sqlService.next(sqlStore, pagination);
-    }
-
-    public List<Entity> findAll() {
+    public List<E> findAll() {
         return sqlService.findAll(sqlStore, sqlStore.getSelect());
     }
 
-    public Entity findById(Key key) {
-        return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
+    public E findById(K k) {
+        return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), k));
     }
 
-    public final List<Entity> findAllByIds(Key[] keys) {
-        return sqlService.findAll(sqlStore, keysSQLBuilder.apply(sqlStore.getSelectByIds(), keys));
+    public final List<E> findAllByIds(K[] ks) {
+        return sqlService.findAll(sqlStore, keysSQLBuilder.apply(sqlStore.getSelectByIds(), ks));
     }
 
-    public Entity find(Entity entity) {
-        return sqlService.find(sqlStore, entity);
+    public E find(E e) {
+        return sqlService.find(sqlStore, e);
     }
 
-    public Entity insert(Entity entity) {
-        return sqlService.insert(sqlStore, entity);
+    public E insert(E e) {
+        return sqlService.insert(sqlStore, e);
     }
 
-    public int update(Entity entity) {
-        return sqlService.update(sqlStore, entity);
+    public int update(E e) {
+        return sqlService.update(sqlStore, e);
     }
 
-    public int delete(Entity entity) {
-        return sqlService.delete(sqlStore, entity);
+    public int delete(E e) {
+        return sqlService.delete(sqlStore, e);
     }
 
-    public int deleteById(Key key) {
-        return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), key));
+    public int deleteById(K k) {
+        return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), k));
     }
 
-    public int deleteByIds(Key[] keys) {
-        return sqlService.update(keysSQLBuilder.apply(sqlStore.getDeleteByIds(), keys));
+    public int deleteByIds(K[] ks) {
+        return sqlService.update(keysSQLBuilder.apply(sqlStore.getDeleteByIds(), ks));
     }
 
     @Override
-    public Collection<Entity> insertAll(Collection<Entity> entities) {
+    public Collection<E> insertAll(Collection<E> entities) {
         return sqlService.insertAll(sqlStore, entities);
     }
 
     @Override
-    public Entity[] insertAll(Entity[] entities) {
+    public E[] insertAll(E[] entities) {
         return sqlService.insertAll(sqlStore, entities);
     }
 
     @Override
-    public int[] updateAll(Collection<Entity> entities) {
+    public int[] updateAll(Collection<E> entities) {
         return sqlService.updateAll(sqlStore, entities);
     }
 
     @Override
-    public int[] updateAll(Entity[] entities) {
+    public int[] updateAll(E[] entities) {
         return sqlService.updateAll(sqlStore, entities);
     }
 
@@ -159,12 +150,12 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
     }
 
     @Override
-    public int[] deleteAll(Collection<Entity> entities) {
+    public int[] deleteAll(Collection<E> entities) {
         return sqlService.deleteAll(sqlStore, entities);
     }
 
     @Override
-    public int[] deleteAll(Entity[] entities) {
+    public int[] deleteAll(E[] entities) {
         return sqlService.deleteAll(sqlStore, entities);
     }
 
@@ -190,29 +181,29 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
     }
 
 
-    protected String toKeySQL(SQLQueryBuilder builder, Key key) {
-        return SQLQueryUtil.setValue(builder, keyFields, new Object[]{key});
+    protected String toKeySQL(SQLQueryBuilder builder, K k) {
+        return SQLQueryUtil.setValue(builder, keyFields, new Object[]{k});
     }
 
-    protected String toKeySQLByClass(SQLQueryBuilder builder, Key key) {
-        return SQLQueryUtil.setValue(builder, keyFields, key);
+    protected String toKeySQLByClass(SQLQueryBuilder builder, K k) {
+        return SQLQueryUtil.setValue(builder, keyFields, k);
     }
 
-    protected String toKeysSQL(SQLQueryBuilder builder, Key[] values) {
+    protected String toKeysSQL(SQLQueryBuilder builder, K[] values) {
         return builder.build().value("keys", values).toString();
     }
 
-    public String toKeysSQLByClass(SQLQueryBuilder builder, Key[] values) {
+    public String toKeysSQLByClass(SQLQueryBuilder builder, K[] values) {
         Object[][] array = new Object[values.length][];
         int i = 0;
-        for (Key value : values) {
+        for (K value : values) {
             Object[] row = array[i++] = new Object[keyFields.length];
             int c = 0;
             for (Field field : keyFields) {
                 try {
                     row[c++] = field.get(value);
                 } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
+                    throw new HiSqlException(e);
                 }
             }
         }

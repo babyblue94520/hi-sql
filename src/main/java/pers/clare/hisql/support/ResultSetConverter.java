@@ -11,7 +11,7 @@ public class ResultSetConverter {
 
     private final Map<Class<?>, ResultSetConvertHandler<?>> map = new ConcurrentHashMap<>();
 
-    {
+    public ResultSetConverter() {
         register(InputStream.class, ResultSet::getBinaryStream);
     }
 
@@ -19,6 +19,7 @@ public class ResultSetConverter {
         map.put(type, converter);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> ResultSetConvertHandler<T> get(Class<T> type) {
         return (ResultSetConvertHandler<T>) map.get(type);
     }

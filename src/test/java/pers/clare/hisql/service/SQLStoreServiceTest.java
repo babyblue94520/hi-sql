@@ -3,12 +3,18 @@ package pers.clare.hisql.service;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import pers.clare.hisql.BasicTest;
+import pers.clare.hisql.page.Page;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.store.SQLCrudStore;
+import pers.clare.hisql.util.SQLStoreFactory;
 import pers.clare.hisql.vo.TestTable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,26 +23,33 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 @TestInstance(PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SpringBootTest
-class SQLStoreServiceTest {
-    private final SQLStoreService service;
+class SQLStoreServiceTest extends BasicTest {
+    private final SQLService service;
 
     private final SQLCrudStore<TestTable> store;
 
     private final int max = 10;
 
     @Autowired
-    public SQLStoreServiceTest(SQLStoreService service) {
+    public SQLStoreServiceTest(SQLService service) {
         this.service = service;
-        store = service.buildCrud(TestTable.class);
+        store = SQLStoreFactory.buildCrud(service, TestTable.class);
+    }
+
+    @Override
+    protected int getMax() {
+        return max;
     }
 
     @BeforeEach
     protected void create() {
+        super.create();
         service.update("create table test (id int auto_increment, name varchar(255),primary key(id))");
     }
 
     @AfterEach
     protected void drop() {
+        super.drop();
         service.update("drop table test");
     }
 
@@ -163,4 +176,116 @@ class SQLStoreServiceTest {
         assertNull(service.findByObject(testTable));
     }
 
+    @Test
+    void find() {
+        int total = max;
+        TestTable testTable = service.find(store, findAll);
+        assertEquals(1, testTable.getId());
+        assertEquals("1", testTable.getName());
+        testTable = service.find(store, findAll + " WHERE id=?", 2);
+        assertEquals(2, testTable.getId());
+        assertEquals("2", testTable.getName());
+
+        testTable = service.find(store, findAll, Sort.of(descColumn1));
+        assertEquals(total, testTable.getId());
+        assertEquals(String.valueOf(total), testTable.getName());
+    }
+
+    @Test
+    void findSet() {
+        int total = max;
+        TestTable testTable = service.find(store, findAll);
+
+        Set<TestTable> result = service.findSet(store, findAll);
+        assertEquals(total, result.size());
+        assertTrue(result.contains(testTable));
+
+        total = max / 2;
+        result = service.findSet(store, findAllWhereColumn1, total);
+        assertEquals(total, result.size());
+        assertFalse(result.contains(testTable));
+
+        result = service.findSet(store, findAllWhereColumn1, Sort.of(descColumn1), total);
+        for (TestTable table : result) {
+            assertTrue(table.getId() > total);
+        }
+    }
+
+    @Test
+    void findAll() {
+        int total = max;
+        TestTable testTable = service.find(store, findAll);
+
+        List<TestTable> result = service.findAll(store, findAll);
+        assertEquals(total, result.size());
+        assertTrue(result.contains(testTable));
+
+        total = max / 2;
+        result = service.findAll(store, findAllWhereColumn1, total);
+        assertEquals(total, result.size());
+        assertFalse(result.contains(testTable));
+
+        result = service.findAll(store, findAllWhereColumn1, Sort.of(descColumn1), total);
+        int prevId = Integer.MAX_VALUE;
+        for (TestTable table : result) {
+            assertTrue(prevId > table.getId());
+            prevId = table.getId();
+        }
+    }
+
+    @Test
+    void page() {
+        String sql = findAll;
+        Page<TestTable> result = service.page(store, sql, (Pagination) null);
+        int total = max;
+        int page = 0;
+        int count = 0;
+        while (result.getRecords().size() > 0) {
+            assertEquals(page++, result.getPage());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
+            assertEquals(total, result.getTotal());
+            count += result.getRecords().size();
+            result = service.page(store, sql, Pagination.of(page, result.getSize()));
+        }
+        assertEquals(total, count);
+    }
+
+    @Test
+    void page2() {
+        String sql = findAllWhereColumn1;
+        int total = max / 2;
+        Page<TestTable> result = service.page(store, sql, (Pagination) null, total);
+        int page = 0;
+        int count = 0;
+        while (result.getRecords().size() > 0) {
+            assertEquals(page++, result.getPage());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
+            count += result.getRecords().size();
+            result = service.page(store, sql, Pagination.of(page, result.getSize()), total);
+        }
+        assertEquals(total, count);
+    }
+
+    @Test
+    void page3() {
+        String sql = findAllWhereColumn1;
+        int total = max / 2;
+        Sort sort = Sort.of(descColumn1);
+        Page<TestTable> result = service.page(store, sql, sort, total);
+        int page = 0;
+        int count = 0;
+        while (result.getRecords().size() > 0) {
+            assertEquals(page++, result.getPage());
+            assertEquals(service.getPagination(null).getSize(), result.getSize());
+            assertEquals(total, result.getTotal());
+            count += result.getRecords().size();
+            long prev = Integer.MAX_VALUE;
+            for (TestTable record : result.getRecords()) {
+                assertTrue(record.getId() < prev);
+                prev = record.getId();
+            }
+            result = service.page(store, sql, Pagination.of(page, result.getSize(), sort), total);
+        }
+        assertEquals(total, count);
+    }
 }

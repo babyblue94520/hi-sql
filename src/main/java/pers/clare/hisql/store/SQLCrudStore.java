@@ -3,7 +3,7 @@ package pers.clare.hisql.store;
 
 import lombok.Getter;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.util.SQLStoreUtil;
+import pers.clare.hisql.util.SQLStoreSqlUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -45,56 +45,56 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public String getCount() {
         if (count == null) {
-            count = SQLStoreUtil.buildCount(tableName);
+            count = SQLStoreSqlUtil.buildCount(tableName);
         }
         return count;
     }
 
     public SQLQueryBuilder getCountById() {
         if (countById == null) {
-            countById = SQLStoreUtil.buildCountById(columns, tableName);
+            countById = SQLStoreSqlUtil.buildCountById(columns, tableName);
         }
         return countById;
     }
 
     public String getSelect() {
         if (select == null) {
-            select = SQLStoreUtil.buildSelect(columns, tableName);
+            select = SQLStoreSqlUtil.buildSelect(columns, tableName);
         }
         return select;
     }
 
     public SQLQueryBuilder getSelectById() {
         if (selectById == null) {
-            selectById = SQLStoreUtil.getSelectById(columns, tableName);
+            selectById = SQLStoreSqlUtil.getSelectById(columns, tableName);
         }
         return selectById;
     }
 
     public SQLQueryBuilder getSelectByIds() {
         if (selectByIds == null) {
-            selectByIds = SQLStoreUtil.getSelectByIds(columns, tableName);
+            selectByIds = SQLStoreSqlUtil.getSelectByIds(columns, tableName);
         }
         return selectByIds;
     }
 
     public String getDelete() {
         if (delete == null) {
-            count = SQLStoreUtil.buildDelete(tableName);
+            delete = SQLStoreSqlUtil.buildDelete(tableName);
         }
         return delete;
     }
 
     public SQLQueryBuilder getDeleteById() {
         if (deleteById == null) {
-            deleteById = SQLStoreUtil.buildDeleteById(columns, tableName);
+            deleteById = SQLStoreSqlUtil.buildDeleteById(columns, tableName);
         }
         return deleteById;
     }
 
     public SQLQueryBuilder getDeleteByIds() {
         if (deleteByIds == null) {
-            deleteByIds = SQLStoreUtil.buildDeleteByIds(columns, tableName);
+            deleteByIds = SQLStoreSqlUtil.buildDeleteByIds(columns, tableName);
         }
         return deleteByIds;
     }

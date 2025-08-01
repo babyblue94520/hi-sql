@@ -157,4 +157,5 @@ public class PerformanceTests {
             jdbcTemplate.update("UPDATE user SET update_time = ? WHERE id=?", System.currentTimeMillis(), user.getId());
         });
     }
+
 }

@@ -1,9 +1,9 @@
 package pers.clare.hisql.function;
 
 
-import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.service.SQLService;
 
 @FunctionalInterface
 public interface SqlInvoke {
-    Object apply(SQLStoreService service, String sql, Object[] arguments, Object[] originArguments);
+    Object apply(SQLService service, String sql, Object[] arguments, Object[] originArguments);
 }

@@ -8,19 +8,23 @@ import pers.clare.hisql.repository.SQLCrudRepository;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @UtilityClass
 public class ClassUtil {
+    private static final Map<Class<?>, Method[]> methodsMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Method[]> declaredMethodsMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Field[]> declaredFieldsMap = new ConcurrentHashMap<>();
 
-    private static final ConcurrentMap<Class<?>, Method[]> declaredMethodsMap = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<Class<?>, Field[]> declaredFieldsMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Map<String, Field>> classNameFieldMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Method>> classOrderMethodsMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Field>> classOrderFieldsMap = new ConcurrentHashMap<>();
 
-    private static final ConcurrentMap<Class<?>, Map<String, Field>> classNameFieldMap = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<Class<?>, List<Method>> classOrderMethodsMap = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<Class<?>, List<Field>> classOrderFieldsMap = new ConcurrentHashMap<>();
 
+    public static Method[] getMethods(Class<?> clazz) {
+        return methodsMap.computeIfAbsent(clazz, Class::getMethods);
+    }
 
     public static Method[] getDeclaredMethods(Class<?> clazz) {
         return declaredMethodsMap.computeIfAbsent(clazz, Class::getDeclaredMethods);
@@ -55,11 +59,11 @@ public class ClassUtil {
     }
 
     private static List<Method> toOrderGetMethods(Class<?> clazz) {
-        return sort(ClassUtil.getDeclaredMethods(clazz), ClassUtil::isGetMethod, (o) -> {
-            Order order = o.getAnnotation(Order.class);
+        return sort(ClassUtil.getDeclaredMethods(clazz), ClassUtil::isGetMethod, method -> {
+            Order order = method.getAnnotation(Order.class);
             if (order == null) {
                 Map<String, Field> fieldMap = getNameFieldMap(clazz);
-                Field field = fieldMap.get(methodToFieldName(o.getName()));
+                Field field = fieldMap.get(methodToFieldName(method.getName()));
                 if (field != null) {
                     order = field.getAnnotation(Order.class);
                 }
@@ -73,14 +77,14 @@ public class ClassUtil {
     }
 
     private static List<Field> toOrderFields(Class<?> clazz) {
-        return sort(ClassUtil.getDeclaredFields(clazz), (f) -> true, (f) -> f.getAnnotation(Order.class));
+        return sort(ClassUtil.getDeclaredFields(clazz), field -> true, field -> field.getAnnotation(Order.class));
     }
 
-    private static <T> List<T> sort(T[] array, Function<T, Boolean> filter, Function<T, Order> orderGetter) {
+    private static <T> List<T> sort(T[] array, Predicate<T> filter, Function<T, Order> orderGetter) {
         List<OrderObject<T>> orderObjects = new ArrayList<>();
         List<T> others = new ArrayList<>();
         for (T o : array) {
-            if (!filter.apply(o)) continue;
+            if (!filter.test(o)) continue;
             Order order = orderGetter.apply(o);
             if (order == null) {
                 others.add(o);

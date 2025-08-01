@@ -7,13 +7,13 @@ import pers.clare.hisql.repository.SQLCrudRepositoryImpl;
 import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.repository.SQLRepositoryImpl;
 import pers.clare.hisql.service.SQLService;
-import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.service.impl.SQLServiceImpl;
 
 public class SQLProxyFactory {
 
     public static ProxyFactory build(
             Class<?> clazz
-            , SQLStoreService sqlStoreService
+            , SQLServiceImpl service
     ) {
 
         if (!SQLRepository.class.isAssignableFrom(clazz)) {
@@ -22,15 +22,15 @@ public class SQLProxyFactory {
         ProxyFactory proxyFactory = new ProxyFactory();
         Object target;
         if (SQLCrudRepository.class.isAssignableFrom(clazz)) {
-            target = new SQLCrudRepositoryImpl<>(sqlStoreService, clazz);
+            target = new SQLCrudRepositoryImpl<>(service, clazz);
             proxyFactory.setInterfaces(clazz, SQLCrudRepository.class);
         } else {
-            target = new SQLRepositoryImpl<SQLService>(sqlStoreService);
+            target = new SQLRepositoryImpl<SQLService>(service);
             proxyFactory.setInterfaces(clazz, SQLRepository.class);
         }
         proxyFactory.setTarget(target);
         proxyFactory.addAdvisor(ExposeInvocationInterceptor.ADVISOR);
-        proxyFactory.addAdvice(new SQLMethodInterceptor(clazz, target, SQLMethodFactory.create(clazz, sqlStoreService)));
+        proxyFactory.addAdvice(new SQLMethodInterceptor(clazz, target, SQLMethodFactory.create(clazz, service)));
         return proxyFactory;
     }
 }

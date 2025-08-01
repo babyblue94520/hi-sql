@@ -5,7 +5,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
 import org.springframework.util.Assert;
 import pers.clare.hisql.method.SQLProxyFactory;
-import pers.clare.hisql.service.SQLStoreService;
+import pers.clare.hisql.service.impl.SQLServiceImpl;
 
 @Log4j2
 public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<Object>, BeanClassLoaderAware, BeanFactoryAware {
@@ -50,7 +50,7 @@ public class SQLRepositoryFactoryBean implements InitializingBean, FactoryBean<O
     }
 
     public Object getRepository() {
-        Object repository = SQLProxyFactory.build(repositoryInterface, beanFactory.getBean(serviceBeanName, SQLStoreService.class)).getProxy(classLoader);
+        Object repository = SQLProxyFactory.build(repositoryInterface, beanFactory.getBean(serviceBeanName, SQLServiceImpl.class)).getProxy(classLoader);
         if (log.isDebugEnabled()) {
             log.debug("Finished creation of repository instance for {}.", repositoryInterface.getName());
         }

@@ -2,7 +2,6 @@ package pers.clare.hisql.method;
 
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -13,6 +12,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @UtilityClass
 @Log4j2
@@ -39,9 +39,9 @@ public class SQLInjector {
             String content;
             for (int i = 0; i < nodeList.getLength(); i++) {
                 node = nodeList.item(i);
-                if (Node.ELEMENT_NODE != node.getNodeType()) continue;
-                content = node.getTextContent();
-                if (!StringUtils.hasLength(content)) continue;
+                if (!Objects.equals(Node.ELEMENT_NODE, node.getNodeType())) continue;
+                content = node.getTextContent().trim();
+                if (content.isEmpty()) continue;
                 map.put(node.getNodeName(), content);
             }
         } catch (Exception e) {

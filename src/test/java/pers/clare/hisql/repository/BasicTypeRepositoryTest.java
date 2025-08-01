@@ -8,7 +8,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.repository.BasicTypeRepository;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 
@@ -193,45 +192,4 @@ class BasicTypeRepositoryTest {
         result = basicTypeRepository.pageStringMap(pagination, value);
         result.getRecords().forEach(map -> assertEquals(value, map.get("VALUE")));
     }
-
-    @Test
-    void findIntegerNext() {
-        int value = 1;
-        Next<Integer> result = basicTypeRepository.nextInteger(value);
-        assertTrue(result.getRecords().contains(value));
-
-        result = basicTypeRepository.nextInteger(pagination, value);
-        assertTrue(result.getRecords().contains(value));
-    }
-
-    @Test
-    void findStringNext() {
-        String value = "1";
-        Next<String> result = basicTypeRepository.nextString(value);
-        assertTrue(result.getRecords().contains(value));
-
-        result = basicTypeRepository.nextString(pagination, value);
-        assertTrue(result.getRecords().contains(value));
-    }
-
-    @Test
-    void findIntegerMapNext() {
-        int value = 1;
-        Next<Map<String, Integer>> result = basicTypeRepository.nextIntegerMap(value);
-        result.getRecords().forEach(map -> assertEquals(value, map.get("VALUE")));
-
-        result = basicTypeRepository.nextIntegerMap(pagination, value);
-        result.getRecords().forEach(map -> assertEquals(value, map.get("VALUE")));
-    }
-
-    @Test
-    void findStringMapNext() {
-        String value = "1";
-        Next<Map<String, String>> result = basicTypeRepository.nextStringMap(value);
-        result.getRecords().forEach(map -> assertEquals(value, map.get("VALUE")));
-
-        result = basicTypeRepository.nextStringMap(pagination, value);
-        result.getRecords().forEach(map -> assertEquals(value, map.get("VALUE")));
-    }
-
 }

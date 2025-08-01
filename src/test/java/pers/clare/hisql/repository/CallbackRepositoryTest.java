@@ -8,7 +8,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.data.repository.CallbackRepository;
-import pers.clare.hisql.util.ConnectionUtil;
+import pers.clare.hisql.util.PreparedStatementUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,7 +45,7 @@ class CallbackRepositoryTest {
         long value = 1L;
         long result = callbackRepository.connectionPrepared(1L, (connection, sql, parameters) -> {
             PreparedStatement prepareStatement = connection.prepareStatement(sql);
-            ConnectionUtil.setQueryValue(prepareStatement, parameters);
+            PreparedStatementUtil.setValue(prepareStatement, parameters);
             ResultSet resultSet = prepareStatement.executeQuery();
             if (resultSet.next()) {
                 return resultSet.getLong(1);

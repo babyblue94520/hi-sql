@@ -2,19 +2,18 @@ package pers.clare.hisql.util;
 
 import lombok.experimental.UtilityClass;
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.query.SQLQueryBuilder;
-import pers.clare.hisql.service.SQLBasicService;
+import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.store.SQLData;
+import pers.clare.hisql.store.SQLRequest;
 import pers.clare.hisql.store.SQLStoreColumn;
 
 import java.lang.reflect.Type;
 import java.util.*;
 
 @UtilityClass
-public class SQLStoreUtil {
+public class SQLStoreSqlUtil {
 
     private static final Set<Class<?>> parameterizedTypes = new HashSet<>();
 
@@ -22,72 +21,79 @@ public class SQLStoreUtil {
 
         parameterizedTypes.add(Optional.class);
         parameterizedTypes.add(Page.class);
-        parameterizedTypes.add(Next.class);
     }
 
-    public static SQLData toInsertSQLData(SQLCrudStore<?> sqlStore, Object entity) throws Exception {
-        SQLStoreColumn[] columns = sqlStore.getColumns();
-        StringBuilder columnSql = new StringBuilder("INSERT INTO " + sqlStore.getTableName() + "(");
-        StringBuilder valueSql = new StringBuilder("VALUES(");
-        List<Object> values = new ArrayList<>();
-        Object value;
-        for (SQLStoreColumn column : columns) {
-            if (!column.isInsertable()) continue;
-            value = column.getValue(entity);
-            if (value == null) {
-                if (column.isAuto()) continue;
-                if (column.isNotNullable()) continue;
-            }
-            columnSql.append(column.getName())
-                    .append(',');
-            valueSql.append('?')
-                    .append(',');
-            values.add(value);
-        }
-        valueSql.deleteCharAt(valueSql.length() - 1).append(')');
-        columnSql.deleteCharAt(columnSql.length() - 1)
-                .append(')')
-                .append(valueSql);
-        return new SQLData(columnSql.toString(), values.toArray());
-    }
-
-    public static SQLData toUpdateSQLData(SQLCrudStore<?> sqlStore, Object entity) throws Exception {
-        SQLStoreColumn[] columns = sqlStore.getColumns();
-        StringBuilder valueSql = new StringBuilder("UPDATE " + sqlStore.getTableName() + " SET ");
-        StringBuilder whereSql = new StringBuilder(" WHERE ");
-        List<Object> setValues = new ArrayList<>();
-        List<Object> whereValues = new ArrayList<>();
-        for (SQLStoreColumn column : columns) {
-            if (column.isId()) {
-                Object value = column.getValue(entity);
-                whereValues.add(value);
-                whereSql.append(column.getName())
-                        .append('=')
-                        .append('?')
-                        .append(" AND ");
-            } else {
-                if (!column.isUpdatable()) continue;
-                Object value = column.getValue(entity);
-                if (value == null && column.isNotNullable()) continue;
-                setValues.add(value);
-                valueSql.append(column.getName())
-                        .append('=')
-                        .append('?')
+    public static SQLRequest toInsertRequest(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
+        if (sqlStore.isPs()) {
+            SQLStoreColumn[] columns = sqlStore.getColumns();
+            StringBuilder columnSql = new StringBuilder("INSERT INTO " + sqlStore.getTableName() + "(");
+            StringBuilder valueSql = new StringBuilder("VALUES(");
+            List<Object> values = new ArrayList<>();
+            Object value;
+            for (SQLStoreColumn column : columns) {
+                if (!column.isInsertable()) continue;
+                value = column.getValue(entity);
+                if (value == null) {
+                    if (column.isAuto()) continue;
+                    if (column.isNotNullable()) continue;
+                }
+                columnSql.append(column.getName())
                         .append(',');
+                valueSql.append('?')
+                        .append(',');
+                values.add(value);
             }
+            valueSql.deleteCharAt(valueSql.length() - 1).append(')');
+            columnSql.deleteCharAt(columnSql.length() - 1)
+                    .append(')')
+                    .append(valueSql);
+            return new SQLRequest(columnSql.toString(), values.toArray());
+        } else {
+            return new SQLRequest(buildInsertSQL(sqlStore, entity), null);
         }
-        whereSql.delete(whereSql.length() - 5, whereSql.length() - 1);
-        valueSql.deleteCharAt(valueSql.length() - 1)
-                .append(whereSql);
-        Object[] values = new Object[setValues.size() + whereValues.size()];
-        int i = 0;
-        for (Object value : setValues) {
-            values[i++] = value;
+    }
+
+    public static SQLRequest toUpdateRequest(SQLCrudStore<?> sqlStore, Object entity) throws IllegalAccessException {
+        if (sqlStore.isPs()) {
+            SQLStoreColumn[] columns = sqlStore.getColumns();
+            StringBuilder valueSql = new StringBuilder("UPDATE " + sqlStore.getTableName() + " SET ");
+            StringBuilder whereSql = new StringBuilder(" WHERE ");
+            List<Object> setValues = new ArrayList<>();
+            List<Object> whereValues = new ArrayList<>();
+            for (SQLStoreColumn column : columns) {
+                if (column.isId()) {
+                    Object value = column.getValue(entity);
+                    whereValues.add(value);
+                    whereSql.append(column.getName())
+                            .append('=')
+                            .append('?')
+                            .append(" AND ");
+                } else {
+                    if (!column.isUpdatable()) continue;
+                    Object value = column.getValue(entity);
+                    if (value == null && column.isNotNullable()) continue;
+                    setValues.add(value);
+                    valueSql.append(column.getName())
+                            .append('=')
+                            .append('?')
+                            .append(',');
+                }
+            }
+            whereSql.delete(whereSql.length() - 5, whereSql.length() - 1);
+            valueSql.deleteCharAt(valueSql.length() - 1)
+                    .append(whereSql);
+            Object[] values = new Object[setValues.size() + whereValues.size()];
+            int i = 0;
+            for (Object value : setValues) {
+                values[i++] = value;
+            }
+            for (Object value : whereValues) {
+                values[i++] = value;
+            }
+            return new SQLRequest(valueSql.toString(), values);
+        } else {
+            return new SQLRequest(buildUpdateSQL(sqlStore, entity), null);
         }
-        for (Object value : whereValues) {
-            values[i++] = value;
-        }
-        return new SQLData(valueSql.toString(), values);
     }
 
     public static String buildCount(String tableName) {
@@ -136,7 +142,7 @@ public class SQLStoreUtil {
     }
 
 
-    public static String appendSelectColumns(SQLBasicService service, Type returnType, String command) {
+    public static String appendSelectColumns(SQLService service, Type returnType, String command) {
         Class<?> returnClass = ClassUtil.toWrapperClass(returnType);
         if (
                 parameterizedTypes.contains(returnClass)
@@ -148,7 +154,7 @@ public class SQLStoreUtil {
         if (returnClass == Map.class) {
             return "SELECT * " + command;
         } else {
-            if (SQLStoreUtil.isIgnore(returnClass)) {
+            if (SQLStoreSqlUtil.isIgnore(returnClass)) {
                 throw new HiSqlException("Select return type not support type. %s", returnClass);
             }
             SQLStoreColumn[] columns = SQLStoreColumnUtil.create(returnClass, service);
@@ -181,7 +187,7 @@ public class SQLStoreUtil {
     }
 
 
-    public static <T> String buildInsertSQL(SQLCrudStore<T> store, T entity) {
+    public static String buildInsertSQL(SQLCrudStore<?> store, Object entity) {
         try {
             SQLStoreColumn[] columns = store.getColumns();
             String tableName = store.getTableName();
@@ -207,7 +213,7 @@ public class SQLStoreUtil {
         }
     }
 
-    public static <T> String buildUpdateSQL(SQLCrudStore<T> store, T entity) {
+    public static String buildUpdateSQL(SQLCrudStore<?> store, Object entity) {
         try {
             SQLStoreColumn[] columns = store.getColumns();
             String tableName = store.getTableName();

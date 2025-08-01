@@ -1,13 +1,16 @@
 package pers.clare.hisql.constant;
 
-public interface CommandType {
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
+public class CommandType {
     /**
      * executeQuery
      */
-    int QUERY = 1;
+    public static final int QUERY = 1;
 
     /**
      * executeUpdate
      */
-    int UPDATE = 2;
+    public static final int UPDATE = 2;
 }

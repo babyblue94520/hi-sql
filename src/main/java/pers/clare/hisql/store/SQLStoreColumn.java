@@ -7,6 +7,7 @@ import pers.clare.hisql.util.ClassUtil;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Getter
 public class SQLStoreColumn {
@@ -42,11 +43,11 @@ public class SQLStoreColumn {
         this.getter = createGetter();
     }
 
-    public Object getValue(Object target) throws Exception {
+    public Object getValue(Object target) throws IllegalAccessException {
         return getter.apply(target);
     }
 
-    public void setValue(Object target, ResultSet rs, int i) throws Exception {
+    public void setValue(Object target, ResultSet rs, int i) throws SQLException, IllegalAccessException {
         setter.apply(target, rs, i);
     }
 
@@ -66,25 +67,25 @@ public class SQLStoreColumn {
         return field::get;
     }
 
-    public void setObjectValue(Object target, ResultSet resultSet, int index) throws Exception {
+    public void setObjectValue(Object target, ResultSet resultSet, int index) throws SQLException, IllegalAccessException {
         field.set(target, resultSet.getObject(index));
     }
 
-    public void setTypeValue(Object target, ResultSet resultSet, int index) throws Exception {
+    public void setTypeValue(Object target, ResultSet resultSet, int index) throws SQLException, IllegalAccessException {
         field.set(target, resultSet.getObject(index, type));
     }
 
-    public void setConverterValue(Object target, ResultSet resultSet, int index) throws Exception {
+    public void setConverterValue(Object target, ResultSet resultSet, int index) throws SQLException, IllegalAccessException {
         field.set(target, converter.apply(resultSet, index));
     }
 
     @FunctionalInterface
     interface Setter {
-        void apply(Object target, ResultSet resultSet, int index) throws Exception;
+        void apply(Object target, ResultSet resultSet, int index) throws SQLException, IllegalAccessException;
     }
 
     @FunctionalInterface
     interface Getter {
-        Object apply(Object target) throws Exception;
+        Object apply(Object target) throws IllegalAccessException;
     }
 }

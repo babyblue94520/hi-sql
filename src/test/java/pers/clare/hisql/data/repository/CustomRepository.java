@@ -4,7 +4,6 @@ import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.data.entity.User;
 import pers.clare.hisql.data.entity.UserSimple;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -84,12 +83,6 @@ public interface CustomRepository extends SQLRepository {
 
     @HiSql("SELECT * FROM user WHERE account=:account")
     Page<User> pageByAccount(Pagination pagination, String account);
-
-    @HiSql("SELECT * FROM user WHERE account=:account")
-    Next<User> nextByAccount(String account);
-
-    @HiSql("SELECT * FROM user WHERE account=:account")
-    Next<User> nextByAccount(Pagination pagination, String account);
 
     @HiSql("SELECT * FROM user WHERE account=:account")
     List<User> findAllByAccount(Sort sort, String account);

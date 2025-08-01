@@ -1,11 +1,9 @@
 package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.util.ConnectionUtil;
+import pers.clare.hisql.service.SQLTypeService;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 public class MySQLPaginationMode implements PaginationMode {
@@ -22,17 +20,17 @@ public class MySQLPaginationMode implements PaginationMode {
 
     @Override
     public long getVirtualTotal(
-            Connection connection
+            SQLTypeService service
             , String sql
             , Object[] parameters
-    ) throws SQLException {
-        String totalSql = "EXPLAIN " + sql;
-        ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
-        if (rs.next()) {
-            return rs.getLong("ROWS");
-        } else {
-            throw new HiSqlException(String.format("query total error.(%s)", totalSql));
+    ) {
+        String virtualTotalSql = "EXPLAIN " + sql;
+        Map<String, Object> result = service.findMap(Object.class, virtualTotalSql, parameters);
+        Long total = (Long) result.get("ROWS");
+        if (total == null) {
+            throw new HiSqlException(String.format("Query virtual total error.(%s)", virtualTotalSql));
         }
+        return total;
     }
 
 }

@@ -1,17 +1,10 @@
 package pers.clare.hisql.page;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.util.ConnectionUtil;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import pers.clare.hisql.service.SQLTypeService;
 
 public interface PaginationMode {
 
-    default String buildTotalSQL(String sql) {
-        return "SELECT COUNT(*) FROM(" + sql + ")t";
-    }
 
     default String buildSortSQL(
             Sort sort
@@ -87,24 +80,24 @@ public interface PaginationMode {
     }
 
     default long getTotal(
-            Connection connection
+            SQLTypeService service
             , String sql
             , Object[] parameters
-    ) throws SQLException {
-        String totalSql = buildTotalSQL(sql);
-        ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
-        if (rs.next()) {
-            return rs.getLong(1);
-        } else {
+    ) {
+        String totalSql = "SELECT COUNT(*) FROM(" + sql + ")t";
+        Long total = service.find(Long.class, totalSql, parameters);
+        if (total == null) {
             throw new HiSqlException(String.format("Query total error.(%s)", totalSql));
         }
+
+        return total;
     }
 
     default long getVirtualTotal(
-            Connection connection
+            SQLTypeService service
             , String sql
             , Object[] parameters
-    ) throws SQLException {
-        return getTotal(connection, sql, parameters);
+    ) {
+        return getTotal(service, sql, parameters);
     }
 }

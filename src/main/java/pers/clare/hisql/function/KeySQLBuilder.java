@@ -4,6 +4,6 @@ import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.query.SQLQueryBuilder;
 
 @FunctionalInterface
-public interface KeySQLBuilder<Key> {
-    String apply(SQLQueryBuilder sqlQueryBuilder, Key key) throws HiSqlException;
+public interface KeySQLBuilder<KEY> {
+    String apply(SQLQueryBuilder sqlQueryBuilder, KEY key) throws HiSqlException;
 }

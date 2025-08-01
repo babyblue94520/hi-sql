@@ -8,7 +8,6 @@ import pers.clare.hisql.data.entity.CompositeKey;
 import pers.clare.hisql.data.entity.CompositeKey2;
 import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.data.repository.CompositeKeyRepository;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
@@ -99,29 +98,6 @@ public class CompositeKeyRepositoryTest {
         List<CompositeTable> datas = compositeKeyRepository.page(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
         assertTrue(datas.get(0).getId() > datas.get(datas.size() - 1).getId());
         datas = compositeKeyRepository.page(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
-        assertTrue(datas.get(0).getId() < datas.get(datas.size() - 1).getId());
-    }
-
-    @Test
-    void next() {
-        int page = 0;
-        int size = 5;
-        Next<CompositeTable> dataNext = compositeKeyRepository.next(Pagination.of(page, size));
-        assertEquals(0, dataNext.getRecords().size());
-        int total = 23;
-        for (int i = 0; i < total; i++) {
-            create();
-        }
-        int count = 0;
-        while ((dataNext = compositeKeyRepository.next(Pagination.of(page++, size))).getRecords().size() > 0) {
-            count += dataNext.getRecords().size();
-            assertEquals(size, dataNext.getSize());
-        }
-        assertEquals(total, count);
-
-        List<CompositeTable> datas = compositeKeyRepository.next(Pagination.of(0, size, "id DESC,account ASC")).getRecords();
-        assertTrue(datas.get(0).getId() > datas.get(datas.size() - 1).getId());
-        datas = compositeKeyRepository.next(Pagination.of(0, size, "id ASC,account DESC")).getRecords();
         assertTrue(datas.get(0).getId() < datas.get(datas.size() - 1).getId());
     }
 

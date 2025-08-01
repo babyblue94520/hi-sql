@@ -15,7 +15,6 @@ public interface SQLRepository {
 
     <R> R resultSet(String sql, Object[] args, ResultSetCallback<R> callback);
 
-
     <T> T executeInsert(Class<T> keyType, String sql, Object... args);
 
     @NonNull

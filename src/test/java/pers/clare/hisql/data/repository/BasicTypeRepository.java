@@ -2,7 +2,6 @@ package pers.clare.hisql.data.repository;
 
 import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
-import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.repository.SQLRepository;
@@ -99,28 +98,4 @@ public interface BasicTypeRepository extends SQLRepository {
 
     @HiSql("SELECT :value AS value")
     Page<Map<String, String>> pageStringMap(Pagination pagination, String value);
-
-    @HiSql("SELECT :value")
-    Next<Integer> nextInteger(int value);
-
-    @HiSql("SELECT :value")
-    Next<Integer> nextInteger(Pagination pagination, int value);
-
-    @HiSql("SELECT :value")
-    Next<String> nextString(String value);
-
-    @HiSql("SELECT :value")
-    Next<String> nextString(Pagination pagination, String value);
-
-    @HiSql("SELECT :value AS value")
-    Next<Map<String, Integer>> nextIntegerMap(int value);
-
-    @HiSql("SELECT :value AS value")
-    Next<Map<String, Integer>> nextIntegerMap(Pagination pagination, int value);
-
-    @HiSql("SELECT :value AS value")
-    Next<Map<String, String>> nextStringMap(String value);
-
-    @HiSql("SELECT :value AS value")
-    Next<Map<String, String>> nextStringMap(Pagination pagination, String value);
 }
