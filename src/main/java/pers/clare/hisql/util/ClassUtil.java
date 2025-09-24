@@ -12,8 +12,8 @@ import java.util.function.Function;
 
 public class ClassUtil {
 
-    private static final ConcurrentMap<Class<?>, Method[]> classDeclaredMethodsMap = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<Class<?>, Field[]> classDeclaredFieldsMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Class<?>, Method[]> declaredMethodsMap = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Class<?>, Field[]> declaredFieldsMap = new ConcurrentHashMap<>();
 
     private static final ConcurrentMap<Class<?>, Map<String, Field>> classNameFieldMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<Class<?>, List<Method>> classOrderMethodsMap = new ConcurrentHashMap<>();
@@ -21,17 +21,19 @@ public class ClassUtil {
 
 
     public static Method[] getDeclaredMethods(Class<?> clazz) {
-        return classDeclaredMethodsMap.computeIfAbsent(clazz, Class::getDeclaredMethods);
+        return declaredMethodsMap.computeIfAbsent(clazz, Class::getDeclaredMethods);
     }
 
     public static Field[] getDeclaredFields(Class<?> clazz) {
-        return classDeclaredFieldsMap.computeIfAbsent(clazz, (c) -> {
-            Field[] fields = c.getDeclaredFields();
-            for (Field field : fields) {
-                field.setAccessible(true);
-            }
-            return fields;
-        });
+        return declaredFieldsMap.computeIfAbsent(clazz, ClassUtil::buildDeclareFields);
+    }
+
+    private static Field[] buildDeclareFields(Class<?> clazz) {
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+        }
+        return fields;
     }
 
     public static Map<String, Field> getNameFieldMap(Class<?> clazz) {
@@ -51,10 +53,10 @@ public class ClassUtil {
     }
 
     private static List<Method> toOrderGetMethods(Class<?> clazz) {
-        Map<String, Field> fieldMap = getNameFieldMap(clazz);
         return sort(ClassUtil.getDeclaredMethods(clazz), ClassUtil::isGetMethod, (o) -> {
             Order order = o.getAnnotation(Order.class);
             if (order == null) {
+                Map<String, Field> fieldMap = getNameFieldMap(clazz);
                 Field field = fieldMap.get(methodToFieldName(o.getName()));
                 if (field != null) {
                     order = field.getAnnotation(Order.class);
@@ -72,12 +74,12 @@ public class ClassUtil {
         return sort(ClassUtil.getDeclaredFields(clazz), (f) -> true, (f) -> f.getAnnotation(Order.class));
     }
 
-    private static <T> List<T> sort(T[] array, Function<T, Boolean> filter, Function<T, Order> getOrder) {
+    private static <T> List<T> sort(T[] array, Function<T, Boolean> filter, Function<T, Order> orderGetter) {
         List<OrderObject<T>> orderObjects = new ArrayList<>();
         List<T> others = new ArrayList<>();
         for (T o : array) {
             if (!filter.apply(o)) continue;
-            Order order = getOrder.apply(o);
+            Order order = orderGetter.apply(o);
             if (order == null) {
                 others.add(o);
             } else {
@@ -113,42 +115,26 @@ public class ClassUtil {
         return type.isPrimitive() || type.getName().startsWith("java.");
     }
 
+    public static boolean isBasicTypeArray(Class<?> type) {
+        if (type.isArray()) {
+            type = type.getComponentType();
+            return isBasicType(type) || isBasicTypeArray(type);
+        }
+        return false;
+    }
+
     @NonNull
-    public static Class<?> toClassType(Type type) {
+    public static Class<?> toWrapperClass(Type type) {
         if (type instanceof Class) {
             return (Class<?>) type;
         }
         if (type instanceof ParameterizedType) {
             Type result = ((ParameterizedType) type).getRawType();
             if (result instanceof Class) {
-                return toClassType((Class<?>) result);
+                return toWrapperClass((Class<?>) result);
             }
         }
         return Object.class;
-    }
-
-    @NonNull
-    public static Class<?> toClassType(@NonNull Class<?> clazz) {
-        if (clazz.isPrimitive()) {
-            if (clazz == byte.class) {
-                return Byte.class;
-            } else if (clazz == char.class) {
-                return Byte.class;
-            } else if (clazz == short.class) {
-                return Short.class;
-            } else if (clazz == int.class) {
-                return Integer.class;
-            } else if (clazz == long.class) {
-                return Long.class;
-            } else if (clazz == float.class) {
-                return Float.class;
-            } else if (clazz == double.class) {
-                return Double.class;
-            } else if (clazz == boolean.class) {
-                return Boolean.class;
-            }
-        }
-        return clazz;
     }
 
     public static Type[] findTypes(Class<?> clazz) {
@@ -198,14 +184,61 @@ public class ClassUtil {
         }
     }
 
+    public static Class<?> toWrapperClass(Class<?> clazz) {
+        if (clazz.isPrimitive()) {
+            if (clazz == boolean.class) {
+                return Boolean.class;
+            } else if (clazz == byte.class) {
+                return Byte.class;
+            } else if (clazz == char.class) {
+                return Character.class;
+            } else if (clazz == double.class) {
+                return Double.class;
+            } else if (clazz == float.class) {
+                return Float.class;
+            } else if (clazz == int.class) {
+                return Integer.class;
+            } else if (clazz == long.class) {
+                return Long.class;
+            } else if (clazz == short.class) {
+                return Short.class;
+            } else {
+                return clazz;
+            }
+        }
+        return clazz;
+    }
+
+    public static Object getDefaultValue(Class<?> type, Object value) {
+        if (value == null && type.isPrimitive()) {
+            if (type == int.class) {
+                return 0;
+            } else if (type == boolean.class) {
+                return false;
+            } else if (type == byte.class) {
+                return (byte) 0;
+            } else if (type == short.class) {
+                return (short) 0;
+            } else if (type == long.class) {
+                return 0L;
+            } else if (type == float.class) {
+                return 0.0f;
+            } else if (type == double.class) {
+                return 0.0d;
+            } else if (type == char.class) {
+                return '\u0000';
+            }
+        }
+        return value;
+    }
 
     @NonNull
     public static Class<?> getValueClass(Type type, int index) {
         Type result = getValueType(type, index);
         if (result instanceof ParameterizedType) {
-            return ClassUtil.toClassType(((ParameterizedType) result).getRawType());
+            return ClassUtil.toWrapperClass(((ParameterizedType) result).getRawType());
         } else {
-            return ClassUtil.toClassType(result);
+            return ClassUtil.toWrapperClass(result);
         }
     }
 
@@ -226,4 +259,5 @@ public class ClassUtil {
             this.object = object;
         }
     }
+
 }

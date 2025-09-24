@@ -1,11 +1,10 @@
 package pers.clare.hisql.util;
 
-import pers.clare.hisql.function.FieldSetter;
-import pers.clare.hisql.function.ResultSetValueConverter;
+import pers.clare.hisql.function.ResultSetConvertHandler;
 import pers.clare.hisql.store.SQLStore;
+import pers.clare.hisql.store.SQLStoreColumn;
 import pers.clare.hisql.support.ResultSetConverter;
 
-import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -65,28 +64,27 @@ public class ResultSetUtil {
         return result;
     }
 
-    public static <T> T toInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
+    public static <T> T toInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
         if (rs.next()) {
-            return buildInstance(rs, sqlStore.getConstructor(), fields);
+            return buildInstance(sqlStore, rs);
         }
         return null;
     }
 
-    public static <T> Set<T> toSetInstance(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+    public static <T> Set<T> toSetInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        SQLStoreColumn[] columns = getColumns(sqlStore, rs);
         Set<T> result = new HashSet<>();
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
         while (rs.next()) {
-            result.add(buildInstance(rs, sqlStore.getConstructor(), fields));
+            result.add(buildInstance(sqlStore, rs, columns));
         }
         return result;
     }
 
-    public static <T> List<T> toInstances(ResultSet rs, SQLStore<T> sqlStore) throws Exception {
+    public static <T> List<T> toInstances(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        SQLStoreColumn[] columns = getColumns(sqlStore, rs);
         List<T> list = new ArrayList<>();
-        FieldSetter[] fields = toFields(rs.getMetaData(), sqlStore.getFieldSetterMap());
         while (rs.next()) {
-            list.add(buildInstance(rs, sqlStore.getConstructor(), fields));
+            list.add(buildInstance(sqlStore, rs, columns));
         }
         return list;
     }
@@ -125,36 +123,46 @@ public class ResultSetUtil {
         return collection;
     }
 
-    private static <T> T buildInstance(ResultSet rs, Constructor<T> constructor, FieldSetter[] fields) throws Exception {
-        T target = constructor.newInstance();
-        int i = 1;
-        for (FieldSetter field : fields) {
-            if (field != null) field.apply(target, rs, i);
+    public static <T> SQLStoreColumn[] getColumns(SQLStore<T> sqlStore, ResultSet rs) throws SQLException {
+        Map<String, SQLStoreColumn> columnMap = sqlStore.getNameMapping();
+        ResultSetMetaData metaData = rs.getMetaData();
+        int l = metaData.getColumnCount();
+        SQLStoreColumn[] columns = new SQLStoreColumn[l];
+        for (int i = 0; i < l; ) {
+            columns[i] = columnMap.get(metaData.getColumnLabel(++i));
+        }
+        return columns;
+    }
+
+    private static <T> T buildInstance(SQLStore<T> sqlStore, ResultSet rs) throws Exception {
+        return buildInstance(sqlStore, rs, getColumns(sqlStore, rs));
+    }
+
+    private static <T> T buildInstance(SQLStore<T> sqlStore, ResultSet rs, SQLStoreColumn[] columns) throws Exception {
+        T target = sqlStore.getConstructor().newInstance();
+        int i = 0;
+        for (SQLStoreColumn column : columns) {
             i++;
+            if (column == null) continue;
+            column.setValue(target, rs, i);
         }
         return target;
     }
 
-    private static FieldSetter[] toFields(ResultSetMetaData metaData, Map<String, FieldSetter> fieldMap) throws Exception {
-        int l = metaData.getColumnCount();
-        FieldSetter[] fields = new FieldSetter[l];
-        for (int i = 0; i < l; i++) {
-            fields[i] = fieldMap.get(metaData.getColumnLabel(i + 1));
-        }
-        return fields;
+    public static <T> T getValue(ResultSetConverter resultSetConverter, ResultSet rs, int index, Class<T> clazz) throws SQLException {
+        return getValue(resultSetConverter.get(clazz), rs, index, clazz);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T getValue(ResultSetConverter resultSetConverter, ResultSet rs, int index, Class<T> clazz) throws SQLException {
-        ResultSetValueConverter<T> valueConverter = resultSetConverter.get(clazz);
-        if (valueConverter == null) {
+    public static <T> T getValue(ResultSetConvertHandler<T> converter, ResultSet rs, int index, Class<T> clazz) throws SQLException {
+        if (converter == null) {
             if (clazz == Object.class) {
                 return (T) rs.getObject(index);
             } else {
                 return rs.getObject(index, clazz);
             }
         } else {
-            return valueConverter.apply(rs, index);
+            return converter.apply(rs, index);
         }
     }
 }

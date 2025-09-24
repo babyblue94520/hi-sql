@@ -32,7 +32,7 @@ public @interface EnableHiSql {
     Class<?>[] basePackageClasses() default {};
 
     /**
-     * DataSource bean name.
+     * DataSource bean name. Default @Primary DataSource
      */
     String dataSourceRef() default "";
 

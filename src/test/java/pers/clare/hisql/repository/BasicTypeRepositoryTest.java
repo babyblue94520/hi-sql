@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
@@ -64,7 +63,7 @@ public class BasicTypeRepositoryTest {
         boolean result = basicTypeRepository.findBoolean(value);
         assertTrue(result);
         result = basicTypeRepository.notFoundBoolean(value);
-        assertEquals(false, result);
+        assertFalse(result);
     }
 
     @Test

@@ -45,30 +45,30 @@ public class SQLQueryUtil {
             , Object value
     ) {
         Class<?> valueClass = value.getClass();
-        if (valueClass.isArray()) {
+        if (ClassUtil.isBasicTypeArray(valueClass)) {
             sb.append('(');
             if (value instanceof Object[]) {
                 Object[] vs = (Object[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                notEmpty(vs.length);
                 for (Object v : vs) appendInValue(sb, v);
             } else if (value instanceof int[]) {
                 int[] vs = (int[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                notEmpty(vs.length);
                 for (int v : vs) appendInValue(sb, v);
             } else if (value instanceof long[]) {
                 long[] vs = (long[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                notEmpty(vs.length);
                 for (long v : vs) appendInValue(sb, v);
             } else if (value instanceof char[]) {
                 char[] vs = (char[]) value;
-                if (vs.length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+                notEmpty(vs.length);
                 for (char v : vs) appendInValue(sb, v);
             }
             sb.deleteCharAt(sb.length() - 1).append(')');
         } else if (Collection.class.isAssignableFrom(valueClass)) {
             @SuppressWarnings("unchecked")
             Collection<Object> vs = (Collection<Object>) value;
-            if (vs.isEmpty()) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+            notEmpty(vs.size());
             sb.append('(');
             for (Object v : vs) appendInValue(sb, v);
             sb.deleteCharAt(sb.length() - 1).append(')');
@@ -141,4 +141,9 @@ public class SQLQueryUtil {
         }
         return query;
     }
+
+    private static void notEmpty(int length) {
+        if (length == 0) throw new IllegalArgumentException("SQL WHERE IN doesn't empty value");
+    }
+
 }

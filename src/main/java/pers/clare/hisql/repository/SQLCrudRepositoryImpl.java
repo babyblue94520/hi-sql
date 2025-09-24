@@ -2,34 +2,54 @@ package pers.clare.hisql.repository;
 
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.KeySQLBuilder;
+import pers.clare.hisql.function.KeysSQLBuilder;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.service.SQLStoreService;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.ClassUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLStoreService> implements SQLCrudRepository<Entity, Key> {
+
+    protected static final Map<Class<?>, Field[]> keyFieldsMap = new ConcurrentHashMap<>();
+
     protected final SQLCrudStore<Entity> sqlStore;
     protected final KeySQLBuilder<Key> keySQLBuilder;
+    protected final KeysSQLBuilder<Key> keysSQLBuilder;
+    protected final Class<Key> keyClass;
+    protected final Field[] keyFields;
 
     @SuppressWarnings("unchecked")
     public SQLCrudRepositoryImpl(SQLStoreService sqlService, Class<Entity> repositoryClass) {
         super(sqlService);
         Type[] types = ClassUtil.findTypes(repositoryClass);
         Class<Entity> entityClass = (Class<Entity>) types[0];
-        sqlStore = SQLStoreFactory.buildCrud(sqlService.getNaming(), sqlService.getResultSetConverter(), entityClass);
+        sqlStore = sqlService.buildCrud(entityClass);
+        keyClass = (Class<Key>) types[1];
 
-        Class<Key> keyClass = (Class<Key>) types[1];
-        keySQLBuilder = SQLStoreFactory.buildKey(keyClass, sqlStore);
+        if (ClassUtil.isBasicType(keyClass)
+            || ClassUtil.isBasicTypeArray(keyClass)
+        ) {
+            keyFields = sqlStore.getKeyFields();
+            keySQLBuilder = this::toKeySQL;
+            keysSQLBuilder = this::toKeysSQL;
+        } else {
+            keyFields = ClassUtil.getDeclaredFields(keyClass);
+            keySQLBuilder = this::toKeySQLByClass;
+            keysSQLBuilder = this::toKeysSQLByClass;
+        }
     }
 
     public long count() {
@@ -85,6 +105,9 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.find(sqlStore, keySQLBuilder.apply(sqlStore.getSelectById(), key));
     }
 
+    public final List<Entity> findAllByIds(Key[] keys) {
+        return sqlService.findAll(sqlStore, keysSQLBuilder.apply(sqlStore.getSelectByIds(), keys));
+    }
 
     public Entity find(Entity entity) {
         return sqlService.find(sqlStore, entity);
@@ -104,6 +127,10 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
 
     public int deleteById(Key key) {
         return sqlService.update(keySQLBuilder.apply(sqlStore.getDeleteById(), key));
+    }
+
+    public int deleteByIds(Key[] keys) {
+        return sqlService.update(keysSQLBuilder.apply(sqlStore.getDeleteByIds(), keys));
     }
 
     @Override
@@ -162,4 +189,33 @@ public class SQLCrudRepositoryImpl<Entity, Key> extends SQLRepositoryImpl<SQLSto
         return sqlService.deleteByObject(object);
     }
 
+
+    protected String toKeySQL(SQLQueryBuilder builder, Key key) {
+        return SQLQueryUtil.setValue(builder, keyFields, new Object[]{key});
+    }
+
+    protected String toKeySQLByClass(SQLQueryBuilder builder, Key key) {
+        return SQLQueryUtil.setValue(builder, keyFields, key);
+    }
+
+    protected String toKeysSQL(SQLQueryBuilder builder, Key[] values) {
+        return builder.build().value("keys", values).toString();
+    }
+
+    public String toKeysSQLByClass(SQLQueryBuilder builder, Key[] values) {
+        Object[][] array = new Object[values.length][];
+        int i = 0;
+        for (Key value : values) {
+            Object[] row = array[i++] = new Object[keyFields.length];
+            int c = 0;
+            for (Field field : keyFields) {
+                try {
+                    row[c++] = field.get(value);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return builder.build().value("keys", array).toString();
+    }
 }

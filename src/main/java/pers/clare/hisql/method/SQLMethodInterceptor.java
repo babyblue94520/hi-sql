@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class SQLMethodInterceptor implements MethodInterceptor {
     private final Object target;
-    private final Map<Method, Method> methodMaps = new HashMap<>();
+    private final Map<Method, Method> methodMap = new HashMap<>();
     private final Map<Method, MethodInterceptor> methodInterceptorMap;
 
     public SQLMethodInterceptor(
@@ -27,7 +27,7 @@ public class SQLMethodInterceptor implements MethodInterceptor {
         for (Method method : interfaceClass.getMethods()) {
             try {
                 targetMethod = targetClass.getMethod(method.getName(), method.getParameterTypes());
-                this.methodMaps.put(method, targetMethod);
+                this.methodMap.put(method, targetMethod);
             } catch (NoSuchMethodException ignored) {
             }
         }
@@ -36,7 +36,7 @@ public class SQLMethodInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {
         try {
-            Method method = this.methodMaps.get(methodInvocation.getMethod());
+            Method method = this.methodMap.get(methodInvocation.getMethod());
             if (method == null) {
                 MethodInterceptor handler = methodInterceptorMap.get(methodInvocation.getMethod());
                 if (handler == null)

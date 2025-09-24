@@ -2,21 +2,30 @@ package pers.clare.hisql.store;
 
 
 import lombok.Getter;
-import pers.clare.hisql.function.FieldSetter;
 
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 public class SQLStore<T> {
     protected final Constructor<T> constructor;
-    protected final Map<String, FieldSetter> fieldSetterMap;
+    protected final SQLStoreColumn[] columns;
+    protected final Map<String, SQLStoreColumn> nameMapping;
 
-    public SQLStore(Constructor<T> constructor
-            , Map<String, FieldSetter> fieldSetterMap
+    public SQLStore(Constructor<T> constructor, SQLStoreColumn[] columns
     ) {
         this.constructor = constructor;
-        this.fieldSetterMap = fieldSetterMap;
+        this.columns = columns;
+        this.nameMapping = new HashMap<>();
+        for (SQLStoreColumn column : columns) {
+            String name = column.getName();
+            nameMapping.put(name, column);
+            nameMapping.put(name.replaceAll("`", ""), column);
+            nameMapping.put(column.getField().getName(), column);
+            nameMapping.put(name.toUpperCase(), column);
+            nameMapping.put(name.toLowerCase(), column);
+        }
     }
 
 }

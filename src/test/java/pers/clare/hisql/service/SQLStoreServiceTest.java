@@ -4,7 +4,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.vo.TestTable;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ class SQLStoreServiceTest {
     @Autowired
     public SQLStoreServiceTest(SQLStoreService service) {
         this.service = service;
-        store = SQLStoreFactory.buildCrud(service.getNaming(), service.getResultSetConverter(), TestTable.class);
+        store = service.buildCrud(TestTable.class);
     }
 
     @BeforeEach
@@ -163,4 +162,5 @@ class SQLStoreServiceTest {
         service.deleteByObject(testTable);
         assertNull(service.findByObject(testTable));
     }
+
 }

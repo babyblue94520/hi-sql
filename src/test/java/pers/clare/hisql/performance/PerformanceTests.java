@@ -43,7 +43,7 @@ public class PerformanceTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private final int thread = Runtime.getRuntime().availableProcessors();
+    private final int thread = 4;
 
     private final int pageSize = 100;
 
@@ -119,7 +119,8 @@ public class PerformanceTests {
         assertEquals(page.getRecords().size(), pageSize);
         PerformanceUtil.byTime("hisql_select", thread, time, (index) -> {
             User user = page.getRecords().get((int) (index % pageSize));
-            assertNotNull(userRepository.findById(user.getId()));
+            user = userRepository.findById(user.getId());
+            assertNotNull(user);
         });
     }
 

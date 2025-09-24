@@ -62,7 +62,7 @@ public abstract class SQLStoreNextService extends SQLStoreQueryService {
         Connection connection = null;
         try {
             connection = getConnection();
-            List<T> list = ResultSetUtil.toInstances(ConnectionUtil.query(connection, executeSql, parameters), sqlStore);
+            List<T> list = ResultSetUtil.toInstances(sqlStore, ConnectionUtil.query(connection, executeSql, parameters));
             return toNext(pagination, list);
         } catch (HiSqlException e) {
             throw e;

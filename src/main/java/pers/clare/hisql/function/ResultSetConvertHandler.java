@@ -4,6 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 @FunctionalInterface
-public interface ResultSetValueConverter<T> {
+public interface ResultSetConvertHandler<T> {
     T apply(ResultSet resultSet, int index) throws SQLException;
 }

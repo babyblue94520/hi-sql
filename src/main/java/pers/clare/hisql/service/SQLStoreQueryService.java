@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public abstract class SQLStoreQueryService extends SQLService {
+public abstract class SQLStoreQueryService extends SQLStoreBasicService {
 
     private <T, R> R queryHandler(
             SQLStore<T> sqlStore
@@ -27,7 +27,7 @@ public abstract class SQLStoreQueryService extends SQLService {
         Connection connection = null;
         try {
             connection = getConnection();
-            return storeResultSetHandler.apply(ConnectionUtil.query(connection, sql, parameters), sqlStore);
+            return storeResultSetHandler.apply(sqlStore, ConnectionUtil.query(connection, sql, parameters));
         } catch (HiSqlException e) {
             throw e;
         } catch (Exception e) {

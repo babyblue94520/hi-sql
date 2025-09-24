@@ -41,10 +41,6 @@ public class SQLQuery {
         }
     }
 
-    public SQLQuery values(String key, Object... value) {
-        return value(key, value);
-    }
-
     public SQLQuery value(String key, Object value) {
         if (key == null) return this;
         List<Integer> list = keyIndex.get(key);

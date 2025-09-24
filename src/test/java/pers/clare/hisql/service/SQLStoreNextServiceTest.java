@@ -11,7 +11,6 @@ import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.vo.TestTable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +30,7 @@ class SQLStoreNextServiceTest extends BasicTest {
     @Autowired
     public SQLStoreNextServiceTest(SQLStoreNextService service) {
         this.service = service;
-        store = SQLStoreFactory.buildCrud(service.getNaming(), service.getResultSetConverter(), TestTable.class);
+        store = service.buildCrud(TestTable.class);
     }
 
     @Override

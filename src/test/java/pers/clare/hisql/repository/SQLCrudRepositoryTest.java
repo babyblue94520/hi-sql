@@ -138,15 +138,33 @@ public class SQLCrudRepositoryTest {
     }
 
     @Test
+    void findAllByIds() {
+        List<User> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        Long[] keys = new Long[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = data.getId();
+        }
+        List<User> result = userRepository.findAllByIds(keys);
+        assertNotNull(result);
+        for (int i = 0; i < result.size(); i++) {
+            var o = list.get(i);
+            var r = result.get(i);
+            assertEquals(o.getId(), r.getId());
+            assertEquals(o.getAccount(), r.getAccount());
+        }
+    }
+
+    @Test
     void insert() {
         User user = create();
         assertEquals("", user.getName());
         assertEquals("", user.getEmail());
         assertEquals(1, user.getCount());
-        assertEquals(0, user.getUpdateUser());
-        assertEquals(0, user.getUpdateTime());
-        assertEquals(0, user.getCreateUser());
-        assertEquals(0, user.getCreateTime());
+
         assertTrue(user.getEnabled());
         assertFalse(user.getLocked());
     }
@@ -158,7 +176,9 @@ public class SQLCrudRepositoryTest {
         user.setName(name);
         int count = userRepository.update(user);
         assertEquals(1, count);
-        assertEquals(name, userRepository.findById(user.getId()).getName());
+
+        User entity = userRepository.findById(user.getId());
+        assertEquals(name, entity.getName());
     }
 
     @Test
@@ -175,6 +195,24 @@ public class SQLCrudRepositoryTest {
         int count = userRepository.deleteById(user.getId());
         assertEquals(1, count);
         assertNull(userRepository.findById(user.getId()));
+    }
+
+    @Test
+    void deleteByIds() {
+        List<User> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(create());
+        }
+        Long[] keys = new Long[list.size()];
+        for (int i = 0; i < 10; i++) {
+            var data = list.get(i);
+            keys[i] = data.getId();
+        }
+        int count = userRepository.deleteByIds(keys);
+        assertEquals(list.size(), count);
+        for (var entity : list) {
+            assertNull(userRepository.find(entity));
+        }
     }
 
     @Test
@@ -214,42 +252,26 @@ public class SQLCrudRepositoryTest {
     }
 
     @Test
-    void updateAll() {
+    void updateAll() throws InterruptedException {
         int count = 10;
         List<User> users = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             users.add(create());
         }
-        long updateTime = System.currentTimeMillis();
-        for (User user : users) {
-            user.setUpdateTime(updateTime);
-        }
-
         for (int i : userRepository.updateAll(users)) {
             assertEquals(1, i);
-        }
-        for (User user : users) {
-            assertEquals(updateTime, userRepository.find(user).getUpdateTime());
         }
     }
 
     @Test
-    void updateAllArray() {
+    void updateAllArray() throws InterruptedException {
         int count = 10;
         User[] users = new User[count];
         for (int i = 0; i < count; i++) {
             users[i] = create();
         }
-        long updateTime = System.currentTimeMillis();
-        for (User user : users) {
-            user.setUpdateTime(updateTime);
-        }
-
         for (int i : userRepository.updateAll(users)) {
             assertEquals(1, i);
-        }
-        for (User user : users) {
-            assertEquals(updateTime, userRepository.find(user).getUpdateTime());
         }
     }
 

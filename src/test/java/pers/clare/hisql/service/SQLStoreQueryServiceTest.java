@@ -9,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import pers.clare.hisql.BasicTest;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.vo.TestTable;
 
 import java.util.List;
@@ -31,7 +30,7 @@ class SQLStoreQueryServiceTest extends BasicTest {
     @Autowired
     public SQLStoreQueryServiceTest(SQLStoreQueryService service) {
         this.service = service;
-        store = SQLStoreFactory.buildCrud(service.getNaming(), service.getResultSetConverter(), TestTable.class);
+        store = service.buildCrud(TestTable.class);
     }
 
     @Override

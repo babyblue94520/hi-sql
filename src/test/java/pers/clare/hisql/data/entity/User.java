@@ -39,7 +39,7 @@ public class User {
     private Boolean enabled;
 
     @Column(nullable = false, name = "update_time", columnDefinition = "bigint default '0'")
-    private Long updateTime;
+    private long updateTime;
 
     @Column(nullable = false, name = "update_user", columnDefinition = "bigint default '0'")
     private Long updateUser;

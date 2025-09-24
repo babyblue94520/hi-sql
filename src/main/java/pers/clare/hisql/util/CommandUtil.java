@@ -1,10 +1,10 @@
 package pers.clare.hisql.util;
 
 import pers.clare.hisql.exception.HiSqlException;
-import pers.clare.hisql.naming.NamingStrategy;
 import pers.clare.hisql.page.Next;
 import pers.clare.hisql.page.Page;
-import pers.clare.hisql.store.FieldColumn;
+import pers.clare.hisql.service.SQLBasicService;
+import pers.clare.hisql.store.SQLStoreColumn;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -54,8 +54,8 @@ public class CommandUtil {
         return new String(temp, 0, count);
     }
 
-    public static String appendSelectColumns(NamingStrategy naming, Type returnType, String command) {
-        Class<?> returnClass = ClassUtil.toClassType(returnType);
+    public static String appendSelectColumns(SQLBasicService service, Type returnType, String command) {
+        Class<?> returnClass = ClassUtil.toWrapperClass(returnType);
         if (
                 parameterizedTypes.contains(returnClass)
                 || returnClass.isArray()
@@ -66,13 +66,13 @@ public class CommandUtil {
         if (returnClass == Map.class) {
             return "select * " + command;
         } else {
-            if (FieldColumnFactory.isIgnore(returnClass)) {
+            if (SQLStoreUtil.isIgnore(returnClass)) {
                 throw new HiSqlException("Select return type not support type. %s", returnClass);
             }
-            FieldColumn[] fields = FieldColumnFactory.get(naming, returnClass);
+            SQLStoreColumn[] columns = SQLStoreColumnUtil.create(returnClass, service);
             StringBuilder sb = new StringBuilder("select ");
-            for (FieldColumn field : fields) {
-                sb.append(field.getColumnName()).append(',');
+            for (SQLStoreColumn column : columns) {
+                sb.append(column.getName()).append(',');
             }
             sb.deleteCharAt(sb.length() - 1);
             sb.append(' ').append(command);

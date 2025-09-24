@@ -6,5 +6,5 @@ import java.sql.ResultSet;
 
 @FunctionalInterface
 public interface StoreResultSetHandler<T, R> {
-    R apply(ResultSet resultSet, SQLStore<T> sqlStore) throws Exception;
+    R apply(SQLStore<T> sqlStore, ResultSet resultSet) throws Exception;
 }

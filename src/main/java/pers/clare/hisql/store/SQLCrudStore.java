@@ -2,20 +2,15 @@ package pers.clare.hisql.store;
 
 
 import lombok.Getter;
-import pers.clare.hisql.function.FieldSetter;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.util.SQLStoreUtil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Map;
 
 public class SQLCrudStore<T> extends SQLStore<T> {
     @Getter
     private final String tableName;
-
-    @Getter
-    private final FieldColumn[] fieldColumns;
     @Getter
     private final Field autoKey;
     @Getter
@@ -28,21 +23,21 @@ public class SQLCrudStore<T> extends SQLStore<T> {
     private SQLQueryBuilder countById;
     private String select;
     private SQLQueryBuilder selectById;
+    private SQLQueryBuilder selectByIds;
     private String delete;
     private SQLQueryBuilder deleteById;
+    private SQLQueryBuilder deleteByIds;
 
     public SQLCrudStore(
             Constructor<T> constructor
-            , Map<String, FieldSetter> fieldSetMap
             , String tableName
-            , FieldColumn[] fieldColumns
+            , SQLStoreColumn[] columns
             , Field autoKey
             , Field[] keyFields
             , boolean ps
     ) {
-        super(constructor, fieldSetMap);
+        super(constructor, columns);
         this.tableName = tableName;
-        this.fieldColumns = fieldColumns;
         this.autoKey = autoKey;
         this.keyFields = keyFields;
         this.ps = ps;
@@ -57,23 +52,30 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public SQLQueryBuilder getCountById() {
         if (countById == null) {
-            countById = SQLStoreUtil.buildCountById(fieldColumns, tableName);
+            countById = SQLStoreUtil.buildCountById(columns, tableName);
         }
         return countById;
     }
 
     public String getSelect() {
         if (select == null) {
-            select = SQLStoreUtil.buildSelect(fieldColumns, tableName);
+            select = SQLStoreUtil.buildSelect(columns, tableName);
         }
         return select;
     }
 
     public SQLQueryBuilder getSelectById() {
         if (selectById == null) {
-            selectById = SQLStoreUtil.getSelectById(fieldColumns, tableName);
+            selectById = SQLStoreUtil.getSelectById(columns, tableName);
         }
         return selectById;
+    }
+
+    public SQLQueryBuilder getSelectByIds() {
+        if (selectByIds == null) {
+            selectByIds = SQLStoreUtil.getSelectByIds(columns, tableName);
+        }
+        return selectByIds;
     }
 
     public String getDelete() {
@@ -85,9 +87,15 @@ public class SQLCrudStore<T> extends SQLStore<T> {
 
     public SQLQueryBuilder getDeleteById() {
         if (deleteById == null) {
-            deleteById = SQLStoreUtil.buildDeleteById(fieldColumns, tableName);
+            deleteById = SQLStoreUtil.buildDeleteById(columns, tableName);
         }
         return deleteById;
     }
 
+    public SQLQueryBuilder getDeleteByIds() {
+        if (deleteByIds == null) {
+            deleteByIds = SQLStoreUtil.buildDeleteByIds(columns, tableName);
+        }
+        return deleteByIds;
+    }
 }

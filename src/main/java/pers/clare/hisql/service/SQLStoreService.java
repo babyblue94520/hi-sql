@@ -3,7 +3,6 @@ package pers.clare.hisql.service;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLData;
-import pers.clare.hisql.store.SQLStoreFactory;
 import pers.clare.hisql.util.SQLQueryUtil;
 import pers.clare.hisql.util.SQLStoreUtil;
 
@@ -39,7 +38,7 @@ public class SQLStoreService extends SQLStorePageService {
                 }
             }
             return entity;
-        } catch (IllegalAccessException e) {
+        } catch (Exception e) {
             throw new HiSqlException(e);
         }
     }
@@ -74,7 +73,7 @@ public class SQLStoreService extends SQLStorePageService {
             try {
                 SQLData data = SQLStoreUtil.toUpdateSQLData(store, entity);
                 return update(data.getSql(), data.getParameters());
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 throw new HiSqlException(e);
             }
         } else {
@@ -175,7 +174,7 @@ public class SQLStoreService extends SQLStorePageService {
 
     @SuppressWarnings("unchecked")
     private <T> SQLCrudStore<T> toStore(T entity) {
-        return SQLStoreFactory.buildCrud(getNaming(), getResultSetConverter(), (Class<T>) entity.getClass());
+        return this.buildCrud((Class<T>) entity.getClass());
     }
 
 }
