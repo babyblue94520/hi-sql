@@ -1,5 +1,8 @@
 package pers.clare.hisql.query;
 
+import pers.clare.hisql.constant.KeyCache;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,22 +11,25 @@ import java.util.Map;
 public class SQLQueryReplace {
     private final char[][] sqlParts;
 
-    private final Map<String, Integer> keyIndex;
+    private final Map<String, List<Integer>> keyIndexes;
 
     private final String[] values;
 
 
-    public SQLQueryReplace(char[][] sqlParts, Map<String, Integer> keyIndex) {
+    public SQLQueryReplace(char[][] sqlParts, Map<String, List<Integer>> keyIndexes) {
         this.sqlParts = sqlParts;
-        this.keyIndex = keyIndex;
+        this.keyIndexes = keyIndexes;
         this.values = new String[sqlParts.length];
     }
 
     public SQLQueryReplace replace(String key, String sql) {
+        key = KeyCache.get(key);
         if (key == null || sql == null || sql.isEmpty()) return this;
-        Integer index = keyIndex.get(key);
-        if (index == null) return this;
-        values[index] = sql;
+        List<Integer> indexes = keyIndexes.get(key);
+        if (indexes == null) return this;
+        for (Integer index : indexes) {
+            values[index] = sql;
+        }
         return this;
     }
 
@@ -47,7 +53,7 @@ public class SQLQueryReplace {
                 if (str == null) continue;
                 sb.append(str);
             } else {
-                sb.append(cs);
+                sb.append(cs, 0, cs.length);
             }
         }
         return sb.toString();

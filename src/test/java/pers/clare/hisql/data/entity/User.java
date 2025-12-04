@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import pers.clare.hisql.vo.IdName;
 
 import javax.persistence.*;
 
@@ -14,7 +15,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class User {
+public class User extends IdName {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

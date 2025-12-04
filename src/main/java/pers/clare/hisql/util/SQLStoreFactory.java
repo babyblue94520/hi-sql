@@ -9,7 +9,8 @@ import pers.clare.hisql.store.SQLStoreColumn;
 
 import javax.persistence.Table;
 import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +23,7 @@ public class SQLStoreFactory {
             SQLBasicService service
             , Class<T> clazz
     ) {
-        if (SQLStoreSqlUtil.isIgnore(clazz)) throw new Error(String.format("%s can not build SQLStore.", clazz));
+        validate(clazz);
         return (SQLStore<T>) storeCacheMap.computeIfAbsent(clazz, key -> doBuild(service, clazz));
     }
 
@@ -31,8 +32,7 @@ public class SQLStoreFactory {
             SQLBasicService service
             , Class<T> clazz
     ) {
-        if (SQLStoreSqlUtil.isIgnore(clazz))
-            throw new Error(String.format("%s can not build SQLStore.", clazz));
+        validate(clazz);
         SQLStore<T> store = (SQLStore<T>) storeCacheMap.computeIfAbsent(clazz, key -> doBuildCrud(service, clazz));
         if (!(store instanceof SQLCrudStore)) {
             store = doBuildCrud(service, clazz);
@@ -64,27 +64,29 @@ public class SQLStoreFactory {
             tableName = table.name();
         }
         SQLStoreColumn[] columns = SQLStoreColumnUtil.create(clazz, service);
-        int keyCount = 0;
-        Field[] keyFields = new Field[columns.length];
-        Field autoKey = null;
+        List<SQLStoreColumn> keyColumns = new ArrayList<>(columns.length);
+        SQLStoreColumn autoKey = null;
         boolean ps = false;
         for (SQLStoreColumn column : columns) {
-            if (column.isAuto()) autoKey = column.getField();
+            if (column.isAuto()) autoKey = column;
             if (column.isId()) {
-                keyFields[keyCount++] = column.getField();
+                keyColumns.add(column);
             }
-            if (InputStream.class.isAssignableFrom(column.getField().getType())) {
+            if (InputStream.class.isAssignableFrom(column.getType())) {
                 ps = true;
             }
         }
-        Field[] temp = keyFields;
-        keyFields = new Field[keyCount];
-        System.arraycopy(temp, 0, keyFields, 0, keyCount);
 
         try {
-            return new SQLCrudStore<>(clazz.getConstructor(), tableName, columns, autoKey, keyFields, ps);
+            return new SQLCrudStore<>(clazz.getConstructor(), tableName, columns, autoKey, keyColumns.toArray(new SQLStoreColumn[0]), ps);
         } catch (NoSuchMethodException e) {
             throw new HiSqlException(e.getMessage());
+        }
+    }
+
+    private void validate(Class<?> clazz) {
+        if (ClassUtil.isIgnore(clazz)) {
+            throw new HiSqlException(String.format("%s can not build SQLStore.", clazz));
         }
     }
 }

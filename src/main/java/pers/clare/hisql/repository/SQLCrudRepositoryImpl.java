@@ -9,46 +9,52 @@ import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.store.SQLCrudStore;
-import pers.clare.hisql.util.ClassUtil;
+import pers.clare.hisql.store.SQLStore;
+import pers.clare.hisql.store.SQLStoreColumn;
 import pers.clare.hisql.util.SQLQueryUtil;
+import pers.clare.hisql.util.SQLStoreColumnUtil;
 import pers.clare.hisql.util.SQLStoreFactory;
+import pers.clare.hisql.util.TypeUtil;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
 public class SQLCrudRepositoryImpl<E, K> extends SQLRepositoryImpl<SQLService> implements SQLCrudRepository<E, K> {
-
-    protected static final Map<Class<?>, Field[]> keyFieldsMap = new ConcurrentHashMap<>();
 
     protected final SQLCrudStore<E> sqlStore;
     protected final KeySQLBuilder<K> keySQLBuilder;
     protected final KeysSQLBuilder<K> keysSQLBuilder;
     protected final Class<K> keyClass;
-    protected final Field[] keyFields;
+    protected final SQLStoreColumn[] keyColumns;
 
     @SuppressWarnings("unchecked")
     public SQLCrudRepositoryImpl(SQLService sqlService, Class<E> repositoryClass) {
         super(sqlService);
-        Type[] types = ClassUtil.findTypes(repositoryClass);
+        Type[] types = TypeUtil.findTypes(repositoryClass);
         Class<E> entityClass = (Class<E>) types[0];
         sqlStore = SQLStoreFactory.buildCrud(sqlService, entityClass);
         keyClass = (Class<K>) types[1];
 
-        if (ClassUtil.isBasicType(keyClass)
-            || ClassUtil.isBasicTypeArray(keyClass)
+        if (TypeUtil.isBasicType(keyClass)
+            || TypeUtil.isBasicTypeArray(keyClass)
         ) {
-            keyFields = sqlStore.getKeyFields();
+            keyColumns = sqlStore.getKeyColumns();
             keySQLBuilder = this::toKeySQL;
             keysSQLBuilder = this::toKeysSQL;
         } else {
-            keyFields = ClassUtil.getDeclaredFields(keyClass);
+            keyColumns = SQLStoreColumnUtil.create(keyClass, sqlService);
             keySQLBuilder = this::toKeySQLByClass;
             keysSQLBuilder = this::toKeysSQLByClass;
+        }
+    }
+
+    public <T> SQLStore<T> buildSQLStore(Class<T> clazz) {
+        try {
+            return SQLStoreFactory.build(sqlService, clazz);
+        } catch (Exception e) {
+            throw new HiSqlException(e);
         }
     }
 
@@ -59,7 +65,7 @@ public class SQLCrudRepositoryImpl<E, K> extends SQLRepositoryImpl<SQLService> i
 
     public long count(E entity) {
         try {
-            Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyFields(), entity), sqlStore);
+            Long count = sqlService.find(Long.class, SQLQueryUtil.setValue(sqlStore.getCountById(), sqlStore.getKeyColumns(), entity), sqlStore);
             return count == null ? 0 : count;
         } catch (HiSqlException e) {
             throw e;
@@ -182,26 +188,26 @@ public class SQLCrudRepositoryImpl<E, K> extends SQLRepositoryImpl<SQLService> i
 
 
     protected String toKeySQL(SQLQueryBuilder builder, K k) {
-        return SQLQueryUtil.setValue(builder, keyFields, new Object[]{k});
+        return SQLQueryUtil.setValue(builder, keyColumns, new Object[]{k});
     }
 
     protected String toKeySQLByClass(SQLQueryBuilder builder, K k) {
-        return SQLQueryUtil.setValue(builder, keyFields, k);
+        return SQLQueryUtil.setValue(builder, keyColumns, k);
     }
 
     protected String toKeysSQL(SQLQueryBuilder builder, K[] values) {
         return builder.build().value("keys", values).toString();
     }
 
-    public String toKeysSQLByClass(SQLQueryBuilder builder, K[] values) {
-        Object[][] array = new Object[values.length][];
+    public String toKeysSQLByClass(SQLQueryBuilder builder, K[] entities) {
+        Object[][] array = new Object[entities.length][];
         int i = 0;
-        for (K value : values) {
-            Object[] row = array[i++] = new Object[keyFields.length];
+        for (K entity : entities) {
+            Object[] row = array[i++] = new Object[keyColumns.length];
             int c = 0;
-            for (Field field : keyFields) {
+            for (SQLStoreColumn column : keyColumns) {
                 try {
-                    row[c++] = field.get(value);
+                    row[c++] = column.getValue(entity);
                 } catch (IllegalAccessException e) {
                     throw new HiSqlException(e);
                 }

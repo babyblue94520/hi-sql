@@ -1,99 +1,81 @@
 package pers.clare.hisql.query;
 
 import org.springframework.lang.NonNull;
+import pers.clare.hisql.constant.KeyCache;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SQLQueryBuilder {
-
-    private final char[][] sqlParts;
-
-    private final Map<String, List<Integer>> keyIndex;
-
-    SQLQueryBuilder(char[] sql, int count) {
-        keyIndex = new HashMap<>();
-        sqlParts = new char[count + count + 1][];
-        char c, p = 0;
-        int l = sql.length, partCount = 0, tempLength = 0;
-        char[] temp = new char[l];
-        boolean b;
-        for (int i = 0; i < l; i++) {
-            c = sql[i];
-            if (c == ':' && sql[i + 1] != '=') {
-                sqlParts[partCount] = new char[tempLength];
-                System.arraycopy(temp, 0, sqlParts[partCount++], 0, tempLength);
-                sqlParts[partCount] = null;
-                tempLength = 0;
-                i++;
-                b = false;
-                for (; i < l; i++) {
-                    c = sql[i];
-                    switch (c) {
-                        case ' ':
-                        case ',':
-                        case ')':
-                        case '\n':
-                            put(keyIndex, new String(temp, 0, tempLength), partCount++);
-                            tempLength = 0;
-                            temp[tempLength++] = c;
-                            b = true;
-                            break;
-                        default:
-                            temp[tempLength++] = c;
-                    }
-                    if (b) break;
-                }
-                if (!b) {
-                    put(keyIndex, new String(temp, 0, tempLength), partCount++);
-                    tempLength = 0;
-                }
-                continue;
-            } else if (c == ' ' && p == ' ') {
-                continue;
-            }
-            temp[tempLength++] = p = c;
-        }
-        if (tempLength > 0) {
-            sqlParts[partCount] = new char[tempLength];
-            System.arraycopy(temp, 0, sqlParts[partCount], 0, tempLength);
-        } else {
-            sqlParts[partCount] = null;
-        }
-    }
 
     public static SQLQueryBuilder create(@NonNull String sql) {
         return create(sql.toCharArray());
     }
 
-    public static SQLQueryBuilder create(@NonNull char[] cs) {
-        int count = getKeyCount(cs);
-        return new SQLQueryBuilder(cs, count);
-    }
+    public static SQLQueryBuilder create(@NonNull char[] sql) {
 
-    public static boolean hasKey(char[] cs) {
-        for (int i = 0, l = cs.length; i < l; i++) {
-            if (cs[i] == ':' && cs[++i] != '=') return true;
+        Map<String, List<Integer>> keyIndexes = new HashMap<>();
+        List<int[]> partRanges = new ArrayList<>();
+
+        int l = sql.length;
+        int partStart = 0;
+
+        for (int i = 0; i < l; i++) {
+            char c = sql[i];
+            if (c == ':' && (i + 1 < l) && sql[i + 1] != '=') {
+                if (i > partStart) {
+                    partRanges.add(new int[]{partStart, i});
+                }
+
+                partStart = i + 1;
+                while (++i < l) {
+                    c = sql[i];
+                    if (c == ' ' || c == ',' || c == ')' || c == '\n' || c == ';') {
+                        break;
+                    }
+                }
+
+                int keyLen = i - partStart;
+                if (keyLen > 0) {
+                    String key = KeyCache.computeIfAbsent(new String(sql, partStart, keyLen));
+                    keyIndexes.computeIfAbsent(key, k -> new ArrayList<>())
+                            .add(partRanges.size());
+                    partRanges.add(null);
+                }
+                partStart = i;
+            }
         }
-        return false;
-    }
 
-    private static int getKeyCount(char[] cs) {
-        int count = 0;
-        for (int i = 0, l = cs.length; i < l; i++) {
-            if (cs[i] == ':' && cs[++i] != '=') count++;
+        if (l > partStart) {
+            partRanges.add(new int[]{partStart, l});
         }
-        return count;
+
+        var parts = new char[partRanges.size()][];
+        for (int j = 0; j < partRanges.size(); j++) {
+            int[] range = partRanges.get(j);
+            if (range == null) {
+                parts[j] = new char[0];
+            } else {
+                parts[j] = Arrays.copyOfRange(sql, range[0], range[1]);
+            }
+        }
+        return new SQLQueryBuilder(parts, keyIndexes);
     }
 
-    private static void put(Map<String, List<Integer>> keyIndex, String key, Integer index) {
-        keyIndex.computeIfAbsent(key, k -> new ArrayList<>()).add(index);
+    private final char[][] sqlParts;
+
+    private final Map<String, List<Integer>> keyIndexes;
+
+    SQLQueryBuilder(char[][] sqlParts, Map<String, List<Integer>> keyIndexes) {
+        this.sqlParts = sqlParts;
+        this.keyIndexes = keyIndexes;
+    }
+
+    public boolean hasKey() {
+        return keyIndexes != null && !keyIndexes.isEmpty();
     }
 
     public SQLQuery build() {
-        return new SQLQuery(sqlParts, keyIndex);
+        return new SQLQuery(sqlParts, keyIndexes);
     }
 
 }

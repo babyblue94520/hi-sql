@@ -1,4 +1,7 @@
-package pers.clare.hisql.page;
+package pers.clare.hisql.page.impl;
+
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.PaginationMode;
 
 @SuppressWarnings("unused")
 public class MSSQLPaginationMode implements PaginationMode {
@@ -9,7 +12,7 @@ public class MSSQLPaginationMode implements PaginationMode {
         appendSortSQL(sql, pagination.getSorts());
         sql.append(" OFFSET ")
                 .append(pagination.getSize() * pagination.getPage())
-                .append(" FETCH NEXT ")
+                .append(" ROWS FETCH NEXT ")
                 .append(pagination.getSize())
                 .append(" ROWS ONLY");
     }

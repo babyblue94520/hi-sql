@@ -12,6 +12,7 @@ import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.SqlReplace;
+import pers.clare.hisql.support.SqlReplacer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -332,6 +333,62 @@ class SQLRepositoryTest {
         id = null;
         users = customRepository.findAll(SqlReplace.of(id, "AND id=:id"));
         assertEquals(0, users.size());
+    }
+
+    @Test
+    void findAllByReplacer() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        Long id = null;
+        for (int i = 0; i < count; i++) {
+            id = customRepository.insert(account);
+        }
+        List<User> result = customRepository.findAll(
+                SqlReplacer.create()
+                        .add("id", "AND id=:id")
+                        .add("id1", "id", "AND id=:id")
+                        .add("id2", "id", "AND id=:id")
+                , id
+        );
+        assertEquals(1, result.size());
+        List<User> result2 = customRepository.findAll(
+                SqlReplacer.create()
+                        .add("id", "AND id=:id")
+                        .add("id1", "id", "AND id=:id")
+                        .add("id2", "id", "AND id=:id")
+                , null
+        );
+        assertEquals(5, result2.size());
+    }
+
+    @Test
+    void findAllByReplacer2() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        Long id = null;
+        for (int i = 0; i < count; i++) {
+            id = customRepository.insert(account);
+        }
+
+        User user = customRepository.findById(id);
+
+        List<User> result = customRepository.findAll2(
+                SqlReplacer.create()
+                        .add("id", "AND id=:id")
+                        .add("id1", "id", "AND id=:id")
+                        .add("id2", "user.id", "AND id=:user.id")
+                , user
+        );
+        assertEquals(1, result.size());
+        user = null;
+        List<User> result2 = customRepository.findAll2(
+                SqlReplacer.create()
+                        .add("id", "AND id=:id")
+                        .add("id1", "id", "AND id=:id")
+                        .add("id2", "user.id", "AND id=:id")
+                , user
+        );
+        assertEquals(5, result2.size());
     }
 
     @Test

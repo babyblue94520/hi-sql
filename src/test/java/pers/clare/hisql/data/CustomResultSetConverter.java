@@ -8,4 +8,5 @@ public class CustomResultSetConverter extends ResultSetConverter {
     {
         register(Pattern.class, (rs, i) -> Pattern.compile(rs.getString(i)));
     }
+
 }

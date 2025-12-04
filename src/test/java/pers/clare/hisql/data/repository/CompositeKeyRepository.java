@@ -3,7 +3,6 @@ package pers.clare.hisql.data.repository;
 import org.springframework.stereotype.Repository;
 import pers.clare.hisql.annotation.HiSql;
 import pers.clare.hisql.data.entity.CompositeKey;
-import pers.clare.hisql.data.entity.CompositeKey2;
 import pers.clare.hisql.data.entity.CompositeTable;
 import pers.clare.hisql.repository.SQLCrudRepository;
 
@@ -19,12 +18,7 @@ public interface CompositeKeyRepository extends SQLCrudRepository<CompositeTable
     @HiSql("SELECT * FROM composite_table WHERE (id,account) IN :keys")
     List<CompositeTable> findAll(Collection<CompositeKey> keys);
 
-    @HiSql("SELECT * FROM composite_table WHERE (account,id) IN :keys")
-    List<CompositeTable> findAll2(Collection<CompositeKey2> keys);
 
     @HiSql("SELECT * FROM composite_table WHERE (id,account) IN :keys")
     List<CompositeTable> findAll(CompositeKey[] keys);
-
-    @HiSql("SELECT * FROM composite_table WHERE (account,id) IN :keys")
-    List<CompositeTable> findAll2(CompositeKey2[] keys);
 }

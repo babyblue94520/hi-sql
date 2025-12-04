@@ -1,88 +1,89 @@
 package pers.clare.hisql.query;
 
 import org.springframework.lang.NonNull;
+import pers.clare.hisql.constant.KeyCache;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Parse replace sql
  */
 public class SQLQueryReplaceBuilder {
-    private static final char startFlag = '{';
-    private static final char endFlag = '}';
-
-    private final char[][] sqlParts;
-
-    private final Map<String, Integer> keyIndex;
-
-    SQLQueryReplaceBuilder(char[] sql, int keyCount) {
-        keyIndex = new HashMap<>(keyCount);
-        sqlParts = new char[keyCount + keyCount + 1][];
-        char c;
-        int l = sql.length, partCount = 0, tempLength = 0, keyLength;
-        char[] temp = new char[l];
-        char[] key = new char[l];
-        for (int i = 0; i < l; i++) {
-            c = sql[i];
-            if (c == startFlag) {
-                sqlParts[partCount] = new char[tempLength];
-                System.arraycopy(temp, 0, sqlParts[partCount++], 0, tempLength);
-                sqlParts[partCount] = null;
-                tempLength = 0;
-                keyLength = 0;
-                i++;
-                for (; i < l; i++) {
-                    c = sql[i];
-                    if (c == endFlag) {
-                        keyIndex.put(new String(key, 0, keyLength), partCount++);
-                        keyLength = 0;
-                        break;
-                    }
-                    key[keyLength++] = c;
-                }
-                if (keyLength > 0) {
-                    sqlParts[partCount] = new char[keyLength];
-                    System.arraycopy(key, 0, sqlParts[partCount++], 0, keyLength);
-                }
-            } else {
-                temp[tempLength++] = c;
-            }
-        }
-        if (tempLength > 0) {
-            sqlParts[partCount] = new char[tempLength];
-            System.arraycopy(temp, 0, sqlParts[partCount], 0, tempLength);
-        } else {
-            sqlParts[partCount] = null;
-        }
-    }
+    private static final char START_FLAG = '{';
+    private static final char END_FLAG = '}';
 
     public static SQLQueryReplaceBuilder create(@NonNull String sql) {
         return create(sql.toCharArray());
     }
 
-    public static SQLQueryReplaceBuilder create(@NonNull char[] cs) {
-        int count = getKeyCount(cs);
-        return new SQLQueryReplaceBuilder(cs, count);
+    public static SQLQueryReplaceBuilder create(@NonNull char[] sql) {
+        Map<String, List<Integer>> keyIndexes = new HashMap<>();
+        List<int[]> partRanges = new ArrayList<>();
+
+        int l = sql.length;
+        int partStart = 0;
+        for (int i = 0; i < l; i++) {
+            char c = sql[i];
+            if (c == START_FLAG) {
+                if (i > partStart) {
+                    partRanges.add(new int[]{partStart, i});
+                }
+                partStart = i + 1;
+                while (++i < l) {
+                    c = sql[i];
+                    if (c == START_FLAG) {
+                        if (i > partStart) {
+                            partRanges.add(new int[]{partStart - 1, i});
+                            partStart = i + 1;
+                        }
+                    } else if (c == END_FLAG) {
+                        int keyLen = i - partStart;
+                        if (keyLen > 0) {
+                            String key = KeyCache.computeIfAbsent(new String(sql, partStart, keyLen));
+                            keyIndexes.computeIfAbsent(key, k -> new ArrayList<>())
+                                    .add(partRanges.size());
+                            partRanges.add(null);
+                        }
+                        partStart = i + 1;
+                        break;
+                    }
+                }
+            }
+        }
+        if (l > partStart) {
+            partRanges.add(new int[]{partStart, l});
+        }
+        var parts = new char[partRanges.size()][];
+        for (int j = 0; j < partRanges.size(); j++) {
+            int[] range = partRanges.get(j);
+            if (range == null) {
+                parts[j] = null;
+            } else {
+                parts[j] = Arrays.copyOfRange(sql, range[0], range[1]);
+            }
+        }
+        return new SQLQueryReplaceBuilder(parts, keyIndexes);
     }
 
-    public static boolean hasKey(char[] cs) {
-        for (char c : cs) if (c == startFlag) return true;
-        return false;
+    private final char[][] sqlParts;
+
+    private final Map<String, List<Integer>> keyIndexes;
+
+    SQLQueryReplaceBuilder(char[][] sqlParts, Map<String, List<Integer>> keyIndexes) {
+        this.sqlParts = sqlParts;
+        this.keyIndexes = keyIndexes;
     }
 
-    private static int getKeyCount(char[] cs) {
-        int count = 0;
-        for (char c : cs) if (c == startFlag) count++;
-        return count;
+    public boolean hasKey() {
+        return keyIndexes != null && !keyIndexes.isEmpty();
     }
 
     public SQLQueryReplace build() {
-        return new SQLQueryReplace(sqlParts, keyIndex);
+        return new SQLQueryReplace(sqlParts, keyIndexes);
     }
 
     public Set<String> getKeys() {
-        return keyIndex.keySet();
+        return keyIndexes.keySet();
     }
+
 }

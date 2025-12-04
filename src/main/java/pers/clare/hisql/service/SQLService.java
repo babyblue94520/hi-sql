@@ -24,7 +24,7 @@ public interface SQLService extends SQLStoreService, SQLTypeService, SQLBasicSer
                 if (virtualTotal == 0) {
                     virtualTotal = getPaginationMode().getVirtualTotal(this, sql, parameters);
                 }
-                if (total < virtualTotal) {
+                if (total <= virtualTotal) {
                     total = virtualTotal;
                 } else if (listSize > 0) {
                     total += size;

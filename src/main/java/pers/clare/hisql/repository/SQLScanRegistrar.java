@@ -83,29 +83,13 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
             AnnotationMetadata annotationMetadata
             , AnnotationAttributes annotationAttributes
             , BeanDefinitionRegistry registry
-    ) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    ) {
         String dataSourceName = annotationAttributes.getString("dataSourceRef");
         String xmlRootPath = annotationAttributes.getString("xmlRootPath");
         Class<? extends NamingStrategy> namingClass = annotationAttributes.getClass("naming");
         Class<? extends PaginationMode> paginationModeClass = annotationAttributes.getClass("paginationMode");
         Class<? extends ResultSetConverter> resultSetConverter = annotationAttributes.getClass("resultSetConverter");
         Class<? extends CommandTypeParser> commandTypeParser = annotationAttributes.getClass("commandTypeParser");
-
-        BeanDefinitionBuilder sqlServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLServiceImpl.class);
-        if (dataSourceName.isEmpty()) {
-            sqlServiceBuilder.addAutowiredProperty("dataSource");
-        } else {
-            sqlServiceBuilder.addPropertyReference("dataSource", dataSourceName);
-        }
-        sqlServiceBuilder.addPropertyValue("xmlRoot", xmlRootPath);
-
-        sqlServiceBuilder.addPropertyValue("paginationMode", paginationModeClass.getConstructor().newInstance());
-
-        sqlServiceBuilder.addPropertyValue("naming", namingClass.getConstructor().newInstance());
-
-        sqlServiceBuilder.addPropertyValue("resultSetConverter", resultSetConverter.getConstructor().newInstance());
-
-        sqlServiceBuilder.addPropertyValue("commandTypeParser", commandTypeParser.getConstructor().newInstance());
 
         StringBuilder beanName = new StringBuilder(annotationAttributes.getString("beanNamePrefix"));
         if (beanName.length() == 0) {
@@ -114,7 +98,32 @@ public class SQLScanRegistrar implements ImportBeanDefinitionRegistrar {
         }
 
         beanName.append(SQLService.class.getSimpleName());
+
+        BeanDefinitionBuilder sqlServiceBuilder = BeanDefinitionBuilder.genericBeanDefinition(SQLServiceImpl.class);
+
+        if (dataSourceName.isEmpty()) {
+            sqlServiceBuilder.addAutowiredProperty("dataSource");
+        } else {
+            sqlServiceBuilder.addPropertyReference("dataSource", dataSourceName);
+        }
+
+        sqlServiceBuilder.addPropertyValue("xmlRoot", xmlRootPath);
+
+        sqlServiceBuilder.addPropertyReference("paginationMode", beanName + "paginationMode");
+        sqlServiceBuilder.addPropertyReference("naming", beanName + "naming");
+        sqlServiceBuilder.addPropertyReference("resultSetConverter", beanName + "resultSetConverter");
+        sqlServiceBuilder.addPropertyReference("commandTypeParser", beanName + "commandTypeParser");
+
+        registry.registerBeanDefinition(beanName + "paginationMode", BeanDefinitionBuilder.genericBeanDefinition(paginationModeClass).getBeanDefinition());
+
+        registry.registerBeanDefinition(beanName + "naming", BeanDefinitionBuilder.genericBeanDefinition(namingClass).getBeanDefinition());
+
+        registry.registerBeanDefinition(beanName + "resultSetConverter", BeanDefinitionBuilder.genericBeanDefinition(resultSetConverter).getBeanDefinition());
+
+        registry.registerBeanDefinition(beanName + "commandTypeParser", BeanDefinitionBuilder.genericBeanDefinition(commandTypeParser).getBeanDefinition());
+
         registry.registerBeanDefinition(beanName.toString(), sqlServiceBuilder.getBeanDefinition());
+
         return beanName.toString();
     }
 }

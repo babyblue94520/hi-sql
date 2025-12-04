@@ -4,6 +4,8 @@ package pers.clare.hisql.util;
 import lombok.experimental.UtilityClass;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 @UtilityClass
@@ -15,40 +17,14 @@ public class ExceptionUtil {
 
     public static <T extends Throwable> T insertBefore(Method method, T throwable, Predicate<String> insertPackageCondition) {
         StackTraceElement[] stackTraces = throwable.getStackTrace();
-        StackTraceElement[] newStackTraces = new StackTraceElement[stackTraces.length + 1];
-        int i = 0;
-        for (; i < stackTraces.length; i++) {
-            StackTraceElement stackTrace = (newStackTraces[i] = stackTraces[i]);
-            if (insertPackageCondition.test(stackTrace.getClassName())) break;
-        }
-        for (; i < stackTraces.length; i++) {
-            StackTraceElement stackTrace = (newStackTraces[i] = stackTraces[i]);
-            if (!insertPackageCondition.test(stackTrace.getClassName())) break;
-        }
-        newStackTraces[i] = build(method);
-        System.arraycopy(stackTraces, i, newStackTraces, i + 1, stackTraces.length - i);
-        throwable.setStackTrace(newStackTraces);
-        return throwable;
-    }
-
-    public static <T extends Throwable> T insertAfter(Method method, T throwable) {
-        return insertAfter(method, throwable, className -> className.contains(".hisql."));
-    }
-
-    public static <T extends Throwable> T insertAfter(Method method, T throwable, Predicate<String> insertPackageCondition) {
-        StackTraceElement[] stackTraces = throwable.getStackTrace();
-        StackTraceElement[] newStackTraces = new StackTraceElement[stackTraces.length + 1];
-        int i = 0;
-        for (; i < stackTraces.length; i++) {
-            StackTraceElement stackTrace = stackTraces[i];
-            if (insertPackageCondition.test(stackTrace.getClassName())) {
-                newStackTraces[i] = build(method);
-                break;
+        List<StackTraceElement> newStackTraces = new ArrayList<>(stackTraces.length + 1);
+        for (StackTraceElement stackTrace : stackTraces) {
+            newStackTraces.add(stackTrace);
+            if (stackTrace.getClassName().contains("$Proxy")) {
+                newStackTraces.add(build(method));
             }
-            newStackTraces[i] = stackTraces[i];
         }
-        System.arraycopy(stackTraces, i, newStackTraces, i + 1, stackTraces.length - i);
-        throwable.setStackTrace(newStackTraces);
+        throwable.setStackTrace(newStackTraces.toArray(new StackTraceElement[0]));
         return throwable;
     }
 

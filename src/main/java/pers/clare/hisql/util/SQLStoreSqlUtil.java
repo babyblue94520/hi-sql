@@ -143,18 +143,18 @@ public class SQLStoreSqlUtil {
 
 
     public static String appendSelectColumns(SQLService service, Type returnType, String command) {
-        Class<?> returnClass = ClassUtil.toWrapperClass(returnType);
+        Class<?> returnClass = TypeUtil.toWrapperClass(returnType);
         if (
                 parameterizedTypes.contains(returnClass)
                 || returnClass.isArray()
                 || Collection.class.isAssignableFrom(returnClass)
         ) {
-            returnClass = ClassUtil.getValueClass(returnType, 0);
+            returnClass = TypeUtil.getValueClass(returnType, 0);
         }
         if (returnClass == Map.class) {
             return "SELECT * " + command;
         } else {
-            if (SQLStoreSqlUtil.isIgnore(returnClass)) {
+            if (ClassUtil.isIgnore(returnClass)) {
                 throw new HiSqlException("Select return type not support type. %s", returnClass);
             }
             SQLStoreColumn[] columns = SQLStoreColumnUtil.create(returnClass, service);
@@ -201,7 +201,7 @@ public class SQLStoreSqlUtil {
                 if (value == null && (column.isAuto() || column.isNotNullable())) continue;
                 sql.append(column.getName()).append(',');
 
-                SQLQueryUtil.appendValue(valueSql, value);
+                SQLQueryUtil.append(valueSql, value);
                 valueSql.append(',');
             }
             valueSql.deleteCharAt(valueSql.length() - 1).append(')');
@@ -227,7 +227,7 @@ public class SQLStoreSqlUtil {
                     Object value = column.getValue(entity);
                     whereSql.append(column.getName())
                             .append('=');
-                    SQLQueryUtil.appendValue(whereSql, value);
+                    SQLQueryUtil.append(whereSql, value);
                     whereSql.append(and);
                 } else {
                     if (!column.isUpdatable()) continue;
@@ -236,7 +236,7 @@ public class SQLStoreSqlUtil {
 
                     sql.append(column.getName())
                             .append('=');
-                    SQLQueryUtil.appendValue(sql, value);
+                    SQLQueryUtil.append(sql, value);
                     sql.append(',');
                 }
             }
@@ -255,7 +255,7 @@ public class SQLStoreSqlUtil {
                 result.append(column.getName())
                         .append('=')
                         .append(':')
-                        .append(column.getField().getName())
+                        .append(column.getName())
                         .append(" AND ");
             }
         }
@@ -273,17 +273,6 @@ public class SQLStoreSqlUtil {
         result.delete(result.length() - 1, result.length());
         result.append(") IN :keys");
         return result;
-    }
-
-    public static boolean isIgnore(Class<?> clazz) {
-        return clazz == null
-               || clazz.isPrimitive()
-               || clazz.getName().startsWith("java")
-               || clazz.isArray()
-               || Collection.class.isAssignableFrom(clazz)
-               || clazz.isEnum()
-               || clazz.isInterface()
-                ;
     }
 
     public static String normalizeWhitespace(String command) {

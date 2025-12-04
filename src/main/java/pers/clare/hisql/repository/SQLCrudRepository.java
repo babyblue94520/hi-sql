@@ -4,11 +4,13 @@ import org.springframework.lang.NonNull;
 import pers.clare.hisql.page.Page;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
+import pers.clare.hisql.store.SQLStore;
 
 import java.util.Collection;
 import java.util.List;
 
 public interface SQLCrudRepository<E, K> extends SQLRepository {
+    <T> SQLStore<T> buildSQLStore(Class<T> clazz);
 
     @NonNull
     long count();

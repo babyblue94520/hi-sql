@@ -10,13 +10,12 @@ import pers.clare.hisql.function.ResultSetCallback;
 import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.SqlReplace;
+import pers.clare.hisql.support.SqlReplacer;
+import pers.clare.hisql.support.field.FieldGetter;
+import pers.clare.hisql.support.field.FieldReflector;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
-import java.util.function.Function;
 
 @UtilityClass
 public class ArgumentParseUtil {
@@ -27,7 +26,7 @@ public class ArgumentParseUtil {
         int c = 0;
         for (Parameter p : parameters) {
             final int index = c++;
-            buildArgumentGetter(result, p.getType(), p.getParameterizedType(), p.getName(), (arguments) -> arguments[index]);
+            buildArgumentGetter(result, p.getType(), p.getParameterizedType(), p.getName(), arguments -> arguments[index]);
         }
         return result;
     }
@@ -36,6 +35,8 @@ public class ArgumentParseUtil {
     public static void buildArgumentGetter(ParseResult result, Class<?> clazz, Type type, String name, ArgumentHandler<?> handler) {
         if (SqlReplace.class.isAssignableFrom(clazz)) {
             result.getters.put(name, handler);
+        } else if (clazz == SqlReplacer.class) {
+            result.sqlReplacers.add((ArgumentHandler<SqlReplacer>) handler);
         } else if (clazz == Pagination.class) {
             result.pagination = (ArgumentHandler<Pagination>) handler;
         } else if (clazz == Sort.class) {
@@ -48,7 +49,7 @@ public class ArgumentParseUtil {
             result.resultSet = (ArgumentHandler<ResultSetCallback<?>>) handler;
         } else if (clazz.isArray()) {
             Class<?> componentType = clazz.getComponentType();
-            if (ClassUtil.isBasicType(componentType)) {
+            if (TypeUtil.isBasicType(componentType)) {
                 result.getters.put(name, handler);
             } else {
                 if (componentType.isArray()) {
@@ -61,7 +62,7 @@ public class ArgumentParseUtil {
             if (type instanceof ParameterizedType) {
                 Type[] types = ((ParameterizedType) type).getActualTypeArguments();
                 Class<?> actualType = types.length > 0 ? (Class<?>) types[0] : null;
-                if (actualType == null || ClassUtil.isBasicType(actualType)) {
+                if (actualType == null || TypeUtil.isBasicType(actualType)) {
                     result.getters.put(name, handler);
                 } else {
                     if (actualType.isArray()) {
@@ -73,7 +74,7 @@ public class ArgumentParseUtil {
             } else {
                 result.getters.put(name, handler);
             }
-        } else if (ClassUtil.isBasicType(clazz)) {
+        } else if (TypeUtil.isBasicType(clazz)) {
             result.getters.put(name, handler);
         } else {
             buildCustomTypeGetter(result, clazz, name, handler);
@@ -83,32 +84,34 @@ public class ArgumentParseUtil {
     private static void buildCustomTypeGetter(ParseResult result, Class<?> clazz, String name, ArgumentHandler<?> argumentHandler) {
         String fieldName;
         ArgumentHandler<?> handler;
-        for (Method method : ClassUtil.getOrderGetMethods(clazz)) {
-            fieldName = ClassUtil.methodToFieldName(method.getName());
-            handler = (arguments) -> {
+        for (FieldReflector reflector : ClassUtil.getFieldReflectors(clazz)) {
+            Field field = reflector.getField();
+            fieldName = field.getName();
+            FieldGetter getter = reflector.getGetter();
+            handler = arguments -> {
                 try {
-                    return method.invoke(argumentHandler.apply(arguments));
+                    return getter.apply(argumentHandler.apply(arguments));
                 } catch (Exception e) {
                     throw new HiSqlException(e);
                 }
             };
-            buildArgumentGetter(result, method.getReturnType(), method.getGenericReturnType(), fieldName, handler);
-            buildArgumentGetter(result, method.getReturnType(), method.getGenericReturnType(), name + '.' + fieldName, handler);
+            buildArgumentGetter(result, field.getType(), field.getGenericType(), fieldName, handler);
+            buildArgumentGetter(result, field.getType(), field.getGenericType(), name + '.' + fieldName, handler);
         }
         Class<?> superClazz = clazz.getSuperclass();
-        if (superClazz != null && !ClassUtil.isBasicType(superClazz)) {
+        if (superClazz != null && !TypeUtil.isBasicType(superClazz)) {
             buildCustomTypeGetter(result, superClazz, name, argumentHandler);
         }
     }
 
     private static ArgumentHandler<?> buildArrayValueHandler(Class<?> clazz, ArgumentHandler<?> handler) {
-        List<Function<Object, Object>> functions = getFieldHandlers(clazz);
-        return (arguments) -> {
+        FieldReflector[] fieldReflectors = ClassUtil.getFieldReflectors(clazz);
+        return arguments -> {
             Object[] array = (Object[]) handler.apply(arguments);
             Object[][] result = new Object[array.length][];
             int i = 0;
             for (Object o : array) {
-                result[i++] = getValues(o, functions);
+                result[i++] = getValues(o, fieldReflectors);
             }
             return result;
         };
@@ -116,37 +119,22 @@ public class ArgumentParseUtil {
 
     @SuppressWarnings("unchecked")
     private static ArgumentHandler<?> buildCollectionValueHandler(Class<?> clazz, ArgumentHandler<?> handler) {
-        List<Function<Object, Object>> functions = getFieldHandlers(clazz);
-        return (arguments) -> {
+        FieldReflector[] fieldReflectors = ClassUtil.getFieldReflectors(clazz);
+        return arguments -> {
             Collection<Object> collection = (Collection<Object>) handler.apply(arguments);
             Object[][] result = new Object[collection.size()][];
             int i = 0;
             for (Object o : collection) {
-                result[i++] = getValues(o, functions);
+                result[i++] = getValues(o, fieldReflectors);
             }
             return result;
         };
     }
 
-
-    private static List<Function<Object, Object>> getFieldHandlers(Class<?> clazz) {
-        List<Function<Object, Object>> valueHandlers = new ArrayList<>();
-        for (Method method : ClassUtil.getOrderGetMethods(clazz)) {
-            valueHandlers.add((target) -> {
-                try {
-                    return method.invoke(target);
-                } catch (Exception e) {
-                    throw new HiSqlException(e);
-                }
-            });
-        }
-        return valueHandlers;
-    }
-
-    private static Object[] getValues(Object target, List<Function<Object, Object>> functions) {
-        Object[] values = new Object[functions.size()];
-        for (int j = 0, l = functions.size(); j < l; j++) {
-            values[j] = functions.get(j).apply(target);
+    private static Object[] getValues(Object target, FieldReflector[] fieldReflectors) {
+        Object[] values = new Object[fieldReflectors.length];
+        for (int j = 0, l = fieldReflectors.length; j < l; j++) {
+            values[j] = fieldReflectors[j].getGetter().apply(target);
         }
         return values;
     }
@@ -154,6 +142,7 @@ public class ArgumentParseUtil {
     @Getter
     public static class ParseResult {
         private final Map<String, ArgumentHandler<?>> getters = new HashMap<>();
+        private final List<ArgumentHandler<SqlReplacer>> sqlReplacers = new ArrayList<>();
         private ArgumentHandler<Pagination> pagination;
         private ArgumentHandler<Sort> sort;
         private ArgumentHandler<ConnectionCallback<?>> connection;

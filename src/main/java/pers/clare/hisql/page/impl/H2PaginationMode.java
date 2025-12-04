@@ -1,6 +1,8 @@
-package pers.clare.hisql.page;
+package pers.clare.hisql.page.impl;
 
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.service.SQLTypeService;
 
 import java.util.regex.Matcher;

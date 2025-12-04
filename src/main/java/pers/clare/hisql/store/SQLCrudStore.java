@@ -6,15 +6,14 @@ import pers.clare.hisql.query.SQLQueryBuilder;
 import pers.clare.hisql.util.SQLStoreSqlUtil;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 
 public class SQLCrudStore<T> extends SQLStore<T> {
     @Getter
     private final String tableName;
     @Getter
-    private final Field autoKey;
+    private final SQLStoreColumn autoKey;
     @Getter
-    private final Field[] keyFields;
+    private final SQLStoreColumn[] keyColumns;
     // Force the use of PreparedStatement
     @Getter
     private final boolean ps;
@@ -32,14 +31,14 @@ public class SQLCrudStore<T> extends SQLStore<T> {
             Constructor<T> constructor
             , String tableName
             , SQLStoreColumn[] columns
-            , Field autoKey
-            , Field[] keyFields
+            , SQLStoreColumn autoKey
+            , SQLStoreColumn[] keyColumns
             , boolean ps
     ) {
         super(constructor, columns);
         this.tableName = tableName;
         this.autoKey = autoKey;
-        this.keyFields = keyFields;
+        this.keyColumns = keyColumns;
         this.ps = ps;
     }
 

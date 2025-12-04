@@ -16,6 +16,7 @@ import pers.clare.hisql.repository.SQLCrudRepository;
 import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.service.SQLService;
 import pers.clare.hisql.store.SQLStore;
+import pers.clare.hisql.support.SqlReplacer;
 import pers.clare.hisql.util.*;
 
 import java.lang.reflect.Method;
@@ -60,7 +61,7 @@ public class SQLMethodFactory {
             Type returnType = method.getGenericReturnType();
             if (method.getReturnType() == Optional.class) {
                 optional = true;
-                returnType = ClassUtil.getValueType(returnType, 0);
+                returnType = TypeUtil.getValueType(returnType, 0);
             }
 
             ArgumentParseUtil.ParseResult parseResult = ArgumentParseUtil.build(method);
@@ -74,7 +75,7 @@ public class SQLMethodFactory {
             if (command == null || command.isEmpty()) {
                 command = commandMap.get(method.getName());
                 if (command == null || command.isEmpty()) {
-                    throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s method must set XML or @HiSql", clazz.getName(), method.getName())));
+                    throw new HiSqlException(String.format("%s.%s method must set XML or @HiSql", clazz.getName(), method.getName()));
                 }
             }
             command = SQLStoreSqlUtil.normalizeWhitespace(command);
@@ -90,10 +91,11 @@ public class SQLMethodFactory {
             Function<Object[], String> sqlProcessor = buildSqlProcessor(
                     command
                     , parseResult.getGetters()
+                    , parseResult.getSqlReplacers()
             );
             SqlInvoke sqlInvoke = buildInvoke(sqlService, parseResult, returnType, commandType, autoKey);
             if (sqlInvoke == null) {
-                throw ExceptionUtil.insertAfter(method, new HiSqlException(String.format("%s.%s not support return type.", clazz.getName(), method.getName())));
+                throw new HiSqlException(String.format("%s.%s not support return type.", clazz.getName(), method.getName()));
             }
 
             MethodInterceptor interceptor;
@@ -188,7 +190,7 @@ public class SQLMethodFactory {
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
-        Class<?> returnClass = ClassUtil.toWrapperClass(type);
+        Class<?> returnClass = TypeUtil.toWrapperClass(type);
         if (Collection.class.isAssignableFrom(returnClass)) {
             if (returnClass == Set.class) {
                 return buildSet(type, sqlService, sortHandler);
@@ -198,19 +200,19 @@ public class SQLMethodFactory {
         } else if (returnClass.isArray()) {
             return buildList(type, sqlService, sortHandler);
         } else if (returnClass == Map.class) {
-            Class<?> valueClass = ClassUtil.getValueClass(ClassUtil.getValueType(type, 0), 1);
+            Class<?> valueClass = TypeUtil.getValueClass(TypeUtil.getValueType(type, 0), 1);
             return (service, sql, arguments, originArguments) -> service.findMap(valueClass, sql, applySort(sortHandler, originArguments), arguments);
         } else if (Page.class.isAssignableFrom(returnClass)) {
             return buildPage(type, sqlService, paginationHandler, sortHandler);
         } else {
             if (returnClass.isPrimitive()) {
-                final Class<?> objectClass = ClassUtil.toWrapperClass(returnClass);
+                final Class<?> objectClass = TypeUtil.toWrapperClass(returnClass);
                 return (service, sql, arguments, originArguments) -> {
                     Object result = service.find(objectClass, sql, applySort(sortHandler, originArguments), arguments);
-                    return Objects.requireNonNullElse(result, ClassUtil.getDefaultValue(returnClass, result));
+                    return Objects.requireNonNullElse(result, TypeUtil.getDefaultValue(returnClass, result));
                 };
-            } else if (SQLStoreSqlUtil.isIgnore(returnClass)) {
-                final Class<?> objectClass = ClassUtil.toWrapperClass(returnClass);
+            } else if (ClassUtil.isIgnore(returnClass)) {
+                final Class<?> objectClass = TypeUtil.toWrapperClass(returnClass);
                 return (service, sql, arguments, originArguments) -> service.find(objectClass, sql, applySort(sortHandler, originArguments), arguments);
             } else {
                 SQLStore<?> sqlStore = SQLStoreFactory.build(sqlService, returnClass);
@@ -222,7 +224,7 @@ public class SQLMethodFactory {
     private static SqlInvoke buildSqlInsertInvoke(
             Type type
     ) {
-        Class<?> keyClass = ClassUtil.toWrapperClass(type);
+        Class<?> keyClass = TypeUtil.toWrapperClass(type);
         return (service, sql, arguments, originArguments) -> service.insert(keyClass, sql, arguments);
     }
 
@@ -232,7 +234,7 @@ public class SQLMethodFactory {
     private static SqlInvoke buildSqlUpdateInvoke(
             Type type
     ) {
-        Class<?> returnClass = ClassUtil.toWrapperClass(type);
+        Class<?> returnClass = TypeUtil.toWrapperClass(type);
         if (returnClass == int.class
             || returnClass == Integer.class
             || returnClass == void.class
@@ -255,12 +257,12 @@ public class SQLMethodFactory {
             , SQLService sqlService
             , ArgumentHandler<Sort> sortHandler
     ) {
-        Class<?> returnClass = ClassUtil.getValueClass(type, 0);
+        Class<?> returnClass = TypeUtil.getValueClass(type, 0);
         if (returnClass == Map.class) {
-            Class<?> valueClass = ClassUtil.getValueClass(ClassUtil.getValueType(type, 0), 1);
+            Class<?> valueClass = TypeUtil.getValueClass(TypeUtil.getValueType(type, 0), 1);
             return (service, sql, arguments, originArguments) -> service.findAllMapSet(valueClass, sql, applySort(sortHandler, originArguments), arguments);
         } else {
-            if (SQLStoreSqlUtil.isIgnore(returnClass)) {
+            if (ClassUtil.isIgnore(returnClass)) {
                 return (service, sql, arguments, originArguments) -> service.findSet(returnClass, sql, applySort(sortHandler, originArguments), arguments);
             } else {
                 SQLStore<?> sqlStore = SQLStoreFactory.build(sqlService, returnClass);
@@ -277,12 +279,12 @@ public class SQLMethodFactory {
             , SQLService sqlService
             , ArgumentHandler<Sort> sortHandler
     ) {
-        Class<?> returnClass = ClassUtil.getValueClass(type, 0);
+        Class<?> returnClass = TypeUtil.getValueClass(type, 0);
         if (returnClass == Map.class) {
-            Class<?> valueClass = ClassUtil.getValueClass(ClassUtil.getValueType(type, 0), 1);
+            Class<?> valueClass = TypeUtil.getValueClass(TypeUtil.getValueType(type, 0), 1);
             return (service, sql, arguments, originArguments) -> service.findAllMap(valueClass, sql, applySort(sortHandler, originArguments), arguments);
         } else {
-            if (SQLStoreSqlUtil.isIgnore(returnClass)) {
+            if (ClassUtil.isIgnore(returnClass)) {
                 return (service, sql, arguments, originArguments) -> service.findAll(returnClass, sql, applySort(sortHandler, originArguments), arguments);
             } else {
                 SQLStore<?> sqlStore = SQLStoreFactory.build(sqlService, returnClass);
@@ -300,9 +302,9 @@ public class SQLMethodFactory {
             , ArgumentHandler<Pagination> paginationHandler
             , ArgumentHandler<Sort> sortHandler
     ) {
-        Class<?> returnClass = ClassUtil.getValueClass(type, 0);
+        Class<?> returnClass = TypeUtil.getValueClass(type, 0);
         if (returnClass == Map.class) {
-            Class<?> valueClass = ClassUtil.getValueClass(ClassUtil.getValueType(type, 0), 1);
+            Class<?> valueClass = TypeUtil.getValueClass(TypeUtil.getValueType(type, 0), 1);
             if (paginationHandler != null) {
                 return (service, sql, arguments, originArguments) ->
                         service.pageMap(valueClass, sql, applyPagination(paginationHandler, originArguments), arguments);
@@ -311,7 +313,7 @@ public class SQLMethodFactory {
                         service.pageMap(valueClass, sql, applySort(sortHandler, originArguments), arguments);
             }
         } else {
-            if (SQLStoreSqlUtil.isIgnore(returnClass)) {
+            if (ClassUtil.isIgnore(returnClass)) {
                 if (paginationHandler != null) {
                     return (service, sql, arguments, originArguments) ->
                             service.page(returnClass, sql, applyPagination(paginationHandler, originArguments), arguments);
@@ -345,13 +347,16 @@ public class SQLMethodFactory {
     private static Function<Object[], String> buildSqlProcessor(
             String command
             , Map<String, ArgumentHandler<?>> handlerMap
+            , List<ArgumentHandler<SqlReplacer>> sqlReplacers
     ) {
+
         char[] cs = command.toCharArray();
-        if (SQLQueryReplaceBuilder.hasKey(cs)) {
-            SQLQueryReplaceBuilder sqlQueryReplaceBuilder = SQLQueryReplaceBuilder.create(cs);
-            return arguments -> SQLQueryUtil.to(sqlQueryReplaceBuilder, arguments, handlerMap).toString();
-        } else if (SQLQueryBuilder.hasKey(cs)) {
-            SQLQueryBuilder sqlQueryBuilder = SQLQueryBuilder.create(cs);
+        SQLQueryReplaceBuilder sqlQueryReplaceBuilder = SQLQueryReplaceBuilder.create(cs);
+        if (sqlQueryReplaceBuilder.hasKey()) {
+            return arguments -> SQLQueryUtil.to(sqlQueryReplaceBuilder, arguments, handlerMap, sqlReplacers).toString();
+        }
+        SQLQueryBuilder sqlQueryBuilder = SQLQueryBuilder.create(cs);
+        if (sqlQueryBuilder.hasKey()) {
             return arguments -> SQLQueryUtil.to(sqlQueryBuilder, arguments, handlerMap).toString();
         }
         return null;

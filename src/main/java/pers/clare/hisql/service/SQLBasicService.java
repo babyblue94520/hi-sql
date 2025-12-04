@@ -10,6 +10,7 @@ import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.CommandTypeParser;
 import pers.clare.hisql.support.ResultSetConverter;
+import pers.clare.hisql.support.SqlLogContext;
 import pers.clare.hisql.util.PreparedStatementUtil;
 
 import javax.sql.DataSource;
@@ -31,8 +32,6 @@ public interface SQLBasicService {
     ResultSetConverter getResultSetConverter();
 
     CommandTypeParser getCommandTypeParser();
-
-    void logSql(String sql);
 
     default Connection getConnection() {
         return DataSourceUtils.getConnection(getDataSource());
@@ -90,7 +89,7 @@ public interface SQLBasicService {
             String sql
             , PreparedStatementCallback<R> callback
     ) {
-        logSql(sql);
+        SqlLogContext.debug(sql);
         Connection connection = null;
         try {
             connection = getConnection();
@@ -142,7 +141,7 @@ public interface SQLBasicService {
     }
 
     default ResultSet query(Connection connection, String sql, Object[] parameters) throws SQLException {
-        logSql(sql);
+        SqlLogContext.debug(sql);
         if (parameters == null || parameters.length == 0) {
             Statement statement = connection.createStatement();
             return statement.executeQuery(sql);
@@ -158,7 +157,7 @@ public interface SQLBasicService {
             , String sql
             , Object... parameters
     ) {
-        logSql(sql);
+        SqlLogContext.debug(sql);
         if (keyType == null) throw new HiSqlException("GeneratedKey type can not null!");
         Connection connection = null;
         ResultSet resultSet = null;
@@ -191,14 +190,14 @@ public interface SQLBasicService {
             , Object... parameters
     ) {
         long longValue = updateLarge(sql, parameters);
-        return longValue > Integer.MAX_VALUE ? Integer.MAX_VALUE : longValue < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) longValue;
+        return longValue > Integer.MAX_VALUE ? Integer.MAX_VALUE : Integer.MIN_VALUE > longValue ? Integer.MIN_VALUE : (int) longValue;
     }
 
     default long updateLarge(
             String sql
             , Object... parameters
     ) {
-        logSql(sql);
+        SqlLogContext.debug(sql);
         Connection connection = null;
         ResultSet resultSet = null;
         try {

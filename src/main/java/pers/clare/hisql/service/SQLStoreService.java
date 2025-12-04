@@ -8,12 +8,12 @@ import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.store.SQLCrudStore;
 import pers.clare.hisql.store.SQLRequest;
 import pers.clare.hisql.store.SQLStore;
+import pers.clare.hisql.store.SQLStoreColumn;
 import pers.clare.hisql.util.ResultSetUtil;
 import pers.clare.hisql.util.SQLQueryUtil;
 import pers.clare.hisql.util.SQLStoreFactory;
 import pers.clare.hisql.util.SQLStoreSqlUtil;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Arrays;
@@ -36,11 +36,11 @@ public interface SQLStoreService extends SQLBasicService {
         }
         try {
             SQLRequest data = SQLStoreSqlUtil.toInsertRequest(store, entity);
-            Field autoKey = store.getAutoKey();
+            SQLStoreColumn autoKey = store.getAutoKey();
             if (autoKey == null) {
                 update(data.getSql(), data.getParameters());
             } else {
-                autoKey.set(entity, insert(autoKey.getType(), data.getSql(), data.getParameters()));
+                autoKey.setValue(entity, insert(autoKey.getType(), data.getSql(), data.getParameters()));
             }
             return entity;
         } catch (Exception e) {
@@ -109,7 +109,7 @@ public interface SQLStoreService extends SQLBasicService {
         if (entity == null) {
             return 0;
         }
-        return update(SQLQueryUtil.setValue(store.getDeleteById(), store.getKeyFields(), entity));
+        return update(SQLQueryUtil.setValue(store.getDeleteById(), store.getKeyColumns(), entity));
     }
 
     default <T> int[] deleteAll(
@@ -190,7 +190,6 @@ public interface SQLStoreService extends SQLBasicService {
             , SQLStore<T> sqlStore
             , StoreResultSetHandler<T, R> function
     ) throws HiSqlException {
-        logSql(sql);
         Connection connection = null;
         ResultSet resultSet = null;
         try {
@@ -208,7 +207,7 @@ public interface SQLStoreService extends SQLBasicService {
             SQLCrudStore<T> sqlStore
             , T entity
     ) {
-        String sql = SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyFields(), entity);
+        String sql = SQLQueryUtil.setValue(sqlStore.getSelectById(), sqlStore.getKeyColumns(), entity);
         return queryHandler(sqlStore, sql, null, null, ResultSetUtil::toInstance);
     }
 

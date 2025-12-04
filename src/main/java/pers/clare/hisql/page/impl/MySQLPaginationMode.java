@@ -1,8 +1,11 @@
-package pers.clare.hisql.page;
+package pers.clare.hisql.page.impl;
 
 import pers.clare.hisql.exception.HiSqlException;
+import pers.clare.hisql.page.Pagination;
+import pers.clare.hisql.page.PaginationMode;
 import pers.clare.hisql.service.SQLTypeService;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 @SuppressWarnings("unused")
@@ -26,11 +29,11 @@ public class MySQLPaginationMode implements PaginationMode {
     ) {
         String virtualTotalSql = "EXPLAIN " + sql;
         Map<String, Object> result = service.findMap(Object.class, virtualTotalSql, parameters);
-        Long total = (Long) result.get("ROWS");
-        if (total == null) {
+        BigInteger rows = (BigInteger) result.get("rows");
+        if (rows == null) {
             throw new HiSqlException(String.format("Query virtual total error.(%s)", virtualTotalSql));
         }
-        return total;
+        return rows.longValue();
     }
 
 }

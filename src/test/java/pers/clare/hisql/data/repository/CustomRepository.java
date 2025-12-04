@@ -9,6 +9,7 @@ import pers.clare.hisql.page.Pagination;
 import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.repository.SQLRepository;
 import pers.clare.hisql.support.SqlReplace;
+import pers.clare.hisql.support.SqlReplacer;
 
 import java.util.Collection;
 import java.util.List;
@@ -99,10 +100,16 @@ public interface CustomRepository extends SQLRepository {
     @HiSql("SELECT * FROM user WHERE (id,account) IN :values")
     List<User> findAll(Collection<Object[]> values);
 
-    @HiSql("SELECT * FROM user WHERE 1=1 {idSql}")
+    @HiSql("SELECT * FROM user WHERE 1=1 {idSql} and '{' = '{' {}")
     List<User> findAll(String idSql, Long id);
 
     List<User> findAll(SqlReplace<Object> id);
+
+    @HiSql("SELECT * FROM user WHERE 1=1 {id} {id} {id1} {id2}")
+    List<User> findAll(SqlReplacer replacer, Long id);
+
+    @HiSql("SELECT * FROM user WHERE 1=1 {id} {id} {id1} {id2}")
+    List<User> findAll2(SqlReplacer replacer, User user);
 
     @HiSql("SELECT '[0-9]'")
     Pattern findPattern();

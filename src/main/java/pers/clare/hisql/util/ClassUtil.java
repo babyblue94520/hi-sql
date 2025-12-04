@@ -1,25 +1,25 @@
 package pers.clare.hisql.util;
 
 import lombok.experimental.UtilityClass;
-import org.springframework.core.annotation.Order;
-import org.springframework.lang.NonNull;
-import pers.clare.hisql.repository.SQLCrudRepository;
+import pers.clare.hisql.support.field.FieldGetter;
+import pers.clare.hisql.support.field.FieldReflector;
+import pers.clare.hisql.support.field.FieldSetter;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 @UtilityClass
 public class ClassUtil {
     private static final Map<Class<?>, Method[]> methodsMap = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Method[]> declaredMethodsMap = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Field[]> declaredFieldsMap = new ConcurrentHashMap<>();
-
-    private static final Map<Class<?>, Map<String, Field>> classNameFieldMap = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<Method>> classOrderMethodsMap = new ConcurrentHashMap<>();
-    private static final Map<Class<?>, List<Field>> classOrderFieldsMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, FieldReflector[]> declaredFieldReflectorsMap = new ConcurrentHashMap<>();
 
 
     public static Method[] getMethods(Class<?> clazz) {
@@ -31,239 +31,148 @@ public class ClassUtil {
     }
 
     public static Field[] getDeclaredFields(Class<?> clazz) {
-        return declaredFieldsMap.computeIfAbsent(clazz, ClassUtil::buildDeclareFields);
+        return declaredFieldsMap.computeIfAbsent(clazz, Class::getDeclaredFields);
     }
 
-    private static Field[] buildDeclareFields(Class<?> clazz) {
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
+    public static FieldReflector[] getFieldReflectors(Class<?> clazz) {
+        return declaredFieldReflectorsMap.computeIfAbsent(clazz, ClassUtil::scanFieldReflectors);
+    }
+
+    private static FieldReflector[] scanFieldReflectors(
+            Class<?> clazz
+    ) {
+        if (isIgnore(clazz)) return new FieldReflector[0];
+        Map<String, Method> getterMethodMap = new HashMap<>();
+        Map<String, Method> setterMethodMap = new HashMap<>();
+        scanGetAndSetMethod(clazz, getterMethodMap, setterMethodMap);
+
+        Field[] fields = ClassUtil.getDeclaredFields(clazz);
+        FieldReflector[] result = new FieldReflector[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
             field.setAccessible(true);
+            FieldGetter getter = buildFieldGetter(field, getterMethodMap);
+            FieldSetter setter = buildFieldSetter(field, setterMethodMap);
+            result[i] = new FieldReflector(field, TypeUtil.toWrapperClass(field.getType()), getter, setter);
         }
-        return fields;
-    }
-
-    public static Map<String, Field> getNameFieldMap(Class<?> clazz) {
-        return classNameFieldMap.computeIfAbsent(clazz, ClassUtil::toNameFieldMap);
-    }
-
-    private static Map<String, Field> toNameFieldMap(Class<?> clazz) {
-        Map<String, Field> fieldMap = new HashMap<>();
-        for (Field field : getDeclaredFields(clazz)) {
-            fieldMap.put(field.getName(), field);
-        }
-        return fieldMap;
-    }
-
-    public static List<Method> getOrderGetMethods(Class<?> clazz) {
-        return classOrderMethodsMap.computeIfAbsent(clazz, ClassUtil::toOrderGetMethods);
-    }
-
-    private static List<Method> toOrderGetMethods(Class<?> clazz) {
-        return sort(ClassUtil.getDeclaredMethods(clazz), ClassUtil::isGetMethod, method -> {
-            Order order = method.getAnnotation(Order.class);
-            if (order == null) {
-                Map<String, Field> fieldMap = getNameFieldMap(clazz);
-                Field field = fieldMap.get(methodToFieldName(method.getName()));
-                if (field != null) {
-                    order = field.getAnnotation(Order.class);
-                }
-            }
-            return order;
-        });
-    }
-
-    public static List<Field> getOrderFields(Class<?> clazz) {
-        return classOrderFieldsMap.computeIfAbsent(clazz, ClassUtil::toOrderFields);
-    }
-
-    private static List<Field> toOrderFields(Class<?> clazz) {
-        return sort(ClassUtil.getDeclaredFields(clazz), field -> true, field -> field.getAnnotation(Order.class));
-    }
-
-    private static <T> List<T> sort(T[] array, Predicate<T> filter, Function<T, Order> orderGetter) {
-        List<OrderObject<T>> orderObjects = new ArrayList<>();
-        List<T> others = new ArrayList<>();
-        for (T o : array) {
-            if (!filter.test(o)) continue;
-            Order order = orderGetter.apply(o);
-            if (order == null) {
-                others.add(o);
-            } else {
-                orderObjects.add(new OrderObject<>(order.value(), o));
-            }
-        }
-        orderObjects.sort(Comparator.comparingInt(a -> a.order));
-        List<T> result = new ArrayList<>();
-        for (OrderObject<T> orderObject : orderObjects) {
-            result.add(orderObject.object);
-        }
-        result.addAll(others);
         return result;
     }
 
-    public static boolean isGetMethod(Method method) {
-        return Modifier.isPublic(method.getModifiers())
-               && !Modifier.isStatic(method.getModifiers())
-               && method.getParameters().length == 0
-               && method.getName().startsWith("get");
+    private static FieldGetter buildFieldGetter(Field field, Map<String, Method> getterMethodMap) {
+        Method getterMethod = getterMethodMap.get(field.getName());
+        if (getterMethod == null) {
+            return target -> {
+                try {
+                    if (target == null) return null;
+                    return field.get(target);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        } else {
+            return target -> {
+                try {
+                    if (target == null) return null;
+                    return getterMethod.invoke(target);
+                } catch (InvocationTargetException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        }
     }
 
+    private static FieldSetter buildFieldSetter(Field field, Map<String, Method> setterMethodMap) {
+        Method setterMethod = setterMethodMap.get(field.getName());
+        if (setterMethod == null) {
+            return (target, value) -> {
+                try {
+                    if (target == null) return;
+                    field.set(target, value);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        } else {
+            return (target, value) -> {
+                try {
+                    if (target == null) return;
+                    setterMethod.invoke(target, value);
+                } catch (InvocationTargetException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        }
 
-    public static String methodToFieldName(String name) {
-        char[] cs = new char[name.length() - 3];
-        name.getChars(3, name.length(), cs, 0);
-        cs[0] = Character.toLowerCase(cs[0]);
-        return new String(cs);
     }
 
-    public static boolean isBasicType(Class<?> type) {
-        if (type == null) return false;
-        return type.isPrimitive() || type.getName().startsWith("java.");
+    private static void scanGetAndSetMethod(
+            Class<?> clazz
+            , Map<String, Method> getterMethodMap
+            , Map<String, Method> setMethodMap
+    ) {
+        Method[] methods = ClassUtil.getDeclaredMethods(clazz);
+        for (Method method : methods) {
+            int modifier = method.getModifiers();
+            if (Modifier.isStatic(modifier) || !Modifier.isPublic(modifier)) continue;
+            if (isGetMethod(method)) {
+                getterMethodMap.put(getFieldName(method), method);
+            } else if (isSetMethod(method)) {
+                setMethodMap.put(getFieldName(method), method);
+            }
+        }
     }
 
-    public static boolean isBasicTypeArray(Class<?> type) {
-        if (type.isArray()) {
-            type = type.getComponentType();
-            return isBasicType(type) || isBasicTypeArray(type);
+    private static String getFieldName(Method method) {
+        String methodName = method.getName();
+        String name = null;
+        if (methodName.startsWith("get") || methodName.startsWith("set")) {
+            name = methodName.substring(3);
+        } else if (methodName.startsWith("is")) {
+            name = methodName.substring(2);
+        }
+        if (name == null || name.isEmpty()) return name;
+        if (name.length() == 1) return name.toLowerCase();
+        char c = name.charAt(0);
+        char c2 = name.charAt(1);
+        if (Character.isUpperCase(c) && Character.isUpperCase(c2)) {
+            return name;
+        } else {
+            return Character.toLowerCase(c) + name.substring(1);
+        }
+    }
+
+    private static boolean isGetMethod(Method method) {
+        if (method.getParameterCount() != 0) return false;
+        String methodName = method.getName();
+        if (methodName.length() > 3 && methodName.startsWith("get")) {
+            return true;
+        }
+        if (methodName.length() > 2 && methodName.startsWith("is")
+            && (method.getReturnType() == boolean.class || method.getReturnType() == Boolean.class)
+        ) {
+            return true;
         }
         return false;
     }
 
-    @NonNull
-    public static Class<?> toWrapperClass(Type type) {
-        if (type instanceof Class) {
-            return (Class<?>) type;
+    private static boolean isSetMethod(Method method) {
+        if (method.getParameterCount() != 1) return false;
+        String methodName = method.getName();
+        if (methodName.length() > 3 && methodName.startsWith("set")) {
+            return true;
         }
-        if (type instanceof ParameterizedType) {
-            Type result = ((ParameterizedType) type).getRawType();
-            if (result instanceof Class) {
-                return toWrapperClass((Class<?>) result);
-            }
-        }
-        return Object.class;
+        return false;
     }
 
-    public static Type[] findTypes(Class<?> clazz) {
-        Map<Class<?>, Type[]> typesMap = new HashMap<>();
-        Type[] types = findTypes(clazz, typesMap);
-        if (types == null) {
-            throw new IllegalArgumentException(String.format("%s entity class not found!", clazz));
-        }
-        for (Type type : types) {
-            if (!(type instanceof Class)) {
-                throw new IllegalArgumentException(String.format("%s %s class not found!", clazz, type));
-            }
-        }
-        return types;
+    public static boolean isIgnore(Class<?> clazz) {
+        return clazz == null
+               || clazz.isPrimitive()
+               || clazz.isArray()
+               || clazz.isEnum()
+               || clazz.isInterface()
+               || clazz.isSynthetic()
+               || Collection.class.isAssignableFrom(clazz)
+               || clazz.getName().startsWith("java")
+                ;
     }
-
-    private static Type[] findTypes(Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
-        Type[] types = null;
-        for (Type type : clazz.getGenericInterfaces()) {
-            if (type instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) type;
-                typesMap.put((Class<?>) parameterizedType.getRawType(), parameterizedType.getActualTypeArguments());
-                if (parameterizedType.getRawType() == SQLCrudRepository.class) {
-                    types = parameterizedType.getActualTypeArguments();
-                } else {
-                    types = findTypes((Class<?>) parameterizedType.getRawType(), typesMap);
-                }
-                findTypeVariableToClass(types, clazz, typesMap);
-            } else if (type instanceof Class) {
-                types = findTypes((Class<?>) type, typesMap);
-                findTypeVariableToClass(types, clazz, typesMap);
-            }
-        }
-        return types;
-    }
-
-    private static void findTypeVariableToClass(Type[] types, Class<?> clazz, Map<Class<?>, Type[]> typesMap) {
-        for (int i = 0; i < types.length; i++) {
-            Type type = types[i];
-            if (type instanceof TypeVariable) {
-                for (int j = 0; j < clazz.getTypeParameters().length; j++) {
-                    if (type.getTypeName().equals(clazz.getTypeParameters()[j].getTypeName())) {
-                        types[i] = typesMap.get(clazz)[j];
-                    }
-                }
-            }
-        }
-    }
-
-    public static Class<?> toWrapperClass(Class<?> clazz) {
-        if (clazz.isPrimitive()) {
-            if (clazz == boolean.class) {
-                return Boolean.class;
-            } else if (clazz == byte.class) {
-                return Byte.class;
-            } else if (clazz == char.class) {
-                return Character.class;
-            } else if (clazz == double.class) {
-                return Double.class;
-            } else if (clazz == float.class) {
-                return Float.class;
-            } else if (clazz == int.class) {
-                return Integer.class;
-            } else if (clazz == long.class) {
-                return Long.class;
-            } else if (clazz == short.class) {
-                return Short.class;
-            } else {
-                return clazz;
-            }
-        }
-        return clazz;
-    }
-
-    public static Object getDefaultValue(Class<?> type, Object value) {
-        if (value == null && type.isPrimitive()) {
-            if (type == int.class) {
-                return 0;
-            } else if (type == boolean.class) {
-                return false;
-            } else if (type == byte.class) {
-                return (byte) 0;
-            } else if (type == short.class) {
-                return (short) 0;
-            } else if (type == long.class) {
-                return 0L;
-            } else if (type == float.class) {
-                return 0.0f;
-            } else if (type == double.class) {
-                return 0.0d;
-            } else if (type == char.class) {
-                return '\u0000';
-            }
-        }
-        return value;
-    }
-
-    @NonNull
-    public static Class<?> getValueClass(Type type, int index) {
-        Type result = getValueType(type, index);
-        if (result instanceof ParameterizedType) {
-            return ClassUtil.toWrapperClass(((ParameterizedType) result).getRawType());
-        } else {
-            return ClassUtil.toWrapperClass(result);
-        }
-    }
-
-    @NonNull
-    public static Type getValueType(Type type, int index) {
-        if (type instanceof ParameterizedType) {
-            return ((ParameterizedType) type).getActualTypeArguments()[index];
-        }
-        return Object.class;
-    }
-
-    static class OrderObject<T> {
-        final int order;
-        final T object;
-
-        OrderObject(int order, T object) {
-            this.order = order;
-            this.object = object;
-        }
-    }
-
 }

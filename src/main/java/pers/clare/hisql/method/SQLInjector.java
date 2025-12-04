@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import pers.clare.hisql.exception.HiSqlException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -23,7 +24,7 @@ public class SQLInjector {
         try {
             documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            throw new Error(e.getMessage(), e);
+            throw new HiSqlException(e.getMessage(), e);
         }
     }
 
