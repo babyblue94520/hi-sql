@@ -14,10 +14,7 @@ import pers.clare.hisql.page.Sort;
 import pers.clare.hisql.support.SqlReplace;
 import pers.clare.hisql.support.SqlReplacer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -182,10 +179,69 @@ class SQLRepositoryTest {
         assertEquals(pagination.getSize(), page.getRecords().size());
         assertEquals(count, page.getTotal());
 
+        pagination = Pagination.of(1, 3);
+        page = customRepository.pageByAccount(pagination, account);
+        assertEquals(2, page.getRecords().size());
+        assertEquals(count, page.getTotal());
+
         pagination = Pagination.of(3, 3);
         page = customRepository.pageByAccount(pagination, account);
         assertEquals(0, page.getRecords().size());
         assertEquals(count, page.getTotal());
+    }
+
+    @Test
+    void total() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+        Pagination pagination = Pagination.of(0, 3);
+        Page<User> page;
+        do {
+            page = customRepository.pageByAccount(pagination, account);
+            assertEquals(count, page.getTotal());
+            pagination = pagination.next();
+            pagination.setTotal(page.getTotal());
+        } while (!page.getRecords().isEmpty());
+
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+        page = customRepository.pageByAccount(pagination, account);
+        assertEquals(count * 2, page.getTotal());
+
+    }
+
+
+    @Test
+    void virtualTotal() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+        Pagination pagination = Pagination.of(0, 3);
+        pagination.setVirtualTotal(true);
+        Page<User> page;
+        do {
+            page = customRepository.pageByAccount(pagination, account);
+            if (Objects.equals(page.getSize(), page.getRecords().size())) {
+                assertNotEquals(count, page.getTotal());
+            } else {
+                assertEquals(count, page.getTotal());
+            }
+            pagination = pagination.next();
+            pagination.setTotal(page.getTotal());
+        } while (!page.getRecords().isEmpty());
+
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+        page = customRepository.pageByAccount(pagination, account);
+        assertEquals(count * 2, page.getTotal());
+
     }
 
     @Test

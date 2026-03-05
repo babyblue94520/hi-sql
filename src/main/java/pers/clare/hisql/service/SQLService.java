@@ -16,33 +16,30 @@ public interface SQLService extends SQLStoreService, SQLTypeService, SQLBasicSer
         pagination = getPagination(pagination);
         int size = pagination.getSize();
         int page = pagination.getPage();
-        int listSize = list.size();
         long total = pagination.getTotal();
-        long currentTotal = (long) page * size + listSize;
-        if (listSize < size) {
-            // Is last page.
-            total = currentTotal;
-        } else if (total == 0) {
+
+        if (total == 0) {
             if (pagination.isVirtualTotal()) {
-                total = currentTotal;
-                long virtualTotal = getPaginationMode()
-                        .getVirtualTotal(this, sql, parameters);
-                if (total < virtualTotal) {
-                    total = virtualTotal;
-                } else {
-                    total += size;
-                }
+                total = getPaginationMode().getVirtualTotal(this, sql, parameters);
             } else {
                 total = getPaginationMode().getTotal(this, sql, parameters);
             }
-        } else if (total < currentTotal) {
-            if (pagination.isVirtualTotal()) {
-                total += size;
-            } else {
-                total = getPaginationMode().getTotal(this, sql, parameters);
+        } else {
+            int listSize = list.size();
+            long currentTotal = (long) page * size + listSize;
+            if (total > currentTotal && listSize < size) {
+                total = currentTotal;
+            } else if (total < currentTotal && listSize > 0) {
+                if (pagination.isVirtualTotal()) {
+                    total = currentTotal;
+                    if (listSize == size) {
+                        total += size;
+                    }
+                } else {
+                    total = getPaginationMode().getTotal(this, sql, parameters);
+                }
             }
         }
-
         return Page.of(page, size, list, total);
     }
 }
