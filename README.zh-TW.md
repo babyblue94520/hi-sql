@@ -7,318 +7,263 @@
 ![](images/orm.png)
 ![](images/write_sql.png)
 
-簡單、彈性高的純 __SQL__ 套件。
+Hi SQL 是一個簡單且具備高彈性的純 __SQL__ 套件。
 
-市面上有許多 __ORM Framework__，不同專案可能使用不同的 __ORM__，使用時，根據需求設計 __SQL__，再轉換成對應的 __ORM__ 語法，還須確定
-__ORM__ 轉換成預期的 __SQL__，遇到特殊的 __SQL__ 時，得花更多的時間轉成 __ORM__ 語法，少部分需要依使用的資料庫做調整，更多的優缺點，就不多說。
+### 為什麼選擇 Hi SQL？
+市面上雖然有許多 __ORM 框架 (Framework)__，但在不同專案中可能面臨以下挑戰：
+- 需要學習特定的 ORM 語法。
+- 難以確保 ORM 產生的 SQL 是否符合預期性能。
+- 處理複雜或特殊的 SQL 時，轉換成 ORM 語法的成本極高。
+- 部分 ORM 與特定資料庫耦合度過高。
 
-## 必要條件
+Hi SQL 直接使用原生 SQL，讓開發者能完全掌握查詢邏輯，同時保有開發效率。
+
+## 系統需求
 
 * Spring Framework 5+
 * Java 11+
 
 ## 特色
 
-* __Native SQL__ 為主
-* 高效能
-* 提供基本的參數化查詢和動態 __SQL__ 替換
-* 將查詢結果映射成任意 __Java__ 物件
-* 支持 __Spring @Transactional__
+* **原生 SQL 為主**：直接編寫 SQL，掌握最高控制權。
+* **高效能**：極輕量化的封裝，減少額外開銷。
+* **參數化與動態替換**：提供直覺的參數化查詢與語法替換功能。
+* **彈性物件映射**：輕易將查詢結果映射至任何 Java 物件。
+* **Spring 整合**：完整支持 `@Transactional` 事務管理。
 
 ## 快速開始
 
-### 配置
+### 配置 (Configuration)
 
-預設掃描同 __Package__ 下的所有有 __@Repository__ 的 __Interface__。
+預設會掃描指定套件 (Package) 下所有標記 `@Repository` 的介面 (Interface)。
 
 [HiSqlConfig.java](src/test/java/pers/clare/hisql/data/HiSqlConfig.java)
 
 ```java
-
 @EnableHiSql
 public class HiSqlConfig {
-
 }
 ```
 
-### 建立 Entity 和 Interface
+### 建立實體 (Entity) 與介面 (Interface)
 
-* __SQLCrudRepository__
+* **SQLCrudRepository**
 
-  繼承 __SQLCrudRepository__，即有對 __Entity__ INSERT、UPDATE、DELETE 和 SELECT 的基本功能。
+  繼承 `SQLCrudRepository` 即可獲得實體 (Entity) 的基本增刪改查 (INSERT, UPDATE, DELETE, SELECT) 功能。
 
-  [User.java](src/test/java/pers/clare/hisql/data/entity/User.java)
-
-  [UserRepository.java](src/test/java/pers/clare/hisql/data/repository/UserRepository.java)
+  [User.java](src/test/java/pers/clare/hisql/data/entity/User.java) | [UserRepository.java](src/test/java/pers/clare/hisql/data/repository/UserRepository.java)
 
   ```java
   @Repository
   public interface UserRepository extends SQLCrudRepository<User, Long> {
-  
   }
   ```
 
-* __SQLRepository__
+* **SQLRepository**
 
-  繼承 __SQLRepository__，建立輕量化的 __Repository__。
+  繼承 `SQLRepository` 則可建立更輕量、自定義程度更高的 Repository。
 
-### 使用
+### 基本使用
 
 ```java
-
 @Service
 public class UserService {
+    private final UserRepository userRepository;
 
-    private UserRepository userRepository;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public User find(Long id) {
         if (id == null) return null;
         return userRepository.findById(id);
     }
-
 }
 ```
 
-## 功能
+## 主要功能
 
-* 參數化
+### 1. 參數化查詢
 
-    * 一般參數
-
-      ```java
-      @Repository
-      public interface DemoRepository extends SQLRepository {
-      
-        @HiSql("SELECT * FROM test WHERE value=:value")
-        List<Object> findAll(String value);
-      }
-      ```
-
-    * 物件參數
-
-      將物件解析為 __id__、__obj.id__、__name__、__obj.name__ 參數名稱，如果有相同的參數名稱時，則會根據順序覆蓋。
-
-      ```java
-      import lombok.Getter;
-      import lombok.Setter;     
-      
-      @Getter
-      @Setter
-      public class ValueObject{
-          private Integer id;
-      
-          private String name;
-      }
-      
-      @Repository
-      public interface DemoRepository extends SQLRepository {
-      
-        @HiSql("""
-              SELECT *
-              FROM test
-              WHERE name=:obj.name
-              limit 1
-          """)
-        ValueObject findAll(ValueObject obj);
-      
-        @HiSql("SELECT * FROM test WHERE name=:obj.name")
-        List<ValueObject> findAll(ValueObject obj);
-      
-        @HiSql("SELECT * FROM test WHERE name=:name")
-        List<ValueObject> findAll2(ValueObject obj);
-      
-      }
-      ```
-
-* 動態 __SQL__ 替換
-
-  根據程式邏輯，需要動態增加條件或者替換 __SQL__ 字串時，可以使用該方法。
-
-  另外，請勿自行在外部拼接 __SQL__，應遵循範例中的做法，避免 __SQL Injection__。
+* **一般參數**
 
   ```java
   @Repository
   public interface DemoRepository extends SQLRepository {
-    
-      @HiSql("SELECT * FROM test WHERE 1=1 {valueCondition}")
-      List<Map<String,Object>> findAll(String valueCondition, String value);
-      
-      @HiSql("SELECT * FROM test WHERE 1=1 {value}")
-      List<Map<String,Object>> findAll(SqlReplace<Object> value);
-  }
-    
-  @Service
-  public class DemoService {
-      private DemoRepository demoRepository;
-        
-      public void findAll(String value){
-          // 簡單的字串替換操作
-          demoRepository.findAll("AND column = :value", value);
-          // 使用 SqlReplace，如果 value 是 null，則會替換成空白，反之則替換為指定字串，並且帶入 value 參數
-          demoRepository.findAll(SqlReplace.of(value," AND column = :value"));
-      }
+      @HiSql("SELECT * FROM test WHERE value = :value")
+      List<Object> findAll(String value);
   }
   ```
 
-* 從 __XML__ 讀取 __SQL__
+* **物件參數**
 
-    * 預設根目錄為 __resources/hisql/__，建立和 __Class Name__ 一樣的 __XML__ 檔。
+  自動將物件屬性解析為參數名稱（如 `id`、`obj.id`、`name`、`obj.name`）。若參數名稱衝突，將依順序覆蓋。
 
-      範例： `resources/hisql/CustomRepository.xml`
+  ```java
+  @Getter
+  @Setter
+  public class ValueObject {
+      private Integer id;
+      private String name;
+  }
 
-    * 建立和 **Method Name** 一樣的 __Tag__ 或者 __@HiSql(name=...)__ 指定 __Tag__
+  @Repository
+  public interface DemoRepository extends SQLRepository {
+      @HiSql("SELECT * FROM test WHERE name = :obj.name LIMIT 1")
+      ValueObject findOne(ValueObject obj);
 
-        ```xml
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE SQL>
-        <SQL>
-            <findAll><![CDATA[
-                SELECT * FROM user WHERE 1=1 {id} AND :id IS NOT NULL
-            ]]></findAll>
-        </SQL>
-        ```
+      @HiSql("SELECT * FROM test WHERE name = :name")
+      List<ValueObject> findAll(ValueObject obj);
+  }
+  ```
 
-* 參考測試更多範例
+### 2. 動態 SQL 替換
 
-  [CustomRepository.java](src/test/java/pers/clare/hisql/data/repository/CustomRepository.java)
+根據程式邏輯動態增減內容。**請遵循範例做法，切勿自行拼接字串，以避免 SQL 注入 (SQL Injection) 攻擊。**
 
-## 進階
+#### 使用 SqlReplace
 
-* ### 分頁優化
+```java
+@Repository
+public interface DemoRepository extends SQLRepository {
+    @HiSql("SELECT * FROM test WHERE 1=1 {valueCondition}")
+    List<Map<String, Object>> findByString(String valueCondition, String value);
+    
+    @HiSql("SELECT * FROM test WHERE 1=1 {value}")
+    List<Map<String, Object>> findByReplace(SqlReplace<Object> value);
+}
 
-  使用初次計算的總數或預估值，避免在翻頁時重複計算總數。如果對總數精度有要求，則不建議使用此方式。
-
-    ```java
-    Pagination pagination = Pagination.of(0,20);
-    Page page = repository.page(pagination);
-
-    pagination = Pagination.of(page.getPage() + 1, page.getSize(), page.getTotal());
-    repository.page(pagination);
-    ```
-
-* ### 虛擬總數
-
-  在分頁模式中，使用 __SELECT COUNT(*)__ 查詢總數會非常慢，通過預估總數可以避免對整個結果集進行掃描。
-
-  ### 使用方式
-
-    ```java
-    pagination.setVirtualTotal(true);
-    ```
-
-  ### 實作
-
-    * MySQL
-
-      Replace the actual count (*) with the explain result "rows".
-
-        ```java
-        @Override
-        public long getVirtualTotal(
-                Pagination pagination
-                , Connection connection
-                , String sql
-                , Object[] parameters
-        ) throws SQLException {
-            String totalSql = "EXPLAIN SELECT COUNT(*) FROM(" + sql + ")t";
-            ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
-            if (rs.next()) {
-                return rs.getLong("rows");
-            } else {
-                throw new HiSqlException(String.format("query total error.(%s)", totalSql));
-            }
-        }
-        ```
-
-
-* ### 修改 __PaginationMode__
-
-  ### 設定
-
-    ```java
-    @EnableHiSql(
-        paginationMode = MySQLPaginationMode.class
-    )
-    public class Demo2HiSqlConfig {
-
+@Service
+public class DemoService {
+    private DemoRepository demoRepository;
+      
+    public void demo(String value) {
+        // 簡單字串替換
+        demoRepository.findByString("AND column = :value", value);
+        
+        // 使用 SqlReplace：若 value 為 null 則替換為空字串，否則帶入指定語法
+        demoRepository.findByReplace(SqlReplace.of(value, " AND column = :value"));
     }
-    ```
+}
+```
 
-  ### 自定義
+#### 使用 SqlReplacer (自動匹配)
 
-    ```java
-    public class CustomPaginationMode implements PaginationMode {
+預設替換規則：
+- `String`: `null` 或空字串不替換。
+- `Collection/Array`: 為空不替換。
+- 其他類型: `null` 不替換。
 
-        public void appendPaginationSQL(
-                StringBuilder sql
-                , Pagination pagination
-        ) {
-            appendSortSQL(sql, pagination.getSorts());
-            sql.append(" limit ")
-                    .append(pagination.getSize() * pagination.getPage())
-                    .append(',')
-                    .append(pagination.getSize());
-        }
+```java
+@Repository
+public interface DemoRepository extends SQLRepository {
+    @HiSql("""
+      SELECT * FROM test
+      WHERE 1=1
+          {value}
+          {replace2}
+          {value3}
+      """)
+    List<Map<String, Object>> findAll(SqlReplacer sqlReplacer, DemoQuery query);
+}
 
-        @Override
-        public long getVirtualTotal(
-                Pagination pagination
-                , Connection connection
-                , String sql
-                , Object[] parameters
-        ) throws SQLException {
-            // TODO
-        }
+@Service
+public class DemoService {
+    private DemoRepository demoRepository;
+      
+    public void findAll(DemoQuery query) {
+        demoRepository.findAll(
+            SqlReplacer.create()
+                .add("value", " AND column = :value") // 名稱一致時
+                .add("replace2", "value2", " AND column2 = :value2") // 名稱不一致時
+                .add("value3", " AND column3 = :value3", (v) -> v), // 自訂判斷邏輯
+            query
+        );
     }
+}
+```
 
-    ```
+### 3. 從 XML 讀取 SQL
 
-* ### 修改 NamingStrategy
+* **目錄規範**：預設路徑為 `resources/hisql/`，檔案名稱須與類別名稱一致。
+* **標籤設定**：標籤名稱須與方法名稱一致，或透過 `@HiSql(name=...)` 指定。
 
-  ### 設定
+範例：`resources/hisql/CustomRepository.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SQL>
+<SQL>
+    <findAll><![CDATA[
+        SELECT * FROM user WHERE 1=1 {id} AND :id IS NOT NULL
+    ]]></findAll>
+</SQL>
+```
 
-    ```java
-    @EnableHiSql(
-        naming = UpperCaseNamingStrategy.class
-    )
-    public class Demo2HiSqlConfig {
+## 進階應用
+
+### 分頁優化 (Pagination)
+
+透過使用初次計算的總數，避免翻頁時重複執行 `COUNT(*)`。
+
+```java
+Pagination pagination = Pagination.of(0, 20);
+Page page = repository.page(pagination);
+
+// 下一頁時帶入前次的總數
+pagination = Pagination.of(page.getPage() + 1, page.getSize(), page.getTotal());
+repository.page(pagination);
+```
+
+### 虛擬總數 (Virtual Total)
+
+針對大數據量，使用 `EXPLAIN` 的預估值替代精確的 `COUNT(*)`，大幅提升查詢性能。
+
+```java
+pagination.setVirtualTotal(true);
+```
+
+#### MySQL 實作範例
+```java
+@Override
+public long getVirtualTotal(Pagination pagination, Connection connection, String sql, Object[] parameters) throws SQLException {
+    String totalSql = "EXPLAIN SELECT COUNT(*) FROM(" + sql + ")t";
+    ResultSet rs = ConnectionUtil.query(connection, totalSql, parameters);
+    if (rs.next()) {
+        return rs.getLong("rows");
     }
-    ```
+    throw new HiSqlException("Query total error: " + totalSql);
+}
+```
 
-  ### 自定義
+### 自定義組件
 
-    ```java
-    public class CustomNamingStrategy implements NamingStrategy{
+#### 修改分頁模式 (PaginationMode)
+```java
+@EnableHiSql(paginationMode = MySQLPaginationMode.class)
+public class HiSqlConfig {
+}
+```
+
+#### 修改命名策略 (NamingStrategy)
+```java
+@EnableHiSql(naming = UpperCaseNamingStrategy.class)
+public class HiSqlConfig {
+}
+```
+
+#### 自定義結果集轉換 (ResultSetConverter)
+```java
+public class CustomResultSetConverter extends ResultSetConverter {
+    {
+        // 註冊特殊類型轉換邏輯，例如 Pattern
+        register(Pattern.class, (rs, i) -> Pattern.compile(rs.getString(i)));
     }
+}
 
-    @EnableHiSql(
-        naming = CustomNamingStrategy.class
-    )
-    public class Demo2HiSqlConfig {
-    }
-    ```
+@EnableHiSql(resultSetConverter = CustomResultSetConverter.class)
+public class HiSqlConfig {
+}
+```
 
-
-* ### 自定義 ResultSetConverter
-
-  將 ResultSet Value 轉為目標的特殊類型。
-
-  ### 自定義
-
-    ```java
-    public class CustomResultSetConverter extends ResultSetConverter {
-        {
-            register(Pattern.class, (rs, i) -> Pattern.compile(rs.getString(i)));
-        }
-    }
-    ```
-
-  ### 設定
-
-    ```java
-    @EnableHiSql(
-            resultSetConverter = CustomResultSetConverter.class
-    )
-    public class HiSqlConfig {
-    }
-    ```
+---
+*更多詳細範例請參考：[CustomRepository.java](src/test/java/pers/clare/hisql/data/repository/CustomRepository.java)*
