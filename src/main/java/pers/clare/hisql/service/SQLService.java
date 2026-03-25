@@ -5,7 +5,7 @@ import pers.clare.hisql.page.Pagination;
 
 import java.util.List;
 
-public interface SQLService extends SQLStoreService, SQLTypeService, SQLBasicService {
+public interface SQLService extends SQLStoreService, SQLTypeService {
 
     default <T> Page<T> toPage(
             Pagination pagination
@@ -16,30 +16,40 @@ public interface SQLService extends SQLStoreService, SQLTypeService, SQLBasicSer
         pagination = getPagination(pagination);
         int size = pagination.getSize();
         int page = pagination.getPage();
-        long total = pagination.getTotal();
+        long total = getTotal(pagination, list, sql, parameters);
 
-        if (total == 0) {
-            if (pagination.isVirtualTotal()) {
+        return Page.of(page, size, list, total);
+    }
+
+    private <T> long getTotal(
+            Pagination pagination
+            , List<T> list
+            , String sql
+            , Object[] parameters
+    ) {
+        int size = pagination.getSize();
+        int page = pagination.getPage();
+        int listSize = list.size();
+
+        if (listSize == 0 && page == 0) return 0;
+        long currentTotal = (long) page * size + listSize;
+        if (listSize > 0 && listSize < size) return currentTotal;
+
+        long total = pagination.getTotal();
+        if (pagination.isVirtualTotal()) {
+            if (total == 0) {
                 total = getPaginationMode().getVirtualTotal(this, sql, parameters);
-            } else {
-                total = getPaginationMode().getTotal(this, sql, parameters);
+            }
+            if (total < currentTotal || (total == currentTotal && listSize == size)) {
+                total = currentTotal + size;
+            } else if (listSize == 0) {
+                total = currentTotal;
             }
         } else {
-            int listSize = list.size();
-            long currentTotal = (long) page * size + listSize;
-            if (total > currentTotal && listSize < size) {
-                total = currentTotal;
-            } else if (total < currentTotal && listSize > 0) {
-                if (pagination.isVirtualTotal()) {
-                    total = currentTotal;
-                    if (listSize == size) {
-                        total += size;
-                    }
-                } else {
-                    total = getPaginationMode().getTotal(this, sql, parameters);
-                }
+            if (total == 0 || (total < currentTotal && listSize != 0)) {
+                total = getPaginationMode().getTotal(this, sql, parameters);
             }
         }
-        return Page.of(page, size, list, total);
+        return total;
     }
 }

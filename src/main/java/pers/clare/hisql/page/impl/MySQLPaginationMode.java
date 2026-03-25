@@ -15,8 +15,9 @@ public class MySQLPaginationMode implements PaginationMode {
             , Pagination pagination
     ) {
         appendSortSQL(sql, pagination.getSorts());
+        int start = pagination.isCursor() ? 0 : pagination.getSize() * pagination.getPage();
         sql.append(" LIMIT ")
-                .append(pagination.getSize() * pagination.getPage())
+                .append(start)
                 .append(',')
                 .append(pagination.getSize());
     }
