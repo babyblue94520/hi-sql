@@ -192,6 +192,12 @@ class SQLRepositoryTest {
 
     @Test
     void total() {
+        // Test empty first page inference
+        Pagination emptyPagination = Pagination.of(0, 3);
+        Page<User> emptyPage = customRepository.pageByAccount(emptyPagination, "non_existent_account");
+        assertEquals(0, emptyPage.getTotal());
+        assertEquals(0, emptyPage.getRecords().size());
+
         int count = 5;
         String account = String.valueOf(System.currentTimeMillis());
         for (int i = 0; i < count; i++) {
@@ -212,11 +218,30 @@ class SQLRepositoryTest {
         page = customRepository.pageByAccount(pagination, account);
         assertEquals(count * 2, page.getTotal());
 
+        // Test over-reported total correction (last page inference)
+        Pagination staleLargePagination = Pagination.of(3, 3);
+        staleLargePagination.setTotal(100L);
+        Page<User> lastPage = customRepository.pageByAccount(staleLargePagination, account);
+        assertEquals(1, lastPage.getRecords().size());
+        assertEquals(10L, lastPage.getTotal());
+
+        // Test under-reported total correction (triggers db query)
+        Pagination staleSmallPagination = Pagination.of(0, 3);
+        staleSmallPagination.setTotal(1L);
+        Page<User> queriedPage = customRepository.pageByAccount(staleSmallPagination, account);
+        assertEquals(10L, queriedPage.getTotal());
     }
 
 
     @Test
     void virtualTotal() {
+        // Test empty first page inference
+        Pagination emptyPagination = Pagination.of(0, 3);
+        emptyPagination.setVirtualTotal(true);
+        Page<User> emptyPage = customRepository.pageByAccount(emptyPagination, "non_existent_account");
+        assertEquals(0, emptyPage.getTotal());
+        assertEquals(0, emptyPage.getRecords().size());
+
         int count = 5;
         String account = String.valueOf(System.currentTimeMillis());
         for (int i = 0; i < count; i++) {
@@ -242,7 +267,89 @@ class SQLRepositoryTest {
         page = customRepository.pageByAccount(pagination, account);
         assertEquals(count * 2, page.getTotal());
 
+        // Test over-reported total correction (last page inference)
+        Pagination staleLargePagination = Pagination.of(3, 3);
+        staleLargePagination.setVirtualTotal(true);
+        staleLargePagination.setTotal(100L);
+        Page<User> lastPage = customRepository.pageByAccount(staleLargePagination, account);
+        assertEquals(1, lastPage.getRecords().size());
+        assertEquals(10L, lastPage.getTotal());
+
+        // Test under-reported total correction (virtual mode adds size to currentTotal)
+        Pagination staleSmallPagination = Pagination.of(0, 3);
+        staleSmallPagination.setVirtualTotal(true);
+        staleSmallPagination.setTotal(1L);
+        Page<User> correctedVirtualPage = customRepository.pageByAccount(staleSmallPagination, account);
+        assertEquals(3, correctedVirtualPage.getRecords().size());
+        assertEquals(6L, correctedVirtualPage.getTotal()); // size + currentTotal
     }
+
+    @Test
+    void totalPerformanceOnEmptyPage() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+
+        // Real total is 5.
+        // Request page 10 (offset 30, since size is 3).
+        Pagination pagination = Pagination.of(10, 3);
+        pagination.setTotal(100L); // Over-reported stale total
+
+        Page<User> page = customRepository.pageByAccount(pagination, account);
+
+        assertEquals(0, page.getRecords().size());
+        assertEquals(100L, page.getTotal());
+
+        pagination = Pagination.of(100, 3);
+        pagination.setTotal(100L); // Over-reported stale total
+
+        page = customRepository.pageByAccount(pagination, account);
+
+        assertEquals(0, page.getRecords().size());
+        assertEquals(100L, page.getTotal());
+    }
+
+    @Test
+    void virtualTotalFullPageBoundary() {
+        int count = 10;
+        String account = String.valueOf(System.currentTimeMillis());
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+
+        // 模擬：真實只有 10 筆，我們查第 0 頁，size = 10 (剛好查滿)
+        Pagination pagination = Pagination.of(0, 10);
+        pagination.setVirtualTotal(true);
+        pagination.setTotal(10L); // 故意設定 total 剛好等於目前的筆數
+
+        Page<User> page = customRepository.pageByAccount(pagination, account);
+
+        assertEquals(10, page.getRecords().size());
+        // 驗證：因為頁面是滿的 (10 == 10)，系統自動加送一個 size = 10，總數變為 20。
+        assertEquals(20L, page.getTotal());
+    }
+
+    @Test
+    void virtualTotalFakeConvergence() {
+        int count = 5;
+        String account = String.valueOf(System.currentTimeMillis());
+        for (int i = 0; i < count; i++) {
+            customRepository.insert(account);
+        }
+
+        Pagination pagination = Pagination.of(10, 3);
+        pagination.setVirtualTotal(true);
+        pagination.setTotal(100L);
+
+        Page<User> page = customRepository.pageByAccount(pagination, account);
+
+        assertEquals(0, page.getRecords().size());
+        // In virtual mode, we stick to currentTotal (30 in this case) as the capped estimate.
+        assertEquals(30L, page.getTotal());
+    }
+
 
     @Test
     void sort() {
