@@ -222,6 +222,14 @@ For large datasets, use the `EXPLAIN` estimated value instead of an exact `COUNT
 pagination.setVirtualTotal(true);
 ```
 
+### Cursor Pagination
+
+For sequential data fetching without using traditional offset, you can enable cursor pagination. This overrides the offset to 0 and relies on a cursor condition (e.g., `id > :lastId`) for high-performance iteration.
+
+```java
+pagination.setCursor(true);
+```
+
 #### MySQL Implementation Example
 ```java
 @Override

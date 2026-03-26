@@ -222,6 +222,14 @@ repository.page(pagination);
 pagination.setVirtualTotal(true);
 ```
 
+### 游標分頁 (Cursor Pagination)
+
+針對連續資料讀取，您可以啟用游標分頁來取代傳統的 offset 分頁。啟用後，offset 將強制為 0，並依賴游標條件 (例如：`id > :lastId`) 來達到高效能的循序查找。
+
+```java
+pagination.setCursor(true);
+```
+
 #### MySQL 實作範例
 ```java
 @Override
