@@ -20,6 +20,9 @@ public class Pagination {
     @Setter
     private boolean virtualTotal;
 
+    @Setter
+    private boolean cursor;
+
     private String[] sorts;
 
     public Pagination() {
