@@ -1,6 +1,7 @@
 package pers.clare.hisql.service;
 
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.support.JdbcUtils;
 import pers.clare.hisql.exception.HiSqlException;
 import pers.clare.hisql.function.*;
 import pers.clare.hisql.naming.NamingStrategy;
@@ -42,16 +43,24 @@ public interface SQLBasicService {
     }
 
     default void closeAll(String sql, Connection connection, ResultSet resultSet) {
+        Statement statement = null;
         try {
             if (resultSet != null) {
-                resultSet.close();
-                Statement statement = resultSet.getStatement();
-                if (statement != null) statement.close();
+                statement = resultSet.getStatement();
             }
-        } catch (SQLException e) {
-            throw convertToHiSqlException(sql, e);
+        } catch (SQLException exception) {
+            throw convertToHiSqlException(sql, exception);
+        } finally {
+            try {
+                JdbcUtils.closeResultSet(resultSet);
+            } finally {
+                try {
+                    JdbcUtils.closeStatement(statement);
+                } finally {
+                    releaseConnection(connection);
+                }
+            }
         }
-        releaseConnection(connection);
     }
 
     default HiSqlException convertToHiSqlException(Exception e) {
